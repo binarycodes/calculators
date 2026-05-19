@@ -20,9 +20,9 @@ public record RetirementResult(
 ) {
     /** Last fully-covered year. Equals lifeExp when corpus never depleted. */
     public ProjectionRow lastsUntilRow() {
-        int target = corpusDepletedAt.map(a -> a - 1)
-                .orElseGet(() -> rows.get(rows.size() - 1).age());
-        for (ProjectionRow r : rows) if (r.age() == target) return r;
-        return rows.get(rows.size() - 1);
+        final int target = this.corpusDepletedAt.map(a -> a - 1)
+                .orElseGet(() -> this.rows.get(this.rows.size() - 1).age());
+        for (final ProjectionRow r : this.rows) if (r.age() == target) return r;
+        return this.rows.get(this.rows.size() - 1);
     }
 }

@@ -42,6 +42,7 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteAlias;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -52,7 +53,8 @@ import java.math.RoundingMode;
  * corpus returns / monthly SIP inputs, summary cards, three charts, and a
  * year-by-year projection grid.
  */
-@Route(value = "retirement")
+@Route("retirement")
+@RouteAlias("")
 @Menu(title = "Retirement", icon = "vaadin:piggy-bank", order = 1)
 @PageTitle("Retirement Calculator")
 public class RetirementView extends VerticalLayout {
@@ -96,14 +98,15 @@ public class RetirementView extends VerticalLayout {
         this.defaults = defaults;
         this.store    = store;
 
-        setSizeFull();
+        addClassName("retirement-view");
+        setWidthFull();
         setPadding(true);
         setSpacing(true);
 
-        corpus         = new MoneyField("Current Corpus",                       prefs);
-        monthlyExp     = new MoneyField("Monthly Expenses (today)",             prefs);
-        monthlyInvPre  = new MoneyField("Monthly SIP (Before retirement)",      prefs);
-        monthlyInvPost = new MoneyField("Monthly SIP (After retirement)",       prefs);
+        this.corpus = new MoneyField("Current Corpus",                       prefs);
+        this.monthlyExp = new MoneyField("Monthly Expenses (today)",             prefs);
+        this.monthlyInvPre = new MoneyField("Monthly SIP (Before retirement)",      prefs);
+        this.monthlyInvPost = new MoneyField("Monthly SIP (After retirement)",       prefs);
 
         add(new H2("Retirement Calculator"));
         add(buildInputForm());
@@ -122,9 +125,9 @@ public class RetirementView extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         // Load persisted prefs + per-currency inputs from localStorage.
-        prefs.loadFromBrowser(() ->
-            store.load(map -> {
-                applyForCurrency(prefs.currency());
+        this.prefs.loadFromBrowser(() ->
+                this.store.load(map -> {
+                applyForCurrency(this.prefs.currency());
                 recalculate();
             })
         );
@@ -133,16 +136,16 @@ public class RetirementView extends VerticalLayout {
     // ---- form layout -----------------------------------------------------
 
     private VerticalLayout buildInputForm() {
-        Details timeline = section("Timeline",
-                currentAge, retireAge, lifeExp);
-        Details current = section("Current Finances",
-                corpus, monthlyExp, asPctSuffix(inflation));
-        Details corpusReturns = section("Existing Corpus Returns",
-                asPctSuffix(growthPre), asPctSuffix(growthPost));
-        Details sip = section("Monthly SIP Contributions",
-                monthlyInvPre, asPctSuffix(sipGrowthPre),
-                monthlyInvPost, asPctSuffix(sipGrowthPost));
-        VerticalLayout col = new VerticalLayout(timeline, current, corpusReturns, sip);
+        final Details timeline = section("Timeline",
+                this.currentAge, this.retireAge, this.lifeExp);
+        final Details current = section("Current Finances",
+                this.corpus, this.monthlyExp, asPctSuffix(this.inflation));
+        final Details corpusReturns = section("Existing Corpus Returns",
+                asPctSuffix(this.growthPre), asPctSuffix(this.growthPost));
+        final Details sip = section("Monthly SIP Contributions",
+                this.monthlyInvPre, asPctSuffix(this.sipGrowthPre),
+                this.monthlyInvPost, asPctSuffix(this.sipGrowthPost));
+        final VerticalLayout col = new VerticalLayout(timeline, current, corpusReturns, sip);
         col.setPadding(false);
         col.setSpacing(true);
         col.setWidthFull();
@@ -150,22 +153,23 @@ public class RetirementView extends VerticalLayout {
     }
 
     private Details section(String title, com.vaadin.flow.component.Component... fields) {
-        FormLayout inner = new FormLayout();
+        final FormLayout inner = new FormLayout();
         inner.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0",    1),
                 new FormLayout.ResponsiveStep("36em", 2),
                 new FormLayout.ResponsiveStep("64em", 3),
                 new FormLayout.ResponsiveStep("90em", 4));
         inner.add(fields);
-        Details d = new Details(title, inner);
+        final Details d = new Details(title, inner);
         d.setOpened(true);
         d.setWidthFull();
+        d.addClassName("form-section");
         return d;
     }
 
     private NumberField asPctSuffix(NumberField nf) {
         if (nf.getSuffixComponent() == null) {
-            Span s = new Span("%");
+            final Span s = new Span("%");
             s.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
             nf.setSuffixComponent(s);
         }
@@ -173,10 +177,11 @@ public class RetirementView extends VerticalLayout {
     }
 
     private HorizontalLayout buildActions() {
-        Button calc = new Button("Calculate", e -> recalculate());
+        final Button calc = new Button("Calculate", e -> recalculate());
         calc.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        Button reset = new Button("Reset", e -> resetToDefaults());
-        HorizontalLayout row = new HorizontalLayout(calc, reset);
+        final Button reset = new Button("Reset", e -> resetToDefaults());
+        final HorizontalLayout row = new HorizontalLayout(calc, reset);
+        row.addClassName("action-row");
         row.setSpacing(true);
         return row;
     }
@@ -184,10 +189,11 @@ public class RetirementView extends VerticalLayout {
     // ---- summary --------------------------------------------------------
 
     private HorizontalLayout buildSummary() {
-        HorizontalLayout row = new HorizontalLayout(
-                corpusAtRetirement, expensesAtRetirement, lastsUntil, finalCorpus);
+        final HorizontalLayout row = new HorizontalLayout(
+                this.corpusAtRetirement, this.expensesAtRetirement, this.lastsUntil, this.finalCorpus);
+        row.addClassName("summary-row");
         row.setWidthFull();
-        row.setFlexGrow(1, corpusAtRetirement, expensesAtRetirement, lastsUntil, finalCorpus);
+        row.setFlexGrow(1, this.corpusAtRetirement, this.expensesAtRetirement, this.lastsUntil, this.finalCorpus);
         row.setSpacing(true);
         return row;
     }
@@ -195,30 +201,31 @@ public class RetirementView extends VerticalLayout {
     // ---- charts ---------------------------------------------------------
 
     private VerticalLayout buildChartsBlock() {
-        Tabs tabs = new Tabs(new Tab("Corpus"), new Tab("Annual Expenses"), new Tab("Investments"));
-        VerticalLayout host = new VerticalLayout();
+        final Tabs tabs = new Tabs(new Tab("Corpus"), new Tab("Annual Expenses"), new Tab("Investments"));
+        final VerticalLayout host = new VerticalLayout();
         host.setPadding(false);
         host.setSpacing(false);
         host.setSizeFull();
-        host.add(corpusChart);
+        host.add(this.corpusChart);
 
-        corpusChart.setWidthFull();
-        expensesChart.setWidthFull();
-        investmentsChart.setWidthFull();
-        corpusChart.setHeight("340px");
-        expensesChart.setHeight("340px");
-        investmentsChart.setHeight("340px");
+        this.corpusChart.setWidthFull();
+        this.expensesChart.setWidthFull();
+        this.investmentsChart.setWidthFull();
+        this.corpusChart.setHeight("340px");
+        this.expensesChart.setHeight("340px");
+        this.investmentsChart.setHeight("340px");
 
         tabs.addSelectedChangeListener(e -> {
             host.removeAll();
             switch (e.getSelectedTab().getLabel()) {
-                case "Corpus"           -> host.add(corpusChart);
-                case "Annual Expenses"  -> host.add(expensesChart);
-                case "Investments"      -> host.add(investmentsChart);
+                case "Corpus"           -> host.add(this.corpusChart);
+                case "Annual Expenses"  -> host.add(this.expensesChart);
+                case "Investments"      -> host.add(this.investmentsChart);
             }
         });
 
-        VerticalLayout block = new VerticalLayout(tabs, host);
+        final VerticalLayout block = new VerticalLayout(tabs, host);
+        block.addClassName("chart-card");
         block.setPadding(false);
         block.setSpacing(false);
         block.setWidthFull();
@@ -231,15 +238,15 @@ public class RetirementView extends VerticalLayout {
         // Narrow columns get auto-width so they fit tightly; numeric columns get
         // flex-grow so the grid fills the container without leaving whitespace
         // on the right.
-        grid.addColumn(ProjectionRow::year).setHeader("Year").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(ProjectionRow::age).setHeader("Age").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(r -> r.isPost() ? "Post" : "Pre").setHeader("Phase").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(r -> moneyOrDash(r.annualExp(),   prefs.currency())).setHeader("Annual Expenses").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
-        grid.addColumn(r -> moneyOrDash(r.startCorpus(), prefs.currency())).setHeader("Corpus (Start)").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
-        grid.addColumn(r -> moneyOrDash(r.returns(),     prefs.currency())).setHeader("Returns").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
-        grid.addColumn(r -> moneyOrDash(r.investment(),  prefs.currency())).setHeader("Investment").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
-        grid.addColumn(r -> moneyOrDash(r.withdrawal(),  prefs.currency())).setHeader("Withdrawal").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
-        grid.addColumn(r -> moneyOrDash(r.endCorpus(),   prefs.currency()))
+        this.grid.addColumn(ProjectionRow::year).setHeader("Year").setAutoWidth(true).setFlexGrow(0);
+        this.grid.addColumn(ProjectionRow::age).setHeader("Age").setAutoWidth(true).setFlexGrow(0);
+        this.grid.addColumn(r -> r.isPost() ? "Post" : "Pre").setHeader("Phase").setAutoWidth(true).setFlexGrow(0);
+        this.grid.addColumn(r -> moneyOrDash(r.annualExp(), this.prefs.currency())).setHeader("Annual Expenses").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
+        this.grid.addColumn(r -> moneyOrDash(r.startCorpus(), this.prefs.currency())).setHeader("Corpus (Start)").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
+        this.grid.addColumn(r -> moneyOrDash(r.returns(), this.prefs.currency())).setHeader("Returns").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
+        this.grid.addColumn(r -> moneyOrDash(r.investment(), this.prefs.currency())).setHeader("Investment").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
+        this.grid.addColumn(r -> moneyOrDash(r.withdrawal(), this.prefs.currency())).setHeader("Withdrawal").setFlexGrow(1).setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
+        this.grid.addColumn(r -> moneyOrDash(r.endCorpus(), this.prefs.currency()))
                 .setHeader("Corpus (End)").setFlexGrow(1)
                 .setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END)
                 .setPartNameGenerator(r -> {
@@ -249,17 +256,17 @@ public class RetirementView extends VerticalLayout {
                         return "corpus-end-low";
                     return "corpus-end-healthy";
                 });
-        grid.setPartNameGenerator(r -> {
+        this.grid.setPartNameGenerator(r -> {
             if (r.depleted())      return "depleted-row";
             if (r.isRetireYear())  return "retirement-row";
             if (r.isPost() && r.endCorpus().compareTo(r.annualExp().multiply(BigDecimal.TEN)) < 0)
                 return "low-row";
             return null;
         });
-        grid.setAllRowsVisible(false);
-        grid.setHeight("420px");
-        grid.setWidthFull();
-        VerticalLayout block = new VerticalLayout(new H2("Year-on-Year Projection"), grid);
+        this.grid.setAllRowsVisible(true);
+        this.grid.setWidthFull();
+        final VerticalLayout block = new VerticalLayout(new H2("Year-on-Year Projection"), this.grid);
+        block.addClassName("grid-card");
         block.setPadding(false);
         block.setSpacing(true);
         block.setWidthFull();
@@ -269,18 +276,18 @@ public class RetirementView extends VerticalLayout {
     // ---- input wiring ---------------------------------------------------
 
     private static IntegerField ageField(String label) {
-        IntegerField f = new IntegerField(label);
+        final IntegerField f = new IntegerField(label);
         f.setMin(1);
         f.setMax(120);
         f.setStepButtonsVisible(false);
-        Span suffix = new Span("yrs");
+        final Span suffix = new Span("yrs");
         suffix.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
         f.setSuffixComponent(suffix);
         return f;
     }
 
     private static NumberField pctField(String label) {
-        NumberField f = new NumberField(label);
+        final NumberField f = new NumberField(label);
         f.setMin(0);
         f.setMax(100);
         f.setStep(0.1);
@@ -289,121 +296,121 @@ public class RetirementView extends VerticalLayout {
     }
 
     private void attachInputListeners() {
-        java.util.List.of(currentAge, retireAge, lifeExp).forEach(
+        java.util.List.of(this.currentAge, this.retireAge, this.lifeExp).forEach(
                 f -> f.addValueChangeListener(e -> onInputChanged()));
-        java.util.List.of(inflation, growthPre, growthPost, sipGrowthPre, sipGrowthPost).forEach(
+        java.util.List.of(this.inflation, this.growthPre, this.growthPost, this.sipGrowthPre, this.sipGrowthPost).forEach(
                 f -> f.addValueChangeListener(e -> onInputChanged()));
-        java.util.List.of(corpus, monthlyExp, monthlyInvPre, monthlyInvPost).forEach(
+        java.util.List.of(this.corpus, this.monthlyExp, this.monthlyInvPre, this.monthlyInvPost).forEach(
                 f -> f.addValueChangeListener(e -> onInputChanged()));
     }
 
     private void onInputChanged() {
-        if (suspendListeners) return;
-        store.save(prefs.currency(), readInputs());
+        if (this.suspendListeners) return;
+        this.store.save(this.prefs.currency(), readInputs());
     }
 
     // ---- state transitions ---------------------------------------------
 
     private void onCurrencyOrPrefsChange() {
-        applyForCurrency(prefs.currency());
+        applyForCurrency(this.prefs.currency());
         recalculate();
     }
 
     private void applyForCurrency(Currency c) {
-        RetirementInputs in = store.get(c);
-        if (in == null) in = defaults.forCurrency(c);
+        RetirementInputs in = this.store.get(c);
+        if (in == null) in = this.defaults.forCurrency(c);
         writeInputs(in);
     }
 
     private void resetToDefaults() {
-        Currency c = prefs.currency();
-        RetirementInputs defs = defaults.forCurrency(c);
-        store.save(c, defs);
+        final Currency c = this.prefs.currency();
+        final RetirementInputs defs = this.defaults.forCurrency(c);
+        this.store.save(c, defs);
         writeInputs(defs);
         recalculate();
     }
 
     private void writeInputs(RetirementInputs in) {
-        suspendListeners = true;
+        this.suspendListeners = true;
         try {
-            currentAge.setValue(in.currentAge());
-            retireAge.setValue(in.retireAge());
-            lifeExp.setValue(in.lifeExp());
-            corpus.setBigDecimal(in.corpus());
-            monthlyExp.setBigDecimal(in.monthlyExpenses());
-            monthlyInvPre.setBigDecimal(in.monthlyInvPre());
-            monthlyInvPost.setBigDecimal(in.monthlyInvPost());
-            inflation.setValue(toDouble(in.inflationPct()));
-            growthPre.setValue(toDouble(in.growthPrePct()));
-            growthPost.setValue(toDouble(in.growthPostPct()));
-            sipGrowthPre.setValue(toDouble(in.sipGrowthPrePct()));
-            sipGrowthPost.setValue(toDouble(in.sipGrowthPostPct()));
+            this.currentAge.setValue(in.currentAge());
+            this.retireAge.setValue(in.retireAge());
+            this.lifeExp.setValue(in.lifeExp());
+            this.corpus.setBigDecimal(in.corpus());
+            this.monthlyExp.setBigDecimal(in.monthlyExpenses());
+            this.monthlyInvPre.setBigDecimal(in.monthlyInvPre());
+            this.monthlyInvPost.setBigDecimal(in.monthlyInvPost());
+            this.inflation.setValue(toDouble(in.inflationPct()));
+            this.growthPre.setValue(toDouble(in.growthPrePct()));
+            this.growthPost.setValue(toDouble(in.growthPostPct()));
+            this.sipGrowthPre.setValue(toDouble(in.sipGrowthPrePct()));
+            this.sipGrowthPost.setValue(toDouble(in.sipGrowthPostPct()));
         } finally {
-            suspendListeners = false;
+            this.suspendListeners = false;
         }
     }
 
     private RetirementInputs readInputs() {
         return new RetirementInputs(
-                nz(currentAge.getValue(), 35),
-                nz(retireAge.getValue(), 60),
-                nz(lifeExp.getValue(), 90),
-                or0(corpus.getValue()),
-                or0(monthlyExp.getValue()),
-                bd(inflation.getValue()),
-                bd(growthPre.getValue()),
-                bd(growthPost.getValue()),
-                or0(monthlyInvPre.getValue()),
-                bd(sipGrowthPre.getValue()),
-                or0(monthlyInvPost.getValue()),
-                bd(sipGrowthPost.getValue())
+                nz(this.currentAge.getValue(), 35),
+                nz(this.retireAge.getValue(), 60),
+                nz(this.lifeExp.getValue(), 90),
+                or0(this.corpus.getValue()),
+                or0(this.monthlyExp.getValue()),
+                bd(this.inflation.getValue()),
+                bd(this.growthPre.getValue()),
+                bd(this.growthPost.getValue()),
+                or0(this.monthlyInvPre.getValue()),
+                bd(this.sipGrowthPre.getValue()),
+                or0(this.monthlyInvPost.getValue()),
+                bd(this.sipGrowthPost.getValue())
         );
     }
 
     private void recalculate() {
-        RetirementInputs in;
+        final RetirementInputs in;
         try {
             in = readInputs();
-        } catch (Exception e) { return; }
+        } catch (final Exception e) { return; }
 
-        RetirementResult r;
+        final RetirementResult r;
         try {
             r = RetirementCalculator.calculate(in);
-        } catch (IllegalArgumentException e) {
-            corpusAtRetirement.setValue("—", null);
-            expensesAtRetirement.setValue("—", null);
-            lastsUntil.setValue("—", null);
-            finalCorpus.setValue(e.getMessage(), "red");
+        } catch (final IllegalArgumentException e) {
+            this.corpusAtRetirement.setValue("—", null);
+            this.expensesAtRetirement.setValue("—", null);
+            this.lastsUntil.setValue("—", null);
+            this.finalCorpus.setValue(e.getMessage(), "red");
             return;
         }
 
-        Currency c = prefs.currency();
-        ProjectionRow retire = r.rows().stream()
+        final Currency c = this.prefs.currency();
+        final ProjectionRow retire = r.rows().stream()
                 .filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
         if (retire != null) {
-            corpusAtRetirement.setValue(MoneyFormatter.format(retire.startCorpus(), c), null);
-            expensesAtRetirement.setValue(MoneyFormatter.format(retire.annualExp(), c), null);
+            this.corpusAtRetirement.setValue(MoneyFormatter.format(retire.startCorpus(), c), null);
+            this.expensesAtRetirement.setValue(MoneyFormatter.format(retire.annualExp(), c), null);
         }
 
         if (r.corpusDepletedAt().isPresent()) {
-            int age = r.corpusDepletedAt().get() - 1;
-            lastsUntil.setValue(age + " yrs", "red");
-            lastsUntil.setLabel("Corpus Lasts Until");
+            final int age = r.corpusDepletedAt().get() - 1;
+            this.lastsUntil.setValue(age + " yrs", "red");
+            this.lastsUntil.setLabel("Corpus Lasts Until");
         } else {
-            lastsUntil.setValue("Beyond " + in.lifeExp() + " yrs ✓", "green");
+            this.lastsUntil.setValue("Beyond " + in.lifeExp() + " yrs ✓", "green");
         }
 
-        ProjectionRow lastRow = r.lastsUntilRow();
-        String tone;
+        final ProjectionRow lastRow = r.lastsUntilRow();
+        final String tone;
         if (lastRow.endCorpus().signum() <= 0) tone = "red";
         else if (lastRow.endCorpus().compareTo(lastRow.annualExp().multiply(BigDecimal.valueOf(5))) < 0) tone = "amber";
         else tone = "green";
-        finalCorpus.setLabel(r.corpusDepletedAt().isPresent()
+        this.finalCorpus.setLabel(r.corpusDepletedAt().isPresent()
                 ? "Final Corpus (at age " + lastRow.age() + ")"
                 : "Final Corpus (at life expectancy)");
-        finalCorpus.setValue(MoneyFormatter.format(lastRow.endCorpus(), c), tone);
+        this.finalCorpus.setValue(MoneyFormatter.format(lastRow.endCorpus(), c), tone);
 
-        grid.setItems(r.rows());
+        this.grid.setItems(r.rows());
 
         refreshCorpusChart(in, r);
         refreshExpensesChart(r);
@@ -413,76 +420,76 @@ public class RetirementView extends VerticalLayout {
     // ---- chart rendering ------------------------------------------------
 
     private void refreshCorpusChart(RetirementInputs in, RetirementResult r) {
-        Configuration cfg = corpusChart.getConfiguration();
+        final Configuration cfg = this.corpusChart.getConfiguration();
         cfg.setTitle("Corpus Trajectory");
         cfg.getxAxis().setTitle("Age");
-        cfg.getyAxis().setTitle(prefs.currency().name());
-        DataSeries series = new DataSeries("Corpus");
+        cfg.getyAxis().setTitle(this.prefs.currency().name());
+        final DataSeries series = new DataSeries("Corpus");
         series.add(new DataSeriesItem(in.currentAge(), in.corpus().doubleValue()));
-        for (ProjectionRow row : r.rows()) {
+        for (final ProjectionRow row : r.rows()) {
             series.add(new DataSeriesItem(row.age() + 1, Math.max(row.endCorpus().doubleValue(), 0)));
         }
         cfg.setSeries(series);
-        PlotOptionsAreaspline plot = new PlotOptionsAreaspline();
+        final PlotOptionsAreaspline plot = new PlotOptionsAreaspline();
         plot.setMarker(new com.vaadin.flow.component.charts.model.Marker(false));
         cfg.setPlotOptions(plot);
 
-        XAxis x = cfg.getxAxis();
-        x.setPlotLines(new PlotLine[0]);
-        PlotLine retireLine = new PlotLine();
+        final XAxis x = cfg.getxAxis();
+        x.setPlotLines();
+        final PlotLine retireLine = new PlotLine();
         retireLine.setValue(in.retireAge());
         retireLine.setColor(new com.vaadin.flow.component.charts.model.style.SolidColor("#14b8a6"));
         retireLine.setDashStyle(com.vaadin.flow.component.charts.model.DashStyle.SHORTDASH);
         retireLine.setWidth(2);
         x.addPlotLine(retireLine);
         r.corpusDepletedAt().ifPresent(age -> {
-            PlotLine pl = new PlotLine();
+            final PlotLine pl = new PlotLine();
             pl.setValue(age);
             pl.setColor(new com.vaadin.flow.component.charts.model.style.SolidColor("#ef4444"));
             pl.setDashStyle(com.vaadin.flow.component.charts.model.DashStyle.SHORTDASH);
             pl.setWidth(2);
             x.addPlotLine(pl);
         });
-        corpusChart.drawChart(true);
+        this.corpusChart.drawChart(true);
     }
 
     private void refreshExpensesChart(RetirementResult r) {
-        Configuration cfg = expensesChart.getConfiguration();
+        final Configuration cfg = this.expensesChart.getConfiguration();
         cfg.setTitle("Annual Expenses");
         cfg.getxAxis().setTitle("Age");
-        cfg.getyAxis().setTitle(prefs.currency().name());
-        Number[] ys = new Number[r.rows().size()];
-        String[] cats = new String[r.rows().size()];
+        cfg.getyAxis().setTitle(this.prefs.currency().name());
+        final Number[] ys = new Number[r.rows().size()];
+        final String[] cats = new String[r.rows().size()];
         for (int i = 0; i < r.rows().size(); i++) {
             ys[i]   = r.rows().get(i).annualExp().doubleValue();
             cats[i] = Integer.toString(r.rows().get(i).age());
         }
-        ListSeries series = new ListSeries("Annual Expenses", ys);
+        final ListSeries series = new ListSeries("Annual Expenses", ys);
         cfg.setSeries(series);
         cfg.getxAxis().setCategories(cats);
-        expensesChart.drawChart(true);
+        this.expensesChart.drawChart(true);
     }
 
     private void refreshInvestmentsChart(RetirementResult r) {
-        Configuration cfg = investmentsChart.getConfiguration();
+        final Configuration cfg = this.investmentsChart.getConfiguration();
         cfg.setTitle("Investments at Retirement");
-        double invested = r.investedAtRetirement().doubleValue();
-        ProjectionRow retire = r.rows().stream().filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
-        double total = retire == null ? invested : retire.startCorpus().doubleValue();
-        double interest = Math.max(0, total - invested);
-        DataSeries series = new DataSeries();
-        DataSeriesItem investedItem = new DataSeriesItem("Invested", invested);
-        DataSeriesItem interestItem  = new DataSeriesItem("Interest", interest);
+        final double invested = r.investedAtRetirement().doubleValue();
+        final ProjectionRow retire = r.rows().stream().filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
+        final double total = retire == null ? invested : retire.startCorpus().doubleValue();
+        final double interest = Math.max(0, total - invested);
+        final DataSeries series = new DataSeries();
+        final DataSeriesItem investedItem = new DataSeriesItem("Invested", invested);
+        final DataSeriesItem interestItem  = new DataSeriesItem("Interest", interest);
         series.add(investedItem);
         series.add(interestItem);
         cfg.setSeries(series);
-        PlotOptionsPie pie = new PlotOptionsPie();
+        final PlotOptionsPie pie = new PlotOptionsPie();
         pie.setInnerSize("60%");
-        DataLabels dl = new DataLabels(true);
+        final DataLabels dl = new DataLabels(true);
         dl.setFormat("{point.name}: {point.percentage:.1f}%");
         pie.setDataLabels(dl);
         cfg.setPlotOptions(pie);
-        investmentsChart.drawChart(true);
+        this.investmentsChart.drawChart(true);
     }
 
     // ---- helpers --------------------------------------------------------

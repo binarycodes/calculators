@@ -1,0 +1,40 @@
+vaadin-radio-group.segmented-toggle vaadin-radio-button::part(radio) {
+    display: none;
+}
+
+vaadin-radio-group.segmented-toggle vaadin-radio-button > input {
+    display: none;
+}
+
+vaadin-radio-group.segmented-toggle vaadin-radio-button::before {
+    display: none;
+}
+
+vaadin-radio-group.segmented-toggle {
+    --vaadin-radio-button-gap: 0;
+    --vaadin-gap-xs: 0.25rem;
+
+    background-color: var(--color-surface-overlay);
+    padding: 0.25rem 0.25rem;
+    border-radius: 10px;
+}
+
+vaadin-radio-group.segmented-toggle::part(group-field) {
+    gap: 0.25rem 0.25rem;
+}
+
+vaadin-radio-group.segmented-toggle vaadin-radio-button {
+    background-color: var(--color-surface-overlay);
+    color: var(--color-text);
+    border-radius: 10px;
+
+    &[checked] {
+        background-color: var(--color-surface-raised);
+        color: var(--color-primary-strong);
+        box-shadow: var(--shadow-chip);
+    }
+
+    label {
+        padding: 0.5rem 1rem;
+    }
+}

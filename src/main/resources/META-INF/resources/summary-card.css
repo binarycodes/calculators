@@ -1,0 +1,40 @@
+/*
+ * Summary card.
+ *
+ * The "Corpus at Retirement / Annual Expenses / Corpus Lasts Until / Final
+ * Corpus" tiles shown in a row above the chart. Label is small sans
+ * uppercase; value is bold monospace. The .is-{red,amber,green} tone classes
+ * mirror the grid row coloring (depleted / low / healthy).
+ *
+ * All colors come from colors.css; dark mode lives there too.
+ */
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  min-width: 14rem;
+}
+
+.summary-card .summary-label {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.summary-card .summary-value {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-card .summary-value.is-red    { color: var(--color-danger-text);  }
+.summary-card .summary-value.is-amber  { color: var(--color-warning-text); }
+.summary-card .summary-value.is-green  { color: var(--color-success-text); }

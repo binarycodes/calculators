@@ -32,29 +32,29 @@ public final class RetirementCalculator {
         if (in.retireAge() >= in.lifeExp())
             throw new IllegalArgumentException("Life expectancy must be greater than retirement age.");
 
-        BigDecimal inflation     = pctToFraction(in.inflationPct());
-        BigDecimal growthPre     = pctToFraction(in.growthPrePct());
-        BigDecimal growthPost    = pctToFraction(in.growthPostPct());
-        BigDecimal sipGrowthPre  = pctToFraction(in.sipGrowthPrePct());
-        BigDecimal sipGrowthPost = pctToFraction(in.sipGrowthPostPct());
-        BigDecimal annualExp0    = in.monthlyExpenses().multiply(TWELVE, MC);
-        BigDecimal annualInvPre  = in.monthlyInvPre().multiply(TWELVE, MC);
-        BigDecimal annualInvPost = in.monthlyInvPost().multiply(TWELVE, MC);
+        final BigDecimal inflation     = pctToFraction(in.inflationPct());
+        final BigDecimal growthPre     = pctToFraction(in.growthPrePct());
+        final BigDecimal growthPost    = pctToFraction(in.growthPostPct());
+        final BigDecimal sipGrowthPre  = pctToFraction(in.sipGrowthPrePct());
+        final BigDecimal sipGrowthPost = pctToFraction(in.sipGrowthPostPct());
+        final BigDecimal annualExp0    = in.monthlyExpenses().multiply(TWELVE, MC);
+        final BigDecimal annualInvPre  = in.monthlyInvPre().multiply(TWELVE, MC);
+        final BigDecimal annualInvPost = in.monthlyInvPost().multiply(TWELVE, MC);
 
-        List<ProjectionRow> rows = new ArrayList<>();
+        final List<ProjectionRow> rows = new ArrayList<>();
         BigDecimal mainCorpus = in.corpus();
         BigDecimal sipCorpus  = BigDecimal.ZERO;
         BigDecimal totalInvested = in.corpus();   // initial principal + cumulative SIP
         BigDecimal investedAtRetirement = BigDecimal.ZERO;
         Integer corpusDepletedAt = null;
-        int currentYear = Year.now().getValue();
+        final int currentYear = Year.now().getValue();
 
         for (int age = in.currentAge(); age <= in.lifeExp(); age++) {
-            int yearsFromNow   = age - in.currentAge();
-            int year           = currentYear + yearsFromNow;
-            boolean isRetireYear = age == in.retireAge();
-            boolean isPost     = age >= in.retireAge();
-            BigDecimal annualExp = annualExp0.multiply(pow1plus(inflation, yearsFromNow), MC);
+            final int yearsFromNow   = age - in.currentAge();
+            final int year           = currentYear + yearsFromNow;
+            final boolean isRetireYear = age == in.retireAge();
+            final boolean isPost     = age >= in.retireAge();
+            final BigDecimal annualExp = annualExp0.multiply(pow1plus(inflation, yearsFromNow), MC);
 
             // At retirement, fold the SIP-accumulated corpus into the main corpus.
             if (isRetireYear) {
@@ -63,29 +63,29 @@ public final class RetirementCalculator {
                 sipCorpus = BigDecimal.ZERO;
             }
 
-            BigDecimal mainRate  = isPost ? growthPost    : growthPre;
-            BigDecimal sipRate   = isPost ? sipGrowthPost : sipGrowthPre;
-            BigDecimal investment = isPost ? annualInvPost : annualInvPre;
+            final BigDecimal mainRate  = isPost ? growthPost    : growthPre;
+            final BigDecimal sipRate   = isPost ? sipGrowthPost : sipGrowthPre;
+            final BigDecimal investment = isPost ? annualInvPost : annualInvPre;
             totalInvested = totalInvested.add(investment, MC);
 
-            BigDecimal startCorpus = mainCorpus.add(sipCorpus, MC);
-            BigDecimal mainReturns = mainCorpus.multiply(mainRate, MC);
-            BigDecimal sipReturns  = sipCorpus.multiply(sipRate,  MC);
-            BigDecimal returns     = mainReturns.add(sipReturns, MC);
+            final BigDecimal startCorpus = mainCorpus.add(sipCorpus, MC);
+            final BigDecimal mainReturns = mainCorpus.multiply(mainRate, MC);
+            final BigDecimal sipReturns  = sipCorpus.multiply(sipRate,  MC);
+            final BigDecimal returns     = mainReturns.add(sipReturns, MC);
 
             BigDecimal mainAfter = mainCorpus.add(mainReturns, MC);
             BigDecimal sipAfter  = sipCorpus.add(sipReturns, MC).add(investment, MC);
 
-            BigDecimal withdrawal = isPost ? annualExp : BigDecimal.ZERO;
-            BigDecimal endCorpus;
+            final BigDecimal withdrawal = isPost ? annualExp : BigDecimal.ZERO;
+            final BigDecimal endCorpus;
 
             if (withdrawal.signum() == 0) {
                 endCorpus = mainAfter.add(sipAfter, MC);
             } else {
-                BigDecimal pool = mainAfter.add(sipAfter, MC);
+                final BigDecimal pool = mainAfter.add(sipAfter, MC);
                 if (pool.compareTo(withdrawal) >= 0) {
                     // proportional draw — both buckets shrink in proportion to their share
-                    BigDecimal mainShare = pool.signum() > 0
+                    final BigDecimal mainShare = pool.signum() > 0
                             ? mainAfter.divide(pool, MC)
                             : BigDecimal.ZERO;
                     mainAfter = mainAfter.subtract(withdrawal.multiply(mainShare, MC), MC);
@@ -100,7 +100,7 @@ public final class RetirementCalculator {
                 }
             }
 
-            boolean depleted = endCorpus.signum() < 0;
+            final boolean depleted = endCorpus.signum() < 0;
             rows.add(new ProjectionRow(year, age, isRetireYear, isPost,
                     annualExp, startCorpus, returns, investment, withdrawal,
                     endCorpus, depleted));
@@ -125,7 +125,7 @@ public final class RetirementCalculator {
     /** (1 + rate)^n — used for expense inflation. */
     private static BigDecimal pow1plus(BigDecimal rate, int n) {
         if (n == 0) return BigDecimal.ONE;
-        BigDecimal base = BigDecimal.ONE.add(rate, MC);
+        final BigDecimal base = BigDecimal.ONE.add(rate, MC);
         BigDecimal acc = BigDecimal.ONE;
         for (int i = 0; i < n; i++) acc = acc.multiply(base, MC);
         return acc;

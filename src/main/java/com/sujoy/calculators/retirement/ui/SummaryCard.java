@@ -10,18 +10,19 @@ public class SummaryCard extends Div {
 
     public SummaryCard(String labelText) {
         addClassName("summary-card");
-        label.addClassName("summary-label");
-        value.addClassName("summary-value");
-        label.setText(labelText);
-        add(label, value);
+        this.label.addClassName("summary-label");
+        this.value.addClassName("summary-value");
+        this.label.setText(labelText);
+        add(this.label, this.value);
     }
 
-    public void setLabel(String text) { label.setText(text); }
+    public void setLabel(String text) {
+        this.label.setText(text); }
 
     /** {@code tone} is one of {@code null}, {@code "red"}, {@code "amber"}, {@code "green"}. */
     public void setValue(String text, String tone) {
-        value.setText(text);
-        value.removeClassNames("is-red", "is-amber", "is-green");
-        if (tone != null) value.addClassName("is-" + tone);
+        this.value.setText(text);
+        this.value.removeClassNames("is-red", "is-amber", "is-green");
+        if (tone != null) this.value.addClassName("is-" + tone);
     }
 }

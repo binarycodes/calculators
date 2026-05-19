@@ -31,7 +31,7 @@ public class MainLayout extends AppLayout {
     }
 
     private H1 buildBrand() {
-        H1 brand = new H1("Calculators");
+        final H1 brand = new H1("Calculators");
         brand.getStyle()
                 .setFontSize("var(--vaadin-font-size-xl, 1.25rem)")
                 .setMargin("var(--vaadin-padding-m, 0.75rem)")
@@ -40,10 +40,10 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNav buildSideNav() {
-        SideNav nav = new SideNav();
+        final SideNav nav = new SideNav();
         // Auto-discover routes annotated with @Menu. Falls back to a hard-coded
         // entry until the first view is added so the drawer is not empty.
-        var entries = MenuConfiguration.getMenuEntries();
+        final var entries = MenuConfiguration.getMenuEntries();
         if (entries.isEmpty()) {
             nav.addItem(new SideNavItem("Welcome", "/", VaadinIcon.HOME.create()));
         } else {
@@ -53,23 +53,23 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem toSideNavItem(MenuEntry entry) {
-        SideNavItem item = new SideNavItem(entry.title(), entry.path());
+        final SideNavItem item = new SideNavItem(entry.title(), entry.path());
         if (entry.icon() != null && !entry.icon().isBlank()) {
             // Vaadin icon class string like "vaadin:piggy-bank" or "lumo:cog".
             try {
-                String[] parts = entry.icon().split(":", 2);
+                final String[] parts = entry.icon().split(":", 2);
                 if (parts.length == 2 && "vaadin".equalsIgnoreCase(parts[0])) {
-                    VaadinIcon vi = VaadinIcon.valueOf(parts[1].toUpperCase().replace('-', '_'));
+                    final VaadinIcon vi = VaadinIcon.valueOf(parts[1].toUpperCase().replace('-', '_'));
                     item.setPrefixComponent(vi.create());
                 }
-            } catch (Exception ignore) { /* fall through to no icon */ }
+            } catch (final Exception ignore) { /* fall through to no icon */ }
         }
         return item;
     }
 
     private HorizontalLayout buildHeader(UserPreferences prefs) {
-        DrawerToggle toggle = new DrawerToggle();
-        HorizontalLayout header = new HorizontalLayout(toggle, new PreferencesBar(prefs));
+        final DrawerToggle toggle = new DrawerToggle();
+        final HorizontalLayout header = new HorizontalLayout(toggle, new PreferencesBar(prefs));
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);

@@ -15,10 +15,10 @@ public final class MoneyFormatter {
     /** "₹12,34,56,789" / "$123,456,789" / "€60.000" — rounds half-up, no decimals. */
     public static String format(BigDecimal value, Currency currency) {
         if (value == null) value = BigDecimal.ZERO;
-        long n = value.setScale(0, RoundingMode.HALF_UP).longValueExact();
-        boolean neg = n < 0;
-        long abs = neg ? -n : n;
-        String digits = (currency.style() == Currency.Style.INDIAN)
+        final long n = value.setScale(0, RoundingMode.HALF_UP).longValueExact();
+        final boolean neg = n < 0;
+        final long abs = neg ? -n : n;
+        final String digits = (currency.style() == Currency.Style.INDIAN)
                 ? groupIndian(abs)
                 : groupWestern(abs, currency.locale());
         return (neg ? "−" : "") + currency.symbol() + digits;
@@ -26,12 +26,12 @@ public final class MoneyFormatter {
 
     /** Indian grouping: last 3 digits, then pairs (e.g. 12345678 → "1,23,45,678"). */
     static String groupIndian(long n) {
-        String s = Long.toString(n);
+        final String s = Long.toString(n);
         if (s.length() <= 3) return s;
-        String last3 = s.substring(s.length() - 3);
-        String head  = s.substring(0, s.length() - 3);
+        final String last3 = s.substring(s.length() - 3);
+        final String head  = s.substring(0, s.length() - 3);
         // Group head from the RIGHT into pairs.
-        StringBuilder grouped = new StringBuilder();
+        final StringBuilder grouped = new StringBuilder();
         int i = head.length();
         while (i > 2) {
             grouped.insert(0, "," + head.substring(i - 2, i));
@@ -43,7 +43,7 @@ public final class MoneyFormatter {
 
     /** Western grouping using the locale's NumberFormat (e.g. en-US "1,234,567", de "1.234.567"). */
     static String groupWestern(long n, java.util.Locale locale) {
-        NumberFormat nf = NumberFormat.getNumberInstance(locale);
+        final NumberFormat nf = NumberFormat.getNumberInstance(locale);
         nf.setMaximumFractionDigits(0);
         return nf.format(n);
     }
@@ -51,17 +51,17 @@ public final class MoneyFormatter {
     /** Compact: Indian → Cr/L/k; Western → B/M/k. Same thresholds as the JS app. */
     public static String formatShort(BigDecimal value, Currency currency) {
         if (value == null) value = BigDecimal.ZERO;
-        double n = value.doubleValue();
-        String s = currency.symbol();
+        final double n = value.doubleValue();
+        final String s = currency.symbol();
         if (currency.style() == Currency.Style.INDIAN) {
-            if (n >= 1e7)  return s + trim(n / 1e7,  n >= 1e8 ? 0 : 1) + " Cr";
-            if (n >= 1e5)  return s + trim(n / 1e5,  n >= 1e6 ? 0 : 1) + " L";
+            if (n >= 1.0e7)  return s + trim(n / 1.0e7,  n >= 1.0e8 ? 0 : 1) + " Cr";
+            if (n >= 1.0e5)  return s + trim(n / 1.0e5,  n >= 1.0e6 ? 0 : 1) + " L";
             if (n >= 1000) return s + trim(n / 1000, 0) + "k";
             return s + Math.round(n);
         }
-        if (n >= 1e9) return s + trim(n / 1e9, 1) + "B";
-        if (n >= 1e6) return s + trim(n / 1e6, 1) + "M";
-        if (n >= 1e3) return s + trim(n / 1e3, 1) + "k";
+        if (n >= 1.0e9) return s + trim(n / 1.0e9, 1) + "B";
+        if (n >= 1.0e6) return s + trim(n / 1.0e6, 1) + "M";
+        if (n >= 1.0e3) return s + trim(n / 1.0e3, 1) + "k";
         return s + Math.round(n);
     }
 

@@ -1,0 +1,33 @@
+/*
+ * Grid styling.
+ *
+ * - Cells use the monospace face with tabular numerals for clean numeric
+ *   alignment; headers stay in sans-serif and semibold.
+ * - Row part-names colour rows by lifecycle phase:
+ *     retirement-row → accent tint (the year of retirement itself)
+ *     low-row        → warning tint (corpus < 10× annual expenses)
+ *     depleted-row   → danger tint  (corpus went negative)
+ * - Cell part-names colour the "Corpus (End)" column to mirror the phase.
+ *
+ * All colors come from colors.css.
+ */
+
+vaadin-grid::part(cell) {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+vaadin-grid::part(header-cell) {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Row tints --------------------------------------------------------------- */
+vaadin-grid::part(retirement-row) { background: var(--color-accent-bg); }
+vaadin-grid::part(depleted-row)   { background: var(--color-danger-bg); }
+vaadin-grid::part(low-row)        { background: var(--color-warning-bg); }
+
+/* Corpus (End) cell coloring --------------------------------------------- */
+vaadin-grid::part(corpus-end-depleted) { color: var(--color-danger-text);  font-weight: 600; }
+vaadin-grid::part(corpus-end-low)      { color: var(--color-warning-text); font-weight: 600; }
+vaadin-grid::part(corpus-end-healthy)  { color: var(--color-success-text); font-weight: 600; }

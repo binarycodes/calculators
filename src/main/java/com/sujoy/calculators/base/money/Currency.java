@@ -25,8 +25,8 @@ public enum Currency {
         this.word   = word;
     }
 
-    public String symbol()  { return symbol; }
-    public Locale locale()  { return locale; }
-    public Style  style()   { return style; }
-    public String word()    { return word; }
+    public String symbol()  { return this.symbol; }
+    public Locale locale()  { return this.locale; }
+    public Style  style()   { return this.style; }
+    public String word()    { return this.word; }
 }

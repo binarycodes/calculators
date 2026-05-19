@@ -33,22 +33,22 @@ public class DefaultsProvider {
 
     @PostConstruct
     void load() throws IOException {
-        ObjectMapper om = JsonMapper.builder().build();
-        try (InputStream in = defaultsResource.getInputStream()) {
-            JsonNode root = om.readTree(in);
-            for (Currency c : Currency.values()) {
-                JsonNode node = root.get(c.name());
+        final ObjectMapper om = JsonMapper.builder().build();
+        try (InputStream in = this.defaultsResource.getInputStream()) {
+            final JsonNode root = om.readTree(in);
+            for (final Currency c : Currency.values()) {
+                final JsonNode node = root.get(c.name());
                 if (node == null) continue;
-                defaults.put(c, toInputs(node));
+                this.defaults.put(c, toInputs(node));
             }
         }
     }
 
     public RetirementInputs forCurrency(Currency c) {
-        RetirementInputs in = defaults.get(c);
+        final RetirementInputs in = this.defaults.get(c);
         if (in != null) return in;
         // Fall back to INR if a currency entry is missing.
-        return defaults.getOrDefault(Currency.INR, fallback());
+        return this.defaults.getOrDefault(Currency.INR, fallback());
     }
 
     private RetirementInputs toInputs(JsonNode n) {
@@ -68,7 +68,7 @@ public class DefaultsProvider {
     }
 
     private static BigDecimal bd(JsonNode n, String field) {
-        JsonNode v = n.get(field);
+        final JsonNode v = n.get(field);
         if (v == null || v.isNull()) return BigDecimal.ZERO;
         return new BigDecimal(v.asText());
     }

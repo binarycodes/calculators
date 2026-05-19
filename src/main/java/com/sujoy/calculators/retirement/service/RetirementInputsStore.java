@@ -33,50 +33,50 @@ public class RetirementInputsStore {
     /** Load all currencies from localStorage. {@code onLoaded} is called once
      *  the asynchronous fetch completes (or immediately if there's no UI). */
     public void load(Consumer<Map<Currency, RetirementInputs>> onLoaded) {
-        UI ui = UI.getCurrent();
+        final UI ui = UI.getCurrent();
         if (ui == null) {
-            onLoaded.accept(Map.copyOf(cache));
+            onLoaded.accept(Map.copyOf(this.cache));
             return;
         }
         WebStorage.getItem(STORAGE_KEY, raw -> {
             if (raw != null && !raw.isBlank()) {
                 try {
-                    JsonNode root = om.readTree(raw);
-                    for (Currency c : Currency.values()) {
-                        JsonNode node = root.get(c.name());
-                        if (node != null) cache.put(c, toInputs(node));
+                    final JsonNode root = this.om.readTree(raw);
+                    for (final Currency c : Currency.values()) {
+                        final JsonNode node = root.get(c.name());
+                        if (node != null) this.cache.put(c, toInputs(node));
                     }
-                } catch (Exception ignore) { /* corrupt blob → fall back */ }
+                } catch (final Exception ignore) { /* corrupt blob → fall back */ }
             }
-            onLoaded.accept(Map.copyOf(cache));
+            onLoaded.accept(Map.copyOf(this.cache));
         });
     }
 
     public RetirementInputs get(Currency c) {
-        return cache.get(c);
+        return this.cache.get(c);
     }
 
     /** Save inputs for the given currency. Updates in-memory + localStorage. */
     public void save(Currency c, RetirementInputs in) {
-        cache.put(c, in);
+        this.cache.put(c, in);
         persist();
     }
 
     /** Drop the entry for the given currency (e.g. on reset to defaults). */
     public void clear(Currency c) {
-        if (cache.remove(c) != null) persist();
+        if (this.cache.remove(c) != null) persist();
     }
 
     private void persist() {
-        UI ui = UI.getCurrent();
+        final UI ui = UI.getCurrent();
         if (ui == null) return;
-        ObjectNode root = om.createObjectNode();
-        for (var e : cache.entrySet()) root.set(e.getKey().name(), toJson(e.getValue()));
+        final ObjectNode root = this.om.createObjectNode();
+        for (final var e : this.cache.entrySet()) root.set(e.getKey().name(), toJson(e.getValue()));
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
     private ObjectNode toJson(RetirementInputs in) {
-        ObjectNode n = om.createObjectNode();
+        final ObjectNode n = this.om.createObjectNode();
         n.put("currentAge",    Integer.toString(in.currentAge()));
         n.put("retireAge",     Integer.toString(in.retireAge()));
         n.put("lifeExp",       Integer.toString(in.lifeExp()));
@@ -109,7 +109,7 @@ public class RetirementInputsStore {
     }
 
     private static BigDecimal bd(JsonNode n, String field) {
-        JsonNode v = n.get(field);
+        final JsonNode v = n.get(field);
         if (v == null || v.isNull()) return BigDecimal.ZERO;
         return new BigDecimal(v.asText());
     }

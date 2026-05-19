@@ -27,42 +27,42 @@ public class MoneyField extends CustomField<BigDecimal> {
         this.prefs = prefs;
         setLabel(label);
 
-        inner.setStep(1);
-        inner.setStepButtonsVisible(false);
-        inner.setWidthFull();
-        inner.setPrefixComponent(prefix);
-        inner.addValueChangeListener(e -> updateHelperText());
+        this.inner.setStep(1);
+        this.inner.setStepButtonsVisible(false);
+        this.inner.setWidthFull();
+        this.inner.setPrefixComponent(this.prefix);
+        this.inner.addValueChangeListener(e -> updateHelperText());
 
-        add(inner);
+        add(this.inner);
         prefs.addChangeListener(p -> applyCurrency());
         applyCurrency();
     }
 
     /** Currency-aware presentation. Called on prefs change & on construction. */
     private void applyCurrency() {
-        prefix.setText(prefs.currency().symbol());
+        this.prefix.setText(this.prefs.currency().symbol());
         updateHelperText();
     }
 
     private void updateHelperText() {
-        Double v = inner.getValue();
+        final Double v = this.inner.getValue();
         if (v == null) {
-            inner.setHelperText("");
+            this.inner.setHelperText("");
         } else {
-            inner.setHelperText(NumberToWords.amountInWords(
-                    BigDecimal.valueOf(v), prefs.currency()));
+            this.inner.setHelperText(NumberToWords.amountInWords(
+                    BigDecimal.valueOf(v), this.prefs.currency()));
         }
     }
 
     @Override
     protected BigDecimal generateModelValue() {
-        Double v = inner.getValue();
+        final Double v = this.inner.getValue();
         return v == null ? null : BigDecimal.valueOf(v);
     }
 
     @Override
     protected void setPresentationValue(BigDecimal newPresentationValue) {
-        inner.setValue(newPresentationValue == null
+        this.inner.setValue(newPresentationValue == null
                 ? null
                 : newPresentationValue.doubleValue());
         updateHelperText();
@@ -74,5 +74,5 @@ public class MoneyField extends CustomField<BigDecimal> {
         setModelValue(value, false);
     }
 
-    public NumberField inner() { return inner; }
+    public NumberField inner() { return this.inner; }
 }
