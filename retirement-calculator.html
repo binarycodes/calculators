@@ -54,10 +54,20 @@
 <header class="mb-6 flex items-start justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Retirement Calculator</h1>
-    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Project your corpus growth and drawdown over retirement — all figures in INR.</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Project your corpus growth and drawdown over retirement — all figures in <span id="currency-label">INR</span>.</p>
   </div>
 
   <div class="flex items-center gap-2 shrink-0">
+    <!-- Currency toggle -->
+    <div class="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 gap-0.5">
+      <button data-currency="INR" title="Indian Rupee"
+        class="currency-btn w-8 h-8 rounded text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">₹</button>
+      <button data-currency="EUR" title="Euro"
+        class="currency-btn w-8 h-8 rounded text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">€</button>
+      <button data-currency="USD" title="US Dollar"
+        class="currency-btn w-8 h-8 rounded text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">$</button>
+    </div>
+
     <!-- Font size controls -->
     <div class="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 gap-0.5">
       <button id="font-dec" title="Decrease font size"
@@ -87,8 +97,8 @@
 <!-- Inputs -->
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 mb-6">
   <!-- Timeline -->
-  <section class="mb-6">
-    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Timeline</h3>
+  <fieldset class="border border-slate-200 dark:border-slate-700 rounded-lg px-4 pb-4 mb-5 min-w-0">
+    <legend class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">Timeline</legend>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
       <div class="flex flex-col gap-1.5">
@@ -119,29 +129,31 @@
       </div>
 
     </div>
-  </section>
+  </fieldset>
 
   <!-- Current Finances -->
-  <section class="mb-6">
-    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Current Finances</h3>
+  <fieldset class="border border-slate-200 dark:border-slate-700 rounded-lg px-4 pb-4 mb-5 min-w-0">
+    <legend class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">Current Finances</legend>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
       <div class="flex flex-col gap-1.5">
         <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Current Corpus</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <span class="currency-symbol absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
           <input type="text" inputmode="numeric" id="corpus" data-money value="5000000"
             class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
+        <p class="money-words text-xs text-slate-500 dark:text-slate-400 min-h-[1rem] leading-tight" data-words-for="corpus"></p>
       </div>
 
       <div class="flex flex-col gap-1.5">
         <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly Expenses today</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <span class="currency-symbol absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
           <input type="text" inputmode="numeric" id="monthlyExp" data-money value="50000"
             class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
+        <p class="money-words text-xs text-slate-500 dark:text-slate-400 min-h-[1rem] leading-tight" data-words-for="monthlyExp"></p>
       </div>
 
       <div class="flex flex-col gap-1.5">
@@ -154,11 +166,11 @@
       </div>
 
     </div>
-  </section>
+  </fieldset>
 
   <!-- Existing Corpus Returns -->
-  <section class="mb-6">
-    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Existing Corpus Returns</h3>
+  <fieldset class="border border-slate-200 dark:border-slate-700 rounded-lg px-4 pb-4 mb-5 min-w-0">
+    <legend class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">Existing Corpus Returns</legend>
     <div class="grid grid-cols-2 gap-4">
 
       <div class="flex flex-col gap-1.5">
@@ -180,20 +192,21 @@
       </div>
 
     </div>
-  </section>
+  </fieldset>
 
   <!-- Monthly SIP Contributions -->
-  <section class="mb-6">
-    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Monthly SIP Contributions</h3>
+  <fieldset class="border border-slate-200 dark:border-slate-700 rounded-lg px-4 pb-4 mb-5 min-w-0">
+    <legend class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2">Monthly SIP Contributions</legend>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 
       <div class="flex flex-col gap-1.5">
         <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly SIP (Before retirement)</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <span class="currency-symbol absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
           <input type="text" inputmode="numeric" id="monthlyInvPre" data-money value="25000"
             class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
+        <p class="money-words text-xs text-slate-500 dark:text-slate-400 min-h-[1rem] leading-tight" data-words-for="monthlyInvPre"></p>
       </div>
 
       <div class="flex flex-col gap-1.5">
@@ -208,10 +221,11 @@
       <div class="flex flex-col gap-1.5">
         <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly SIP (After retirement)</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <span class="currency-symbol absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
           <input type="text" inputmode="numeric" id="monthlyInvPost" data-money value="0"
             class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
+        <p class="money-words text-xs text-slate-500 dark:text-slate-400 min-h-[1rem] leading-tight" data-words-for="monthlyInvPost"></p>
       </div>
 
       <div class="flex flex-col gap-1.5">
@@ -224,11 +238,17 @@
       </div>
 
     </div>
-  </section>
-  <button onclick="calculate()"
-    class="mt-5 px-7 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer">
-    Calculate
-  </button>
+  </fieldset>
+  <div class="mt-5 flex flex-wrap gap-3">
+    <button onclick="calculate()"
+      class="px-7 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+      Calculate
+    </button>
+    <button onclick="resetToDefaults()"
+      class="px-7 py-2.5 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 active:bg-slate-100 dark:active:bg-slate-500 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+      Reset
+    </button>
+  </div>
 </div>
 
 <!-- Summary stats — hidden until first calculate -->
@@ -246,7 +266,7 @@
     <div class="stat-value text-xl font-bold" id="s-lasts"></div>
   </div>
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-    <div class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Final Corpus (at life expectancy)</div>
+    <div class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Final Corpus <span id="s-final-suffix" class="normal-case tracking-normal"></span></div>
     <div class="stat-value text-xl font-bold" id="s-final"></div>
   </div>
 </div>

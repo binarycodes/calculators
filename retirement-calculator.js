@@ -1,19 +1,40 @@
-const LOCALE = "en-IN";
-const moneyFmt = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
+// -------------- Currency --------------
+const CURRENCIES = {
+  INR: { symbol: "₹", locale: "en-IN", style: "indian",  word: "Rupees"  },
+  EUR: { symbol: "€", locale: "de-DE", style: "western", word: "Euros"   },
+  USD: { symbol: "$", locale: "en-US", style: "western", word: "Dollars" },
+};
 
-const fmt = (n) =>
-  n < 0
-    ? "−₹" + moneyFmt.format(Math.abs(Math.round(n)))
-    : "₹"  + moneyFmt.format(Math.round(n));
+let currentCurrency = "INR";  // overridden by prefs once they load
+let moneyFmt = new Intl.NumberFormat(CURRENCIES[currentCurrency].locale, { maximumFractionDigits: 0 });
+
+function refreshMoneyFmt() {
+  moneyFmt = new Intl.NumberFormat(CURRENCIES[currentCurrency].locale, { maximumFractionDigits: 0 });
+}
+function currencySymbol() { return CURRENCIES[currentCurrency].symbol; }
+
+const fmt = (n) => {
+  const s = currencySymbol();
+  return n < 0
+    ? "−" + s + moneyFmt.format(Math.abs(Math.round(n)))
+    : s + moneyFmt.format(Math.round(n));
+};
 
 const fmtAge = (n) => n + " yrs";
 
-// Compact Indian formatting for chart axis (Cr / L / k)
+// Compact formatting for chart axis — Indian (Cr/L/k) or Western (B/M/k) based on currency
 function fmtShort(n) {
-  if (n >= 1e7)  return "₹" + (n / 1e7).toFixed(n >= 1e8 ? 0 : 1)  + " Cr";
-  if (n >= 1e5)  return "₹" + (n / 1e5).toFixed(n >= 1e6 ? 0 : 1)  + " L";
-  if (n >= 1000) return "₹" + (n / 1000).toFixed(0) + "k";
-  return "₹" + Math.round(n);
+  const s = currencySymbol();
+  if (CURRENCIES[currentCurrency].style === "indian") {
+    if (n >= 1e7)  return s + (n / 1e7).toFixed(n >= 1e8 ? 0 : 1)  + " Cr";
+    if (n >= 1e5)  return s + (n / 1e5).toFixed(n >= 1e6 ? 0 : 1)  + " L";
+    if (n >= 1000) return s + (n / 1000).toFixed(0) + "k";
+    return s + Math.round(n);
+  }
+  if (n >= 1e9) return s + (n / 1e9).toFixed(1) + "B";
+  if (n >= 1e6) return s + (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return s + (n / 1e3).toFixed(1) + "k";
+  return s + Math.round(n);
 }
 
 // -------------- Chart rendering --------------
@@ -288,7 +309,7 @@ function parseMoney(el) {
 
 function applyMoneyFormat(el) {
   const raw = el.value.replace(/[^\d]/g, "");
-  if (!raw) { el.value = ""; return; }
+  if (!raw) { el.value = ""; updateMoneyWords(el); return; }
 
   const before = el.value.slice(0, el.selectionStart).replace(/[^\d]/g, "").length;
   el.value = moneyFmt.format(parseInt(raw, 10));
@@ -299,9 +320,86 @@ function applyMoneyFormat(el) {
     if (digits === before) { pos = i + 1; break; }
   }
   el.setSelectionRange(pos, pos);
+  updateMoneyWords(el);
 }
 
-// -------------- UI preferences (font size + theme) --------------
+// -------------- Number to words --------------
+const _ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+const _TENS = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+function _twoDigits(n) {
+  if (n < 20) return _ONES[n];
+  const t = Math.floor(n / 10), o = n % 10;
+  return _TENS[t] + (o ? " " + _ONES[o] : "");
+}
+function _threeDigits(n) {
+  const h = Math.floor(n / 100), r = n % 100;
+  let out = "";
+  if (h) out += _ONES[h] + " Hundred";
+  if (r) out += (out ? " " : "") + _twoDigits(r);
+  return out;
+}
+
+function numberToWordsIndian(n) {
+  if (n === 0) return "Zero";
+  function helper(n) {
+    if (n < 100) return _twoDigits(n);
+    if (n < 1000) return _threeDigits(n);
+    if (n < 1e5) {
+      const t = Math.floor(n / 1000), r = n % 1000;
+      return _twoDigits(t) + " Thousand" + (r ? " " + _threeDigits(r) : "");
+    }
+    if (n < 1e7) {
+      const l = Math.floor(n / 1e5), r = n % 1e5;
+      return _twoDigits(l) + " Lakh" + (r ? " " + helper(r) : "");
+    }
+    const c = Math.floor(n / 1e7), r = n % 1e7;
+    return helper(c) + " Crore" + (r ? " " + helper(r) : "");
+  }
+  return helper(n);
+}
+
+function numberToWordsWestern(n) {
+  if (n === 0) return "Zero";
+  const SCALES = [
+    { v: 1e12, name: "Trillion" },
+    { v: 1e9,  name: "Billion"  },
+    { v: 1e6,  name: "Million"  },
+    { v: 1e3,  name: "Thousand" },
+  ];
+  function helper(n) {
+    if (n < 1000) return _threeDigits(n);
+    for (const s of SCALES) {
+      if (n >= s.v) {
+        const q = Math.floor(n / s.v), r = n % s.v;
+        return helper(q) + " " + s.name + (r ? " " + helper(r) : "");
+      }
+    }
+    return _threeDigits(n);
+  }
+  return helper(n);
+}
+
+function amountInWords(n) {
+  const c = CURRENCIES[currentCurrency];
+  const words = c.style === "indian" ? numberToWordsIndian(n) : numberToWordsWestern(n);
+  return words + " " + c.word;
+}
+
+function updateMoneyWords(el) {
+  const target = document.querySelector(`[data-words-for="${el.id}"]`);
+  if (!target) return;
+  const raw = el.value.replace(/[^\d]/g, "");
+  if (!raw) { target.textContent = ""; return; }
+  target.textContent = amountInWords(parseInt(raw, 10));
+}
+
+function refreshAllMoneyWords() {
+  document.querySelectorAll("[data-money]").forEach(el => updateMoneyWords(el));
+}
+
+// -------------- UI preferences (font size + theme + currency) --------------
 const PREFS_KEY = "rc_prefs";
 const FONT_MIN = 12, FONT_MAX = 22, FONT_STEP = 2, FONT_DEFAULT = 16;
 
@@ -309,15 +407,57 @@ let prefs = {};
 try { prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch {}
 let fontSize = prefs.fontSize || FONT_DEFAULT;
 let theme    = prefs.theme    || "light";
+if (prefs.currency && CURRENCIES[prefs.currency]) currentCurrency = prefs.currency;
+refreshMoneyFmt();
 
 function applyFont() { document.documentElement.style.fontSize = fontSize + "px"; }
 function applyTheme() { document.documentElement.classList.toggle("dark", theme === "dark"); }
 function savePrefs() {
-  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ fontSize, theme })); } catch {}
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ fontSize, theme, currency: currentCurrency })); } catch {}
 }
 
 applyFont();
 applyTheme();
+
+function updateCurrencySymbols() {
+  const s = currencySymbol();
+  document.querySelectorAll(".currency-symbol").forEach(el => el.textContent = s);
+  const label = document.getElementById("currency-label");
+  if (label) label.textContent = currentCurrency;
+}
+
+function applyCurrencyButtonStyling() {
+  document.querySelectorAll(".currency-btn").forEach(btn => {
+    const isActive = btn.dataset.currency === currentCurrency;
+    btn.setAttribute("aria-pressed", String(isActive));
+    btn.classList.toggle("text-slate-900", isActive);
+    btn.classList.toggle("dark:text-slate-100", isActive);
+    btn.classList.toggle("bg-slate-100", isActive);
+    btn.classList.toggle("dark:bg-slate-700", isActive);
+  });
+}
+
+async function setCurrency(code) {
+  if (!CURRENCIES[code] || code === currentCurrency) {
+    applyCurrencyButtonStyling();
+    return;
+  }
+  currentCurrency = code;
+  refreshMoneyFmt();
+  savePrefs();
+  applyCurrencyButtonStyling();
+  updateCurrencySymbols();
+
+  // Swap inputs to the new currency's persisted values, or fall back to defaults.json.
+  // defaults.json is read-only — it never gets written back.
+  await loadCurrentCurrencyValues();
+
+  // Re-format money inputs with the new locale
+  document.querySelectorAll("[data-money]").forEach(el => applyMoneyFormat(el));
+  refreshAllMoneyWords();
+
+  if (typeof calculate === "function") calculate();
+}
 
 document.getElementById("font-inc").addEventListener("click", () => {
   fontSize = Math.min(FONT_MAX, fontSize + FONT_STEP);
@@ -334,6 +474,9 @@ document.getElementById("font-reset").addEventListener("click", () => {
 document.getElementById("theme-toggle").addEventListener("click", () => {
   theme = theme === "dark" ? "light" : "dark";
   applyTheme(); savePrefs();
+});
+document.querySelectorAll(".currency-btn").forEach(btn => {
+  btn.addEventListener("click", () => setCurrency(btn.dataset.currency));
 });
 
 // -------------- Calculator input persistence --------------
@@ -353,37 +496,92 @@ function writeStore(serialized) {
   try { window.name = serialized; } catch {}
 }
 
+// Storage shape is { INR: {...}, EUR: {...}, USD: {...} } — values are stored per currency.
+function readAllStored() {
+  let saved;
+  try { saved = JSON.parse(readStore()); } catch {}
+  if (!saved || typeof saved !== "object") return {};
+  // Legacy flat format (pre-currency split) — treat as INR.
+  if (saved.currentAge != null) return { INR: saved };
+  return saved;
+}
+
 function saveInputs() {
+  const all = readAllStored();
   const vals = {};
   INPUT_IDS.forEach(id => {
     const el = document.getElementById(id);
     vals[id] = el.hasAttribute("data-money") ? el.value.replace(/[^\d]/g, "") : el.value;
   });
-  writeStore(JSON.stringify(vals));
+  all[currentCurrency] = vals;
+  writeStore(JSON.stringify(all));
 }
 
-function loadInputs() {
-  let saved;
-  try { saved = JSON.parse(readStore()); } catch {}
-  if (!saved) return;
+function loadInputsFromStorage() {
+  const all = readAllStored();
+  const saved = all[currentCurrency];
+  if (!saved || Object.keys(saved).length === 0) return false;
   INPUT_IDS.forEach(id => {
     if (saved[id] == null) return;
     document.getElementById(id).value = saved[id];
   });
+  return true;
 }
 
-loadInputs();
+// Cache defaults.json after the first fetch — the file is read-only and never modified.
+let DEFAULTS_CACHE = null;
+async function getDefaults() {
+  if (DEFAULTS_CACHE) return DEFAULTS_CACHE;
+  try {
+    const response = await fetch("defaults.json");
+    if (!response.ok) return null;
+    DEFAULTS_CACHE = await response.json();
+    return DEFAULTS_CACHE;
+  } catch { return null; }
+}
 
-document.querySelectorAll("[data-money]").forEach(el => {
-  applyMoneyFormat(el);
-  el.addEventListener("input", () => { applyMoneyFormat(el); saveInputs(); });
-  el.addEventListener("blur",  () => applyMoneyFormat(el));
-});
+async function applyDefaultsForCurrency(currency) {
+  const defaults = await getDefaults();
+  if (!defaults) return false;
+  const values = defaults[currency] || defaults.INR;
+  if (!values) return false;
+  INPUT_IDS.forEach(id => {
+    if (values[id] != null) document.getElementById(id).value = values[id];
+  });
+  return true;
+}
 
-INPUT_IDS.filter(id => !document.getElementById(id).hasAttribute("data-money"))
-  .forEach(id => document.getElementById(id).addEventListener("input", saveInputs));
+async function loadCurrentCurrencyValues() {
+  if (loadInputsFromStorage()) return;
+  await applyDefaultsForCurrency(currentCurrency);
+}
 
-saveInputs();
+async function resetToDefaults() {
+  const applied = await applyDefaultsForCurrency(currentCurrency);
+  if (!applied) return;
+  document.querySelectorAll("[data-money]").forEach(el => applyMoneyFormat(el));
+  saveInputs();
+  calculate();
+}
+
+async function initInputs() {
+  await loadCurrentCurrencyValues();
+
+  document.querySelectorAll("[data-money]").forEach(el => {
+    applyMoneyFormat(el);
+    el.addEventListener("input", () => { applyMoneyFormat(el); saveInputs(); });
+    el.addEventListener("blur",  () => applyMoneyFormat(el));
+  });
+
+  INPUT_IDS.filter(id => !document.getElementById(id).hasAttribute("data-money"))
+    .forEach(id => document.getElementById(id).addEventListener("input", saveInputs));
+
+  updateCurrencySymbols();
+  applyCurrencyButtonStyling();
+  calculate();
+}
+
+initInputs();
 
 function calculate() {
   const currentAge = parseInt(document.getElementById("currentAge").value);
@@ -474,7 +672,6 @@ function calculate() {
   }
 
   const retireRow = rows.find(r => r.isRetireYear);
-  const finalRow  = rows[rows.length - 1];
 
   document.getElementById("s-corpus-retire").textContent = retireRow ? fmt(retireRow.startCorpus) : "—";
   document.getElementById("s-exp-retire").textContent    = retireRow ? fmt(retireRow.annualExp) : "—";
@@ -489,6 +686,14 @@ function calculate() {
     lastsEl.textContent = "Beyond " + fmtAge(lifeExp) + " ✓";
     lastsEl.className = "stat-value text-xl font-bold text-green-600 dark:text-green-400";
   }
+
+  // Final corpus: value at the "lasts until" year. When depleted, that's the row
+  // before the shortfall (the last fully-covered year). Otherwise, life expectancy.
+  const finalAge = corpusDepletedAt ? corpusDepletedAt - 1 : lifeExp;
+  const finalRow = rows.find(r => r.age === finalAge) || rows[rows.length - 1];
+
+  document.getElementById("s-final-suffix").textContent =
+    corpusDepletedAt ? `(at age ${finalAge})` : "(at life expectancy)";
 
   const finalEl = document.getElementById("s-final");
   finalEl.textContent = fmt(finalRow.endCorpus);
@@ -559,4 +764,3 @@ function calculate() {
   document.getElementById("legend").style.display = "";
 }
 
-calculate();

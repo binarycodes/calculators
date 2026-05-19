@@ -1,0 +1,44 @@
+{
+  "INR": {
+    "currentAge": "38",
+    "retireAge": "45",
+    "lifeExp": "90",
+    "corpus": "15000000",
+    "monthlyExp": "70000",
+    "inflation": "8",
+    "growthPre": "10",
+    "growthPost": "8",
+    "monthlyInvPre": "150000",
+    "sipGrowthPre": "10",
+    "monthlyInvPost": "0",
+    "sipGrowthPost": "0"
+  },
+  "EUR": {
+    "currentAge": "38",
+    "retireAge": "45",
+    "lifeExp": "90",
+    "corpus": "60000",
+    "monthlyExp": "1500",
+    "inflation": "2.5",
+    "growthPre": "9",
+    "growthPost": "4",
+    "monthlyInvPre": "1500",
+    "sipGrowthPre": "9",
+    "monthlyInvPost": "0",
+    "sipGrowthPost": "4"
+  },
+  "USD": {
+    "currentAge": "38",
+    "retireAge": "45",
+    "lifeExp": "90",
+    "corpus": "75000",
+    "monthlyExp": "3500",
+    "inflation": "3",
+    "growthPre": "8",
+    "growthPost": "5",
+    "monthlyInvPre": "500",
+    "sipGrowthPre": "8",
+    "monthlyInvPost": "0",
+    "sipGrowthPost": "5"
+  }
+}
