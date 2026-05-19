@@ -1,5 +1,6 @@
 .claude/
 *.class
+.idea/
 
 **/target/
 **/generated/

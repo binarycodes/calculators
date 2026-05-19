@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  verify:
+    name: maven verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: maven verify
+        run: mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${{ secrets.VAADIN_SERVER_LICENSE }} clean verify
