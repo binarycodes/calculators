@@ -4,7 +4,7 @@
     <!-- Project from https://start.vaadin.com/68ae350a-c79a-46cf-915e-2e1d2d705143 -->
     <groupId>com.sujoy</groupId>
     <artifactId>calculators</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>

@@ -1,0 +1,96 @@
+name: create and publish docker container
+
+on:
+  push:
+    branches: [ '*' ]
+  workflow_call:
+    inputs:
+      sha:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: "display sha"
+        run: |
+          echo "found sha ${{ inputs.sha }}"
+
+      - name: set up jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: extract project version
+        id: extract_version
+        run: |
+          echo "MAVEN_NAME=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_OUTPUT
+          echo "MAVEN_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+
+      - name: login to docker hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: set up docker buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: build and push
+        id: bake
+        uses: docker/bake-action@v6
+        env:
+          APP_NAME: ${{ steps.extract_version.outputs.MAVEN_NAME }}
+          APP_VERSION: ${{ steps.extract_version.outputs.MAVEN_VERSION }}
+          VAADIN_SERVER_LICENSE: ${{ secrets.VAADIN_SERVER_LICENSE }}
+        with:
+          targets: default
+          push: true
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+            *.attest=type=provenance,mode=max
+            *.attest=type=sbom
+
+      - name: install cosign
+        uses: sigstore/cosign-installer@v4.0.0
+
+      - name: sign published image(s) (keyless)
+        run: |
+          set -euo pipefail
+          
+          cat > bake-metadata.json <<'JSON'
+          ${{ steps.bake.outputs.metadata }}
+          JSON
+          
+          # Extract tag@digest refs from Bake metadata and sign them.
+          jq -r '
+            to_entries[]
+            | .value as $v
+            | ($v["containerimage.digest"] // empty) as $digest
+            | ($v["image.name"] // empty) as $names
+            | if ($digest == "" or $names == "") then empty else
+                (if ($names|type) == "string" then ($names|split(",")) else $names end)
+                | map(gsub("^\\s+|\\s+$"; ""))
+                | map(select(length>0))
+                | .[]
+                | "\(.)@\($digest)"
+              end
+          ' bake-metadata.json | sort -u | while read -r ref; do
+            echo "Signing ${ref}"
+            cosign sign --yes "${ref}"
+          done

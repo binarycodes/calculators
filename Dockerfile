@@ -1,30 +1,33 @@
-FROM ghcr.io/jqlang/jq:latest AS jq-stage
+ARG JAVA_VERSION="21"
+ARG VAADIN_SERVER_LICENSE=""
 
-FROM eclipse-temurin:21-jdk AS build
-COPY --from=jq-stage /jq /usr/bin/jq
-# Test that jq works after copying
-RUN jq --version
+FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
+ARG VAADIN_SERVER_LICENSE
+WORKDIR /app
+COPY . .
+RUN mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${VAADIN_SERVER_LICENSE} clean package
 
-ENV HOME=/app
-RUN mkdir -p $HOME
-WORKDIR $HOME
-COPY . $HOME
 
-# If you have a Vaadin Pro key, pass it as a secret with id "proKey":
-#
-#   $ docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
-#
-# If you have a Vaadin Offline key, pass it as a secret with id "offlineKey":
-#
-#   $ docker build --secret id=offlineKey,src=$HOME/.vaadin/offlineKey .
+FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine
 
-RUN --mount=type=cache,target=/root/.m2 \
-    --mount=type=secret,id=proKey \
-    --mount=type=secret,id=offlineKey \
-    sh -c 'PRO_KEY=$(jq -r ".proKey // empty" /run/secrets/proKey 2>/dev/null || echo "") && \
-    OFFLINE_KEY=$(cat /run/secrets/offlineKey 2>/dev/null || echo "") && \
-    ./mvnw clean package -DskipTests -Dvaadin.proKey=${PRO_KEY} -Dvaadin.offlineKey=${OFFLINE_KEY}'
+ARG APP_NAME
+ARG APP_VERSION
 
-FROM eclipse-temurin:21-jre-alpine
-COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "/app.jar", "--spring.profiles.active=prod"]
+RUN test -n "$APP_NAME" || (echo "APP_NAME  not set" && false) \
+    && test -n "$APP_VERSION" || (echo "APP_VERSION  not set" && false)
+
+RUN apk add --no-cache curl \
+    && addgroup -S -g 10001 demo \
+    && adduser -S -D -H -u 10001 -G demo demo
+
+WORKDIR /app
+COPY --from=build --chown=demo:demo /app/target/${APP_NAME}-${APP_VERSION}.jar /app/app.jar
+
+USER demo:demo
+EXPOSE 8080
+
+ENV JAVA_TOOL_OPTIONS="-XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=75"
+ENTRYPOINT ["java","-jar","/app/app.jar"]
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=5 \
+    CMD ["curl", "-fsS", "http://127.0.0.1:8088/actuator/health/readiness"]
