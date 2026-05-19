@@ -1,1 +1,5 @@
 .claude/
+*.class
+
+**/target/
+**/generated/
