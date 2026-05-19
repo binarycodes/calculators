@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retirement Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    // Apply theme as early as possible to avoid flash of wrong theme
+    try {
+      const p = JSON.parse(localStorage.getItem("rc_prefs") || "{}");
+      if (p.theme === "dark") document.documentElement.classList.add("dark");
+      if (p.fontSize) document.documentElement.style.fontSize = p.fontSize + "px";
+    } catch {}
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    /* Monospace for anything numeric */
+    input,
+    #summary .stat-value,
+    tbody td { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+    .phase-badge { font-family: 'Inter', ui-sans-serif, sans-serif; }
+
+    /* Dark mode overrides for inputs (avoids repeating dark: utilities on every input) */
+    .dark input {
+      background-color: rgb(30 41 59);   /* slate-800 */
+      border-color: rgb(51 65 85);       /* slate-700 */
+      color: rgb(241 245 249);            /* slate-100 */
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen p-4 md:p-6 transition-colors">
+
+<!-- Header -->
+<header class="mb-6 flex items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Retirement Calculator</h1>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Project your corpus growth and drawdown over retirement — all figures in INR.</p>
+  </div>
+
+  <div class="flex items-center gap-2 shrink-0">
+    <!-- Font size controls -->
+    <div class="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 gap-0.5">
+      <button id="font-dec" title="Decrease font size"
+        class="w-8 h-8 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-xs font-semibold">A−</button>
+      <button id="font-reset" title="Reset font size"
+        class="w-8 h-8 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-sm font-semibold">A</button>
+      <button id="font-inc" title="Increase font size"
+        class="w-8 h-8 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-base font-semibold">A+</button>
+    </div>
+
+    <!-- Theme toggle -->
+    <button id="theme-toggle" title="Toggle dark mode"
+      class="w-10 h-10 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center">
+      <!-- moon (shown in light mode) -->
+      <svg class="w-5 h-5 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+      </svg>
+      <!-- sun (shown in dark mode) -->
+      <svg class="w-5 h-5 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- Inputs -->
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 mb-6">
+  <!-- Timeline -->
+  <section class="mb-6">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Timeline</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Current Age</label>
+        <div class="relative">
+          <input type="number" id="currentAge" value="35" min="1" max="99"
+            class="w-full px-3 py-2 pr-9 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">yrs</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Retirement Age</label>
+        <div class="relative">
+          <input type="number" id="retireAge" value="60" min="1" max="99"
+            class="w-full px-3 py-2 pr-9 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">yrs</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Life Expectancy</label>
+        <div class="relative">
+          <input type="number" id="lifeExp" value="90" min="1" max="120"
+            class="w-full px-3 py-2 pr-9 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">yrs</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Current Finances -->
+  <section class="mb-6">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Current Finances</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Current Corpus</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <input type="text" inputmode="numeric" id="corpus" data-money value="5000000"
+            class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly Expenses today</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <input type="text" inputmode="numeric" id="monthlyExp" data-money value="50000"
+            class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Inflation Rate</label>
+        <div class="relative">
+          <input type="number" id="inflation" value="6" min="0" max="50" step="0.1"
+            class="w-full px-3 py-2 pr-8 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">%</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Existing Corpus Returns -->
+  <section class="mb-6">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Existing Corpus Returns</h3>
+    <div class="grid grid-cols-2 gap-4">
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected rate of returns (Before retirement)</label>
+        <div class="relative">
+          <input type="number" id="growthPre" value="12" min="0" max="100" step="0.1"
+            class="w-full px-3 py-2 pr-8 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">%</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected rate of returns (After retirement)</label>
+        <div class="relative">
+          <input type="number" id="growthPost" value="8" min="0" max="100" step="0.1"
+            class="w-full px-3 py-2 pr-8 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">%</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Monthly SIP Contributions -->
+  <section class="mb-6">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Monthly SIP Contributions</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly SIP (Before retirement)</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <input type="text" inputmode="numeric" id="monthlyInvPre" data-money value="25000"
+            class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected rate of returns (Before retirement)</label>
+        <div class="relative">
+          <input type="number" id="sipGrowthPre" value="12" min="0" max="100" step="0.1"
+            class="w-full px-3 py-2 pr-8 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">%</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly SIP (After retirement)</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">₹</span>
+          <input type="text" inputmode="numeric" id="monthlyInvPost" data-money value="0"
+            class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected rate of returns (After retirement)</label>
+        <div class="relative">
+          <input type="number" id="sipGrowthPost" value="8" min="0" max="100" step="0.1"
+            class="w-full px-3 py-2 pr-8 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">%</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+  <button onclick="calculate()"
+    class="mt-5 px-7 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+    Calculate
+  </button>
+</div>
+
+<!-- Summary stats — hidden until first calculate -->
+<div id="summary" style="display:none" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+    <div class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Corpus at Retirement</div>
+    <div class="stat-value text-xl font-bold text-slate-900 dark:text-slate-100" id="s-corpus-retire"></div>
+  </div>
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+    <div class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Annual Expenses at Retirement</div>
+    <div class="stat-value text-xl font-bold text-slate-900 dark:text-slate-100" id="s-exp-retire"></div>
+  </div>
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+    <div class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Corpus Lasts Until</div>
+    <div class="stat-value text-xl font-bold" id="s-lasts"></div>
+  </div>
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+    <div class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Final Corpus (at life expectancy)</div>
+    <div class="stat-value text-xl font-bold" id="s-final"></div>
+  </div>
+</div>
+
+<!-- Chart -->
+<div id="chart-card" style="display:none" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl mb-6 overflow-hidden">
+  <div class="flex items-center gap-6 px-6 border-b border-slate-200 dark:border-slate-700" role="tablist">
+    <button data-chart="corpus"
+      class="chart-tab text-xs font-semibold uppercase tracking-wider pt-4 pb-3 -mb-px border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+      role="tab">Corpus</button>
+    <button data-chart="expenses"
+      class="chart-tab text-xs font-semibold uppercase tracking-wider pt-4 pb-3 -mb-px border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+      role="tab">Annual Expenses</button>
+    <button data-chart="investments"
+      class="chart-tab text-xs font-semibold uppercase tracking-wider pt-4 pb-3 -mb-px border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+      role="tab">Investments</button>
+  </div>
+  <div class="p-6">
+    <div id="chart" class="w-full text-slate-700 dark:text-slate-300"></div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+  <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Year-on-Year Projection</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full border-collapse text-sm">
+      <thead>
+        <tr class="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700">
+          <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Year</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Age</th>
+          <th class="px-4 py-3 text-left  text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Phase</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Expenses</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Corpus (Start)</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Returns</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Investment</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Withdrawal</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Corpus (End)</th>
+        </tr>
+      </thead>
+      <tbody id="grid-body">
+        <tr>
+          <td colspan="9" class="px-6 py-20 text-center text-slate-400 dark:text-slate-500 text-sm">
+            Enter your details and click Calculate to see the projection.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="legend" style="display:none"
+    class="flex flex-wrap gap-x-6 gap-y-2 px-6 py-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-teal-400 shrink-0"></span>Retirement year</span>
+    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0"></span>Corpus healthy (&gt;25× annual expenses)</span>
+    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>Corpus running low (&lt;10× annual expenses)</span>
+    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0"></span>Corpus depleted</span>
+  </div>
+</div>
+
+<script src="retirement-calculator.js"></script>
+</body>
+</html>
