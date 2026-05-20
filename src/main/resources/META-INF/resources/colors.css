@@ -1,93 +1,72 @@
-/*
- * Color tokens.
- *
- * Every color used by the app's custom CSS is declared here as a semantic
- * CSS custom property. Other stylesheets must only reference these tokens
- * via var(--color-*); raw hex / rgb / color-mix values do not belong in
- * component stylesheets.
- *
- * Grouping:
- *   - Surfaces      → page / card / overlay backgrounds
- *   - Borders       → default vs strong stroke
- *   - Text          → body / muted / subtle
- *   - Brand         → primary action color and its tints
- *   - Status text   → text color for the danger / warning / success / accent states
- *   - Status bg     → row & cell background tints for the same states
- *   - Effects       → shared shadow tokens
- *
- * Dark mode overrides the tokens at the bottom; no other file needs a
- * dark-mode block of its own.
- */
-
 :root {
-  /* Surfaces ---------------------------------------------------------- */
-  --color-surface:           #ffffff;
-  --color-surface-raised:    #ffffff;
-  --color-surface-muted:     #f3f4f6;
-  --color-surface-overlay:   rgba(15, 23, 42, 0.06);
+    /* Surfaces ---------------------------------------------------------- */
+    --color-surface: #ffffff;
+    --color-surface-raised: #ffffff;
+    --color-surface-muted: #f3f4f6;
+    --color-surface-overlay: rgba(15, 23, 42, 0.06);
 
-  /* Borders ----------------------------------------------------------- */
-  --color-border:            #e5e7eb;
-  --color-border-strong:     #d4d4d8;
+    /* Borders ----------------------------------------------------------- */
+    --color-border: #e5e7eb;
+    --color-border-strong: #d4d4d8;
 
-  /* Text -------------------------------------------------------------- */
-  --color-text:              #111827;
-  --color-text-muted:        #6b7280;
-  --color-text-subtle:       #94a3b8;
+    /* Text -------------------------------------------------------------- */
+    --color-text: #111827;
+    --color-text-muted: #6b7280;
+    --color-text-subtle: #94a3b8;
 
-  /* Brand ------------------------------------------------------------- */
-  --color-primary:           #2563eb;
-  --color-primary-strong:    #1d4ed8;
-  --color-primary-soft:      rgba(37, 99, 235, 0.14);
-  --color-focus-ring:        rgba(37, 99, 235, 0.55);
+    /* Brand ------------------------------------------------------------- */
+    --color-primary: #2563eb;
+    --color-primary-strong: #1d4ed8;
+    --color-primary-soft: rgba(37, 99, 235, 0.14);
+    --color-focus-ring: rgba(37, 99, 235, 0.55);
 
-  /* Status — text ----------------------------------------------------- */
-  --color-danger-text:       #b91c1c;
-  --color-warning-text:      #b45309;
-  --color-success-text:      #047857;
-  --color-accent-text:       #0f766e;
+    /* Status — text ----------------------------------------------------- */
+    --color-danger-text: #b91c1c;
+    --color-warning-text: #b45309;
+    --color-success-text: #047857;
+    --color-accent-text: #0f766e;
 
-  /* Status — background tints (translucent so they layer over any surface) */
-  --color-danger-bg:         color-mix(in srgb, #ef4444 14%, transparent);
-  --color-warning-bg:        color-mix(in srgb, #f97316 12%, transparent);
-  --color-success-bg:        color-mix(in srgb, #10b981 12%, transparent);
-  --color-accent-bg:         color-mix(in srgb, #14b8a6 12%, transparent);
+    /* Status — background tints (translucent so they layer over any surface) */
+    --color-danger-bg: color-mix(in srgb, #ef4444 14%, transparent);
+    --color-warning-bg: color-mix(in srgb, #f97316 12%, transparent);
+    --color-success-bg: color-mix(in srgb, #10b981 12%, transparent);
+    --color-accent-bg: color-mix(in srgb, #14b8a6 12%, transparent);
 
-  /* Effects ----------------------------------------------------------- */
-  --shadow-chip:             0 1px 2px rgba(15, 23, 42, 0.10),
-                             0 0 0 1px rgba(15, 23, 42, 0.05);
+    /* Effects ----------------------------------------------------------- */
+    --shadow-chip: 0 1px 2px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(15, 23, 42, 0.05);
 }
 
 html.dark {
-  /* Surfaces ---------------------------------------------------------- */
-  --color-surface:           #1e293b;
-  --color-surface-raised:    #334155;
-  --color-surface-muted:     rgba(15, 23, 42, 0.4);
-  --color-surface-overlay:   rgba(255, 255, 255, 0.06);
+    /* Surfaces ---------------------------------------------------------- */
+    --color-surface: #1e293b;
+    --color-surface-raised: #334155;
+    --color-surface-muted: rgba(15, 23, 42, 0.4);
+    --color-surface-overlay: rgba(255, 255, 255, 0.06);
 
-  /* Borders ----------------------------------------------------------- */
-  --color-border:            #334155;
-  --color-border-strong:     #475569;
+    /* Borders ----------------------------------------------------------- */
+    --color-border: #334155;
+    --color-border-strong: #475569;
 
-  /* Text -------------------------------------------------------------- */
-  --color-text:              #e2e8f0;
-  --color-text-muted:        #94a3b8;
-  --color-text-subtle:       #64748b;
+    /* Text -------------------------------------------------------------- */
+    --color-text: #e2e8f0;
+    --color-text-muted: #94a3b8;
+    --color-text-subtle: #64748b;
 
-  /* Brand ------------------------------------------------------------- */
-  --color-primary:           #60a5fa;
-  --color-primary-strong:    #93c5fd;
-  --color-primary-soft:      rgba(59, 130, 246, 0.25);
-  --color-focus-ring:        rgba(96, 165, 250, 0.6);
+    /* Brand ------------------------------------------------------------- */
+    --color-primary: #60a5fa;
+    --color-primary-strong: #93c5fd;
+    --color-primary-soft: rgba(59, 130, 246, 0.25);
+    --color-focus-ring: rgba(96, 165, 250, 0.6);
 
-  /* Status — text ----------------------------------------------------- */
-  --color-danger-text:       #f87171;
-  --color-warning-text:      #fbbf24;
-  --color-success-text:      #34d399;
-  --color-accent-text:       #5eead4;
+    /* Status — text ----------------------------------------------------- */
+    --color-danger-text: #f87171;
+    --color-warning-text: #fbbf24;
+    --color-success-text: #34d399;
+    --color-accent-text: #5eead4;
 
-  /* Status backgrounds (tints work in either theme via color-mix) ----- */
-  /* Effects ----------------------------------------------------------- */
-  --shadow-chip:             0 1px 2px rgba(0, 0, 0, 0.4),
-                             0 0 0 1px rgba(255, 255, 255, 0.05);
+    /* Status backgrounds (tints work in either theme via color-mix) ----- */
+    /* Effects ----------------------------------------------------------- */
+    --shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }

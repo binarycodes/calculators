@@ -11,29 +11,16 @@
  * No raw color values live here — see colors.css.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 html {
-  font-size: 16px;
-  transition: font-size 0.15s ease;
-  --aura-font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --lumo-font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --mono-font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-html.dark { color-scheme: dark; }
-
-body, vaadin-app-layout, vaadin-side-nav, vaadin-side-nav-item,
-vaadin-button, vaadin-select, vaadin-details, vaadin-form-layout,
-vaadin-number-field, vaadin-integer-field, vaadin-tab, vaadin-tabs,
-vaadin-grid {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    transition: font-size 0.15s ease;
+    --aura-font-family: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --lumo-font-family: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono-font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Monospace, tabular numerals for any numeric input. */
-vaadin-number-field::part(input-field),
-vaadin-integer-field::part(input-field),
-vaadin-number-field input,
-vaadin-integer-field input {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-variant-numeric: tabular-nums;
+html.dark {
+    color-scheme: dark;
 }

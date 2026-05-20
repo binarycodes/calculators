@@ -1,0 +1,12 @@
+.retirement-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.inner-form-section {
+    --_padding: 0;
+    --vaadin-card-border-width: 0;
+}
+
+.form-section-container {
+    --vaadin-vertical-layout-gap: 1.5rem;
+}

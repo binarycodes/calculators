@@ -15,9 +15,9 @@ target "app" {
   dockerfile = "Dockerfile"
 
   args = {
-    APP_NAME    = "${APP_NAME}"
-    APP_VERSION = "${APP_VERSION}"
-    VAADIN_SERVER_LICENSE = "${VAADIN_SERVER_LICENSE}"
+    APP_NAME              = APP_NAME
+    APP_VERSION           = APP_VERSION
+    VAADIN_SERVER_LICENSE = VAADIN_SERVER_LICENSE
   }
 
   tags = [
