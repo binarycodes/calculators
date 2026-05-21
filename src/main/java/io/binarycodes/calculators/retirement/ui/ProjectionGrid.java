@@ -14,6 +14,7 @@ import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 /**
@@ -73,10 +74,16 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         // Each line carries its own ``title`` attribute so hovering over the
         // monthly or yearly value surfaces the amount in words for that line.
         final LitRenderer<ProjectionRow> renderer = LitRenderer.<ProjectionRow>of(
-                        "<div class=\"money-cell\">"
-                                + "<div class=\"money-cell-primary\" title=\"${item.monthlyWords}\">${item.monthly}</div>"
-                                + "<div class=\"money-cell-secondary\" title=\"${item.yearlyWords}\">${item.yearly}</div>"
-                                + "</div>")
+                        """
+                                <div class="money-cell">
+                                    <div id="monthly_${item.id}" class="money-cell-primary">${item.monthly}</div>
+                                    <div id="yearly_${item.id}" class="money-cell-secondary">${item.yearly}</div>
+                                </div>
+                                
+                                <vaadin-tooltip for="monthly_${item.id}" text="${item.monthlyWords}"></vaadin-tooltip>
+                                <vaadin-tooltip for="yearly_${item.id}" text="${item.yearlyWords}"></vaadin-tooltip>
+                                """)
+                .withProperty("id", row -> UUID.randomUUID().toString())
                 .withProperty("monthly", row -> formatMonthly(yearlyAccessor.apply(row)))
                 .withProperty("yearly", row -> formatYearly(yearlyAccessor.apply(row)))
                 .withProperty("monthlyWords", row -> wordsTooltip(monthlyOf(yearlyAccessor.apply(row))))
