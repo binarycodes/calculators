@@ -2,12 +2,8 @@ package io.binarycodes.calculators.retirement.ui;
 
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.badge.Badge;
-import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.grid.ColumnTextAlign;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -32,9 +28,10 @@ import java.math.BigDecimal;
 
 /**
  * The retirement calculator screen. Composes the input form, summary cards,
- * charts, and projection grid; owns no input fields or chart configuration
- * directly — those live in {@link RetirementCalculatorForm}, {@link CorpusChart},
- * {@link ExpensesChart}, and {@link InvestmentsChart}.
+ * charts, and projection grid; owns no input fields, chart configuration, or
+ * grid columns directly — those live in {@link RetirementCalculatorForm},
+ * {@link CorpusChart}, {@link ExpensesChart}, {@link InvestmentsChart}, and
+ * {@link ProjectionGrid}.
  */
 @Route("retirement")
 @RouteAlias("")
@@ -42,7 +39,6 @@ import java.math.BigDecimal;
 @PageTitle("Retirement Calculator")
 public class RetirementView extends VerticalLayout {
 
-    private static final BigDecimal LOW_CORPUS_MULTIPLIER     = BigDecimal.TEN;
     private static final BigDecimal HEALTHY_CORPUS_MULTIPLIER = BigDecimal.valueOf(5);
 
     private final UserPreferences preferences;
@@ -60,7 +56,7 @@ public class RetirementView extends VerticalLayout {
     private final ExpensesChart     expensesChart    = new ExpensesChart();
     private final InvestmentsChart  investmentsChart = new InvestmentsChart();
 
-    private final Grid<ProjectionRow> projectionGrid = new Grid<>(ProjectionRow.class, false);
+    private final ProjectionGrid projectionGrid;
 
     public RetirementView(UserPreferences preferences,
                           DefaultsProvider defaultsProvider,
@@ -76,6 +72,7 @@ public class RetirementView extends VerticalLayout {
 
         this.form = new RetirementCalculatorForm(preferences);
         this.form.addInputChangeListener(this::onInputChanged);
+        this.projectionGrid = new ProjectionGrid(preferences);
 
         add(new H2("Retirement Calculator"));
         add(this.form);
@@ -155,26 +152,6 @@ public class RetirementView extends VerticalLayout {
     }
 
     private VerticalLayout buildProjectionGridCard() {
-        this.projectionGrid.addColumn(ProjectionRow::year).setHeader("Year");
-        this.projectionGrid.addColumn(ProjectionRow::age).setHeader("Age");
-        this.projectionGrid.addComponentColumn(row -> phaseBadge(row.isPost())).setHeader("Phase");
-        addMoneyColumn("Annual Expenses", ProjectionRow::annualExp);
-        addMoneyColumn("Corpus (Start)",  ProjectionRow::startCorpus);
-        addMoneyColumn("Returns",         ProjectionRow::returns);
-        addMoneyColumn("Investment",      ProjectionRow::investment);
-        addMoneyColumn("Withdrawal",      ProjectionRow::withdrawal);
-        addMoneyColumn("Corpus (End)",    ProjectionRow::endCorpus)
-                .setPartNameGenerator(this::corpusEndPartName);
-
-        this.projectionGrid.setPartNameGenerator(this::projectionRowPartName);
-
-        this.projectionGrid.getColumns().forEach(column -> {
-            column.setAutoWidth(true);
-            column.setFlexGrow(1);
-        });
-        this.projectionGrid.setAllRowsVisible(true);
-        this.projectionGrid.setWidthFull();
-
         final VerticalLayout gridCard = new VerticalLayout(
                 new H2("Year-on-Year Projection"), this.projectionGrid);
         gridCard.addClassName("grid-card");
@@ -182,45 +159,6 @@ public class RetirementView extends VerticalLayout {
         gridCard.setSpacing(true);
         gridCard.setWidthFull();
         return gridCard;
-    }
-
-    private Grid.Column<ProjectionRow> addMoneyColumn(
-            String header,
-            java.util.function.Function<ProjectionRow, BigDecimal> moneyAccessor) {
-        return this.projectionGrid
-                .addColumn(row -> moneyOrDash(moneyAccessor.apply(row), this.preferences.currency()))
-                .setHeader(header)
-                .setTextAlign(ColumnTextAlign.END);
-    }
-
-    private String corpusEndPartName(ProjectionRow row) {
-        if (!row.isPost()) {
-            return null;
-        }
-        if (row.endCorpus().signum() <= 0) {
-            return "corpus-end-depleted";
-        }
-        if (isCorpusLow(row)) {
-            return "corpus-end-low";
-        }
-        return "corpus-end-healthy";
-    }
-
-    private String projectionRowPartName(ProjectionRow row) {
-        if (row.depleted()) {
-            return "depleted-row";
-        }
-        if (row.isRetireYear()) {
-            return "retirement-row";
-        }
-        if (row.isPost() && isCorpusLow(row)) {
-            return "low-row";
-        }
-        return null;
-    }
-
-    private static boolean isCorpusLow(ProjectionRow row) {
-        return row.endCorpus().compareTo(row.annualExp().multiply(LOW_CORPUS_MULTIPLIER)) < 0;
     }
 
     private void onInputChanged() {
@@ -271,7 +209,7 @@ public class RetirementView extends VerticalLayout {
         updateLastsUntilSummary(result, inputs.getLifeExp());
         updateFinalCorpusSummary(result, currency);
 
-        this.projectionGrid.setItems(result.rows());
+        this.projectionGrid.update(result.rows());
 
         this.corpusChart.update(inputs, result, currency);
         this.expensesChart.update(result, currency);
@@ -324,24 +262,5 @@ public class RetirementView extends VerticalLayout {
             return Status.WARNING;
         }
         return Status.SUCCESS;
-    }
-
-    private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
-        if (amount == null || amount.signum() == 0) {
-            return "—";
-        }
-        return MoneyFormatter.format(amount, currency);
-    }
-
-    private static Badge phaseBadge(boolean postRetirement) {
-        final Badge badge;
-        if (postRetirement) {
-            badge = new Badge("Post");
-        } else {
-            badge = new Badge("Pre");
-            badge.addThemeVariants(BadgeVariant.SUCCESS);
-        }
-        badge.addThemeVariants(BadgeVariant.SMALL);
-        return badge;
     }
 }
