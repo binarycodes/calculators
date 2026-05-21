@@ -3,6 +3,7 @@ package io.binarycodes.calculators.base.ui;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 
@@ -30,7 +31,15 @@ public class MoneyField extends CustomField<BigDecimal> {
         this.inner.setStepButtonsVisible(false);
         this.inner.setWidthFull();
         this.inner.setPrefixComponent(this.prefix);
-        this.inner.addValueChangeListener(e -> updateHelperText());
+        this.inner.setValueChangeMode(ValueChangeMode.LAZY);
+        this.inner.addValueChangeListener(e -> {
+            updateHelperText();
+            // CustomField only auto-syncs on the host "change" DOM event (blur on
+            // number inputs). Explicitly push the new value so the binder and
+            // any value-change listeners fire as soon as the inner field's
+            // value-change fires (i.e. after the LAZY typing-pause debounce).
+            updateValue();
+        });
 
         add(this.inner);
         prefs.addChangeListener(p -> applyCurrency());

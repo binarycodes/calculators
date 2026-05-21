@@ -10,12 +10,14 @@ import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.charts.model.ChartType;
 import com.vaadin.flow.component.charts.model.Configuration;
 import com.vaadin.flow.component.charts.model.DashStyle;
-import com.vaadin.flow.component.charts.model.DataLabels;
 import com.vaadin.flow.component.charts.model.DataSeries;
 import com.vaadin.flow.component.charts.model.DataSeriesItem;
+import com.vaadin.flow.component.charts.model.HorizontalAlign;
+import com.vaadin.flow.component.charts.model.LayoutDirection;
 import com.vaadin.flow.component.charts.model.ListSeries;
 import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotLine;
+import com.vaadin.flow.component.charts.model.VerticalAlign;
 import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
 import com.vaadin.flow.component.charts.model.PlotOptionsPie;
 import com.vaadin.flow.component.charts.model.XAxis;
@@ -220,6 +222,7 @@ public class RetirementView extends VerticalLayout {
 
     private void onInputChanged() {
         this.store.save(this.prefs.currency(), this.form.getInputs());
+        recalculate();
     }
 
     private void onCurrencyOrPrefsChange() {
@@ -244,6 +247,15 @@ public class RetirementView extends VerticalLayout {
     }
 
     private void recalculate() {
+        if (!this.form.isValid()) {
+            this.form.validate();
+            this.corpusAtRetirement.setValue("—", null);
+            this.expensesAtRetirement.setValue("—", null);
+            this.lastsUntil.setValue("—", null);
+            this.finalCorpus.setValue("Fix the highlighted fields to recalculate.", Status.DANGER);
+            return;
+        }
+
         final RetirementInputs in = this.form.getInputs();
 
         final RetirementResult r;
@@ -270,7 +282,7 @@ public class RetirementView extends VerticalLayout {
             this.lastsUntil.setValue(age + " yrs", Status.DANGER);
             this.lastsUntil.setLabel("Corpus Lasts Until");
         } else {
-            this.lastsUntil.setValue("Beyond " + in.lifeExp() + " yrs ✓", Status.SUCCESS);
+            this.lastsUntil.setValue("Beyond " + in.getLifeExp() + " yrs ✓", Status.SUCCESS);
         }
 
         final ProjectionRow lastRow = r.lastsUntilRow();
@@ -296,7 +308,7 @@ public class RetirementView extends VerticalLayout {
 
     private void refreshCorpusChart(RetirementInputs in, RetirementResult r) {
         final DataSeries series = new DataSeries("Corpus");
-        series.add(new DataSeriesItem(in.currentAge(), in.corpus().doubleValue()));
+        series.add(new DataSeriesItem(in.getCurrentAge(), in.getCorpus().doubleValue()));
         for (final ProjectionRow row : r.rows()) {
             series.add(new DataSeriesItem(row.age() + 1, Math.max(row.endCorpus().doubleValue(), 0)));
         }
@@ -313,7 +325,7 @@ public class RetirementView extends VerticalLayout {
         cfg.setPlotOptions(plot);
 
         final PlotLine retireLine = new PlotLine();
-        retireLine.setValue(in.retireAge());
+        retireLine.setValue(in.getRetireAge());
         retireLine.setColor(new SolidColor("#14b8a6"));
         retireLine.setDashStyle(DashStyle.SHORTDASH);
         retireLine.setWidth(2);
@@ -353,28 +365,43 @@ public class RetirementView extends VerticalLayout {
     }
 
     private void refreshInvestmentsChart(RetirementResult r) {
-        final double invested = r.investedAtRetirement().doubleValue();
+        final SupportedCurrency c = this.prefs.currency();
+        final BigDecimal invested = r.investedAtRetirement();
         final ProjectionRow retire = r.rows().stream().filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
-        final double total = retire == null ? invested : retire.startCorpus().doubleValue();
-        final double interest = Math.max(0, total - invested);
+        final BigDecimal total = retire == null ? invested : retire.startCorpus();
+        final BigDecimal interest = total.subtract(invested).max(BigDecimal.ZERO);
 
-        final DataSeriesItem investedItem = new DataSeriesItem("Invested", invested);
-        final DataSeriesItem interestItem = new DataSeriesItem("Interest", interest);
+        // Slice names embed the formatted amount so they appear next to each
+        // legend swatch (Vaadin Charts builds the legend from series item names).
+        final DataSeriesItem investedItem = new DataSeriesItem(
+                "Invested · " + MoneyFormatter.format(invested, c), invested.doubleValue());
+        final DataSeriesItem interestItem = new DataSeriesItem(
+                "Interest · " + MoneyFormatter.format(interest, c), interest.doubleValue());
 
         final DataSeries series = new DataSeries();
         series.add(investedItem);
         series.add(interestItem);
 
         final PlotOptionsPie pie = new PlotOptionsPie();
-        pie.setInnerSize("60%");
-
-        final DataLabels dl = new DataLabels(true);
-        dl.setFormat("{point.name}: {point.percentage:.1f}%");
-        pie.setDataLabels(dl);
+        pie.setInnerSize("65%");
+        pie.setShowInLegend(true);
+        pie.getDataLabels().setEnabled(true);
+        pie.getDataLabels().setFormat("<b>{point.percentage:.1f}%</b>");
 
         final Configuration cfg = this.investmentsChart.getConfiguration();
         cfg.setTitle("Investments at Retirement");
+        cfg.setSubTitle("Total · " + MoneyFormatter.format(total, c));
+        cfg.getTitle().setAlign(HorizontalAlign.LEFT);
+        cfg.getSubTitle().setAlign(HorizontalAlign.LEFT);
         cfg.getChart().setStyledMode(true);
+        cfg.getLegend().setEnabled(true);
+        cfg.getLegend().setLayout(LayoutDirection.VERTICAL);
+        cfg.getLegend().setAlign(HorizontalAlign.RIGHT);
+        cfg.getLegend().setVerticalAlign(VerticalAlign.MIDDLE);
+        // Anchor the donut on the left half of the plot area so it stays
+        // aligned with the left-aligned title rather than drifting toward
+        // the legend on the right.
+        pie.setCenter("30%", "50%");
         cfg.setSeries(series);
         cfg.setPlotOptions(pie);
         this.investmentsChart.drawChart(true);

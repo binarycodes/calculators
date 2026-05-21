@@ -8,8 +8,15 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.data.binder.Result;
+import com.vaadin.flow.data.binder.Setter;
 import com.vaadin.flow.data.converter.Converter;
+import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
+import com.vaadin.flow.data.validator.DoubleRangeValidator;
+import com.vaadin.flow.data.validator.IntegerRangeValidator;
+import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.shared.Registration;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
@@ -25,28 +32,21 @@ import java.util.List;
  *
  * <p>Renders all twelve input fields organised into four labelled sub-sections
  * (Timeline / Current Finances / Existing Corpus Returns / Monthly SIP
- * Contributions) and binds them to a {@link RetirementInputs} record via a
- * single {@link Binder}.</p>
- *
- * <p>The component itself extends {@link Card} so it composes cleanly with the
- * rest of the page, but it is styled in {@code retirement-view.css} with no
- * border / padding / background so it is visually transparent — the inner
- * section Cards remain the visible chrome, matching the previous layout
- * exactly.</p>
+ * Contributions) and binds them to a {@link RetirementInputs} bean via a
+ * single {@link Binder} with field-level validation.</p>
  *
  * <h3>API</h3>
  * <ul>
- *   <li>{@link #setInputs(RetirementInputs)} — populate all fields from a record.</li>
- *   <li>{@link #getInputs()} — read field values back as a new record.</li>
+ *   <li>{@link #setInputs(RetirementInputs)} — populate all fields from a bean.</li>
+ *   <li>{@link #getInputs()} — write field values back into a new bean.</li>
+ *   <li>{@link #isValid()} — current binder validity.</li>
+ *   <li>{@link #validate()} — force-validate; returns a status object that
+ *       carries the per-field errors.</li>
  *   <li>{@link #addInputChangeListener(Runnable)} — fires after any field
  *       changes, except while {@link #setInputs} is running.</li>
  * </ul>
  */
 public class RetirementCalculatorForm extends VerticalLayout {
-
-    private static final int DEFAULT_CURRENT_AGE = 35;
-    private static final int DEFAULT_RETIRE_AGE = 60;
-    private static final int DEFAULT_LIFE_EXP = 90;
 
     private final IntegerField currentAge = ageField("Current Age");
     private final IntegerField retireAge = ageField("Retirement Age");
@@ -84,41 +84,29 @@ public class RetirementCalculatorForm extends VerticalLayout {
         this.binder.addValueChangeListener(event -> notifyChangeListeners());
     }
 
-    /**
-     * Populate every field from {@code inputs}. Does not fire the change listener.
-     */
     public void setInputs(RetirementInputs inputs) {
         this.suppressChangeEvents = true;
         try {
-            this.binder.readRecord(inputs);
+            this.binder.readBean(inputs);
         } finally {
             this.suppressChangeEvents = false;
         }
     }
 
-    /**
-     * Build a new {@link RetirementInputs} from the current field values.
-     */
     public RetirementInputs getInputs() {
-        return new RetirementInputs(
-                intOrDefault(this.currentAge.getValue(), DEFAULT_CURRENT_AGE),
-                intOrDefault(this.retireAge.getValue(), DEFAULT_RETIRE_AGE),
-                intOrDefault(this.lifeExp.getValue(), DEFAULT_LIFE_EXP),
-                bigDecimalOrZero(this.corpus.getValue()),
-                bigDecimalOrZero(this.monthlyExpenses.getValue()),
-                bigDecimalOf(this.inflationPct.getValue()),
-                bigDecimalOf(this.corpusReturnsPrePct.getValue()),
-                bigDecimalOf(this.corpusReturnsPostPct.getValue()),
-                bigDecimalOrZero(this.monthlyInvestmentPre.getValue()),
-                bigDecimalOf(this.sipReturnsPrePct.getValue()),
-                bigDecimalOrZero(this.monthlyInvestmentPost.getValue()),
-                bigDecimalOf(this.sipReturnsPostPct.getValue())
-        );
+        final var target = new RetirementInputs();
+        this.binder.writeBeanAsDraft(target);
+        return target;
     }
 
-    /**
-     * Fired after any bound field changes (not during {@link #setInputs}).
-     */
+    public boolean isValid() {
+        return this.binder.isValid();
+    }
+
+    public BinderValidationStatus<RetirementInputs> validate() {
+        return this.binder.validate();
+    }
+
     public Registration addInputChangeListener(Runnable listener) {
         this.changeListeners.add(listener);
         return () -> this.changeListeners.remove(listener);
@@ -143,35 +131,78 @@ public class RetirementCalculatorForm extends VerticalLayout {
     }
 
     private void configureBindings() {
-        // Read-only bindings; we re-build the immutable RetirementInputs in getInputs().
-        this.binder.forField(this.currentAge).bind(RetirementInputs::currentAge, null);
-        this.binder.forField(this.retireAge).bind(RetirementInputs::retireAge, null);
-        this.binder.forField(this.lifeExp).bind(RetirementInputs::lifeExp, null);
+        this.binder.forField(this.currentAge)
+                .asRequired("Required")
+                .withValidator(new IntegerRangeValidator("Must be between 1 and 120", 1, 120))
+                .bind(RetirementInputs::getCurrentAge, RetirementInputs::setCurrentAge);
 
-        this.binder.forField(this.corpus).bind(RetirementInputs::corpus, null);
-        this.binder.forField(this.monthlyExpenses).bind(RetirementInputs::monthlyExpenses, null);
-        this.binder.forField(this.monthlyInvestmentPre).bind(RetirementInputs::monthlyInvPre, null);
-        this.binder.forField(this.monthlyInvestmentPost).bind(RetirementInputs::monthlyInvPost, null);
+        this.binder.forField(this.retireAge)
+                .asRequired("Required")
+                .withValidator(new IntegerRangeValidator("Must be between 1 and 120", 1, 120))
+                .withValidator(age -> isGreaterThan(age, this.currentAge.getValue()),
+                        "Must be greater than current age")
+                .bind(RetirementInputs::getRetireAge, RetirementInputs::setRetireAge);
 
-        this.binder.forField(this.inflationPct)
+        this.binder.forField(this.lifeExp)
+                .asRequired("Required")
+                .withValidator(new IntegerRangeValidator("Must be between 1 and 120", 1, 120))
+                .withValidator(age -> isGreaterThan(age, this.retireAge.getValue()),
+                        "Must be greater than retirement age")
+                .bind(RetirementInputs::getLifeExp, RetirementInputs::setLifeExp);
+
+        // When an earlier age changes, the dependent age's validator needs to
+        // re-run so its error message updates.
+        this.currentAge.addValueChangeListener(e -> this.binder.validate());
+        this.retireAge.addValueChangeListener(e -> this.binder.validate());
+
+        this.binder.forField(this.corpus)
+                .asRequired("Required")
+                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                        BigDecimal.ZERO, null))
+                .bind(RetirementInputs::getCorpus, RetirementInputs::setCorpus);
+
+        this.binder.forField(this.monthlyExpenses)
+                .asRequired("Required")
+                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                        BigDecimal.ZERO, null))
+                .bind(RetirementInputs::getMonthlyExpenses, RetirementInputs::setMonthlyExpenses);
+
+        this.binder.forField(this.monthlyInvestmentPre)
+                .asRequired("Required")
+                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                        BigDecimal.ZERO, null))
+                .bind(RetirementInputs::getMonthlyInvPre, RetirementInputs::setMonthlyInvPre);
+
+        this.binder.forField(this.monthlyInvestmentPost)
+                .asRequired("Required")
+                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                        BigDecimal.ZERO, null))
+                .bind(RetirementInputs::getMonthlyInvPost, RetirementInputs::setMonthlyInvPost);
+
+        bindPercentage(this.inflationPct,
+                RetirementInputs::getInflationPct, RetirementInputs::setInflationPct);
+        bindPercentage(this.corpusReturnsPrePct,
+                RetirementInputs::getGrowthPrePct, RetirementInputs::setGrowthPrePct);
+        bindPercentage(this.corpusReturnsPostPct,
+                RetirementInputs::getGrowthPostPct, RetirementInputs::setGrowthPostPct);
+        bindPercentage(this.sipReturnsPrePct,
+                RetirementInputs::getSipGrowthPrePct, RetirementInputs::setSipGrowthPrePct);
+        bindPercentage(this.sipReturnsPostPct,
+                RetirementInputs::getSipGrowthPostPct, RetirementInputs::setSipGrowthPostPct);
+    }
+
+    private void bindPercentage(NumberField field,
+                                ValueProvider<RetirementInputs, BigDecimal> getter,
+                                Setter<RetirementInputs, BigDecimal> setter) {
+        this.binder.forField(field)
+                .asRequired("Required")
+                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
-                .bind(RetirementInputs::inflationPct, null);
+                .bind(getter, setter);
+    }
 
-        this.binder.forField(this.corpusReturnsPrePct)
-                .withConverter(doubleToBigDecimalConverter())
-                .bind(RetirementInputs::growthPrePct, null);
-
-        this.binder.forField(this.corpusReturnsPostPct)
-                .withConverter(doubleToBigDecimalConverter())
-                .bind(RetirementInputs::growthPostPct, null);
-
-        this.binder.forField(this.sipReturnsPrePct)
-                .withConverter(doubleToBigDecimalConverter())
-                .bind(RetirementInputs::sipGrowthPrePct, null);
-
-        this.binder.forField(this.sipReturnsPostPct)
-                .withConverter(doubleToBigDecimalConverter())
-                .bind(RetirementInputs::sipGrowthPostPct, null);
+    private static boolean isGreaterThan(Integer value, Integer floor) {
+        return value == null || floor == null || value > floor;
     }
 
     private void notifyChangeListeners() {
@@ -190,6 +221,7 @@ public class RetirementCalculatorForm extends VerticalLayout {
         field.setMax(120);
         field.setStepButtonsVisible(false);
         field.setSuffixComponent(suffix);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
 
@@ -199,6 +231,7 @@ public class RetirementCalculatorForm extends VerticalLayout {
         field.setMax(100);
         field.setStep(0.1);
         field.setStepButtonsVisible(false);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
 
@@ -244,20 +277,8 @@ public class RetirementCalculatorForm extends VerticalLayout {
 
     private static Converter<Double, BigDecimal> doubleToBigDecimalConverter() {
         return Converter.from(
-                value -> Result.ok(value == null ? BigDecimal.ZERO : BigDecimal.valueOf(value)),
-                value -> value == null ? 0.0d : value.doubleValue()
+                value -> Result.ok(value == null ? null : BigDecimal.valueOf(value)),
+                value -> value == null ? null : value.doubleValue()
         );
-    }
-
-    private static int intOrDefault(Integer value, int fallback) {
-        return value == null ? fallback : value;
-    }
-
-    private static BigDecimal bigDecimalOf(Double value) {
-        return value == null ? BigDecimal.ZERO : BigDecimal.valueOf(value);
-    }
-
-    private static BigDecimal bigDecimalOrZero(BigDecimal value) {
-        return value == null ? BigDecimal.ZERO : value;
     }
 }

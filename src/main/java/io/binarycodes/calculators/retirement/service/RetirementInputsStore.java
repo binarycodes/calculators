@@ -91,19 +91,23 @@ public class RetirementInputsStore {
 
     private ObjectNode toJson(RetirementInputs in) {
         final ObjectNode n = this.om.createObjectNode();
-        n.put("currentAge", Integer.toString(in.currentAge()));
-        n.put("retireAge", Integer.toString(in.retireAge()));
-        n.put("lifeExp", Integer.toString(in.lifeExp()));
-        n.put("corpus", in.corpus().toPlainString());
-        n.put("monthlyExp", in.monthlyExpenses().toPlainString());
-        n.put("inflation", in.inflationPct().toPlainString());
-        n.put("growthPre", in.growthPrePct().toPlainString());
-        n.put("growthPost", in.growthPostPct().toPlainString());
-        n.put("monthlyInvPre", in.monthlyInvPre().toPlainString());
-        n.put("sipGrowthPre", in.sipGrowthPrePct().toPlainString());
-        n.put("monthlyInvPost", in.monthlyInvPost().toPlainString());
-        n.put("sipGrowthPost", in.sipGrowthPostPct().toPlainString());
+        n.put("currentAge", in.getCurrentAge() == null ? null : Integer.toString(in.getCurrentAge()));
+        n.put("retireAge",  in.getRetireAge()  == null ? null : Integer.toString(in.getRetireAge()));
+        n.put("lifeExp",    in.getLifeExp()    == null ? null : Integer.toString(in.getLifeExp()));
+        n.put("corpus",         plain(in.getCorpus()));
+        n.put("monthlyExp",     plain(in.getMonthlyExpenses()));
+        n.put("inflation",      plain(in.getInflationPct()));
+        n.put("growthPre",      plain(in.getGrowthPrePct()));
+        n.put("growthPost",     plain(in.getGrowthPostPct()));
+        n.put("monthlyInvPre",  plain(in.getMonthlyInvPre()));
+        n.put("sipGrowthPre",   plain(in.getSipGrowthPrePct()));
+        n.put("monthlyInvPost", plain(in.getMonthlyInvPost()));
+        n.put("sipGrowthPost",  plain(in.getSipGrowthPostPct()));
         return n;
+    }
+
+    private static String plain(BigDecimal v) {
+        return v == null ? null : v.toPlainString();
     }
 
     private RetirementInputs toInputs(JsonNode n) {

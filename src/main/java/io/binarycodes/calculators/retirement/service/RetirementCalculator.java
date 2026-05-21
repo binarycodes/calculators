@@ -12,11 +12,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Pure port of {@code calculate()} from {@code retirement-calculator.js:500-586}.
- *
- * <p>All arithmetic uses {@link BigDecimal} under {@link MathContext#DECIMAL64}
- * (16 significant digits) — matches IEEE 754 double precision used by the JS
- * version while avoiding subtle rounding drift on equality assertions.</p>
+ * Arithmetic uses {@link BigDecimal} under {@link MathContext#DECIMAL64} —
+ * matches IEEE 754 double precision while avoiding rounding drift on equality
+ * assertions.
  */
 public final class RetirementCalculator {
 
@@ -28,35 +26,35 @@ public final class RetirementCalculator {
     }
 
     public static RetirementResult calculate(RetirementInputs in) {
-        if (in.currentAge() >= in.retireAge()) {
+        if (in.getCurrentAge() >= in.getRetireAge()) {
             throw new IllegalArgumentException("Retirement age must be greater than current age.");
         }
-        if (in.retireAge() >= in.lifeExp()) {
+        if (in.getRetireAge() >= in.getLifeExp()) {
             throw new IllegalArgumentException("Life expectancy must be greater than retirement age.");
         }
 
-        final BigDecimal inflation = pctToFraction(in.inflationPct());
-        final BigDecimal growthPre = pctToFraction(in.growthPrePct());
-        final BigDecimal growthPost = pctToFraction(in.growthPostPct());
-        final BigDecimal sipGrowthPre = pctToFraction(in.sipGrowthPrePct());
-        final BigDecimal sipGrowthPost = pctToFraction(in.sipGrowthPostPct());
-        final BigDecimal annualExp0 = in.monthlyExpenses().multiply(TWELVE, MC);
-        final BigDecimal annualInvPre = in.monthlyInvPre().multiply(TWELVE, MC);
-        final BigDecimal annualInvPost = in.monthlyInvPost().multiply(TWELVE, MC);
+        final BigDecimal inflation = pctToFraction(in.getInflationPct());
+        final BigDecimal growthPre = pctToFraction(in.getGrowthPrePct());
+        final BigDecimal growthPost = pctToFraction(in.getGrowthPostPct());
+        final BigDecimal sipGrowthPre = pctToFraction(in.getSipGrowthPrePct());
+        final BigDecimal sipGrowthPost = pctToFraction(in.getSipGrowthPostPct());
+        final BigDecimal annualExp0 = in.getMonthlyExpenses().multiply(TWELVE, MC);
+        final BigDecimal annualInvPre = in.getMonthlyInvPre().multiply(TWELVE, MC);
+        final BigDecimal annualInvPost = in.getMonthlyInvPost().multiply(TWELVE, MC);
 
         final List<ProjectionRow> rows = new ArrayList<>();
-        BigDecimal mainCorpus = in.corpus();
+        BigDecimal mainCorpus = in.getCorpus();
         BigDecimal sipCorpus = BigDecimal.ZERO;
-        BigDecimal totalInvested = in.corpus();   // initial principal + cumulative SIP
+        BigDecimal totalInvested = in.getCorpus();
         BigDecimal investedAtRetirement = BigDecimal.ZERO;
         Integer corpusDepletedAt = null;
         final int currentYear = Year.now().getValue();
 
-        for (int age = in.currentAge(); age <= in.lifeExp(); age++) {
-            final int yearsFromNow = age - in.currentAge();
+        for (int age = in.getCurrentAge(); age <= in.getLifeExp(); age++) {
+            final int yearsFromNow = age - in.getCurrentAge();
             final int year = currentYear + yearsFromNow;
-            final boolean isRetireYear = age == in.retireAge();
-            final boolean isPost = age >= in.retireAge();
+            final boolean isRetireYear = age == in.getRetireAge();
+            final boolean isPost = age >= in.getRetireAge();
             final BigDecimal annualExp = annualExp0.multiply(pow1plus(inflation, yearsFromNow), MC);
 
             // At retirement, fold the SIP-accumulated corpus into the main corpus.
@@ -129,9 +127,6 @@ public final class RetirementCalculator {
         return pct == null ? BigDecimal.ZERO : pct.divide(HUNDRED, MC);
     }
 
-    /**
-     * (1 + rate)^n — used for expense inflation.
-     */
     private static BigDecimal pow1plus(BigDecimal rate, int n) {
         if (n == 0) {
             return BigDecimal.ONE;
