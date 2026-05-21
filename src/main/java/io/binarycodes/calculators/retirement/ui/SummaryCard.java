@@ -2,7 +2,7 @@ package io.binarycodes.calculators.retirement.ui;
 
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
-import io.binarycodes.calculators.retirement.domain.Status;
+import io.binarycodes.calculators.base.common.Status;
 
 /**
  * A compact "label + big value" tile used in the summary row.
@@ -22,7 +22,7 @@ public class SummaryCard extends Card {
     public void setLabel(String text) {
         this.label.setText(text);
     }
-    
+
     public void setValue(String text, Status status) {
         this.value.setText(text);
 

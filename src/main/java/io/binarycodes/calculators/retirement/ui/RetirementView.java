@@ -2,12 +2,10 @@ package io.binarycodes.calculators.retirement.ui;
 
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.charts.model.ChartType;
 import com.vaadin.flow.component.charts.model.Configuration;
@@ -22,43 +20,34 @@ import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
 import com.vaadin.flow.component.charts.model.PlotOptionsPie;
 import com.vaadin.flow.component.charts.model.XAxis;
 import com.vaadin.flow.component.charts.model.style.SolidColor;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
+import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
-import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
-import io.binarycodes.calculators.retirement.domain.Status;
 import io.binarycodes.calculators.retirement.service.DefaultsProvider;
 import io.binarycodes.calculators.retirement.service.RetirementCalculator;
 import io.binarycodes.calculators.retirement.service.RetirementInputsStore;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.List;
 
 /**
- * The retirement calculator screen. Mirrors the original
- * {@code retirement-calculator.html} layout: timeline / current finances /
- * corpus returns / monthly SIP inputs, summary cards, three charts, and a
- * year-by-year projection grid.
+ * The retirement calculator screen. Composes the form, summary cards, charts,
+ * and projection grid; owns no input fields directly — those live in
+ * {@link RetirementCalculatorForm}.
  */
 @Route("retirement")
 @RouteAlias("")
@@ -70,20 +59,7 @@ public class RetirementView extends VerticalLayout {
     private final DefaultsProvider defaults;
     private final RetirementInputsStore store;
 
-    private final IntegerField currentAge = ageField("Current Age");
-    private final IntegerField retireAge = ageField("Retirement Age");
-    private final IntegerField lifeExp = ageField("Life Expectancy");
-
-    private final MoneyField corpus;
-    private final MoneyField monthlyExp;
-    private final MoneyField monthlyInvPre;
-    private final MoneyField monthlyInvPost;
-
-    private final NumberField inflation = percentageField("Inflation Rate");
-    private final NumberField growthPre = percentageField("Before Retirement");
-    private final NumberField growthPost = percentageField("After Retirement");
-    private final NumberField sipGrowthPre = percentageField("Growth Percentage");
-    private final NumberField sipGrowthPost = percentageField("Growth Percentage");
+    private final RetirementCalculatorForm form;
 
     private final SummaryCard corpusAtRetirement = new SummaryCard("Corpus at Retirement");
     private final SummaryCard expensesAtRetirement = new SummaryCard("Annual Expenses at Retirement");
@@ -96,8 +72,6 @@ public class RetirementView extends VerticalLayout {
 
     private final Grid<ProjectionRow> grid = new Grid<>(ProjectionRow.class, false);
 
-    private boolean suspendListeners;
-
     public RetirementView(UserPreferences prefs, DefaultsProvider defaults, RetirementInputsStore store) {
         this.prefs = prefs;
         this.defaults = defaults;
@@ -108,13 +82,11 @@ public class RetirementView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
 
-        this.corpus = new MoneyField("Current Corpus", prefs);
-        this.monthlyExp = new MoneyField("Monthly Expenses (today)", prefs);
-        this.monthlyInvPre = new MoneyField("Monthly SIP", prefs);
-        this.monthlyInvPost = new MoneyField("Monthly SIP", prefs);
+        this.form = new RetirementCalculatorForm(prefs);
+        this.form.addInputChangeListener(this::onInputChanged);
 
         add(new H2("Retirement Calculator"));
-        add(buildInputForm());
+        add(this.form);
         add(buildActions());
         add(buildSummary());
         add(buildChartsBlock());
@@ -123,7 +95,6 @@ public class RetirementView extends VerticalLayout {
         // React to currency switches: re-pull inputs for the new currency,
         // re-format helper text & money values, recalculate.
         prefs.addChangeListener(p -> onCurrencyOrPrefsChange());
-        attachInputListeners();
     }
 
     @Override
@@ -138,62 +109,7 @@ public class RetirementView extends VerticalLayout {
         );
     }
 
-    private VerticalLayout buildInputForm() {
-        final var timeline = section("Timeline", this.currentAge, this.retireAge, this.lifeExp);
-        final var current = section("Current Finances", this.corpus, this.monthlyExp, asPercentageSuffix(this.inflation));
-        final var corpusReturns = section("Existing Corpus Returns", asPercentageSuffix(this.growthPre), asPercentageSuffix(this.growthPost));
-        final var sip = wrappedSection("Monthly SIP Contributions",
-                section("Before Retirement", this.monthlyInvPre, asPercentageSuffix(this.sipGrowthPre)),
-                section("After Retirement", this.monthlyInvPost, asPercentageSuffix(this.sipGrowthPost))
-        );
-
-        final var col = new VerticalLayout(timeline, current, corpusReturns, sip);
-        col.setPadding(false);
-        col.setSpacing(true);
-        col.setWidthFull();
-        return col;
-    }
-
-    private Component section(String title, Component... items) {
-        final FormLayout inner = new FormLayout();
-        inner.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("36em", 2),
-                new FormLayout.ResponsiveStep("64em", 3),
-                new FormLayout.ResponsiveStep("90em", 4));
-        inner.add(items);
-
-        final var group = new Card();
-        group.setTitle(title);
-        group.add(inner);
-        group.setWidthFull();
-        group.addClassNames("form-section");
-        return group;
-    }
-
-    private Component wrappedSection(String title, Component... items) {
-        final var wrapper = new VerticalLayout(items);
-        wrapper.setPadding(false);
-        wrapper.addClassNames("form-section-container");
-
-        Arrays.stream(items).forEach(item -> item.addClassNames("inner-form-section"));
-
-        final var group = new Card();
-        group.setTitle(title);
-        group.setWidthFull();
-        group.add(wrapper);
-        return group;
-    }
-
-
-    private NumberField asPercentageSuffix(NumberField nf) {
-        if (nf.getSuffixComponent() == null) {
-            final Span s = new Span("%");
-            s.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
-            nf.setSuffixComponent(s);
-        }
-        return nf;
-    }
+    // ---- actions --------------------------------------------------------
 
     private HorizontalLayout buildActions() {
         final Button calc = new Button("Calculate", e -> recalculate());
@@ -300,38 +216,10 @@ public class RetirementView extends VerticalLayout {
         return block;
     }
 
-    private static IntegerField ageField(String label) {
-        final var suffix = new Span("yrs");
-        suffix.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
-
-        final var f = new IntegerField(label);
-        f.setMin(1);
-        f.setMax(120);
-        f.setStepButtonsVisible(false);
-        f.setSuffixComponent(suffix);
-        return f;
-    }
-
-    private static NumberField percentageField(String label) {
-        final var f = new NumberField(label);
-        f.setMin(0);
-        f.setMax(100);
-        f.setStep(0.1);
-        f.setStepButtonsVisible(false);
-        return f;
-    }
-
-    private void attachInputListeners() {
-        List.of(this.currentAge, this.retireAge, this.lifeExp).forEach(f -> f.addValueChangeListener(e -> onInputChanged()));
-        List.of(this.inflation, this.growthPre, this.growthPost, this.sipGrowthPre, this.sipGrowthPost).forEach(f -> f.addValueChangeListener(e -> onInputChanged()));
-        List.of(this.corpus, this.monthlyExp, this.monthlyInvPre, this.monthlyInvPost).forEach(f -> f.addValueChangeListener(e -> onInputChanged()));
-    }
+    // ---- state transitions ---------------------------------------------
 
     private void onInputChanged() {
-        if (this.suspendListeners) {
-            return;
-        }
-        this.store.save(this.prefs.currency(), readInputs());
+        this.store.save(this.prefs.currency(), this.form.getInputs());
     }
 
     private void onCurrencyOrPrefsChange() {
@@ -344,56 +232,19 @@ public class RetirementView extends VerticalLayout {
         if (in == null) {
             in = this.defaults.forCurrency(c);
         }
-        writeInputs(in);
+        this.form.setInputs(in);
     }
 
     private void resetToDefaults() {
         final SupportedCurrency c = this.prefs.currency();
         final RetirementInputs defs = this.defaults.forCurrency(c);
         this.store.save(c, defs);
-        writeInputs(defs);
+        this.form.setInputs(defs);
         recalculate();
     }
 
-    private void writeInputs(RetirementInputs in) {
-        this.suspendListeners = true;
-        try {
-            this.currentAge.setValue(in.currentAge());
-            this.retireAge.setValue(in.retireAge());
-            this.lifeExp.setValue(in.lifeExp());
-            this.corpus.setBigDecimal(in.corpus());
-            this.monthlyExp.setBigDecimal(in.monthlyExpenses());
-            this.monthlyInvPre.setBigDecimal(in.monthlyInvPre());
-            this.monthlyInvPost.setBigDecimal(in.monthlyInvPost());
-            this.inflation.setValue(toDouble(in.inflationPct()));
-            this.growthPre.setValue(toDouble(in.growthPrePct()));
-            this.growthPost.setValue(toDouble(in.growthPostPct()));
-            this.sipGrowthPre.setValue(toDouble(in.sipGrowthPrePct()));
-            this.sipGrowthPost.setValue(toDouble(in.sipGrowthPostPct()));
-        } finally {
-            this.suspendListeners = false;
-        }
-    }
-
-    private RetirementInputs readInputs() {
-        return new RetirementInputs(
-                nz(this.currentAge.getValue(), 35),
-                nz(this.retireAge.getValue(), 60),
-                nz(this.lifeExp.getValue(), 90),
-                or0(this.corpus.getValue()),
-                or0(this.monthlyExp.getValue()),
-                bd(this.inflation.getValue()),
-                bd(this.growthPre.getValue()),
-                bd(this.growthPost.getValue()),
-                or0(this.monthlyInvPre.getValue()),
-                bd(this.sipGrowthPre.getValue()),
-                or0(this.monthlyInvPost.getValue()),
-                bd(this.sipGrowthPost.getValue())
-        );
-    }
-
     private void recalculate() {
-        final RetirementInputs in = readInputs();
+        final RetirementInputs in = this.form.getInputs();
 
         final RetirementResult r;
         try {
@@ -548,21 +399,5 @@ public class RetirementView extends VerticalLayout {
         }
         badge.addThemeVariants(BadgeVariant.SMALL);
         return badge;
-    }
-
-    private static int nz(Integer v, int dflt) {
-        return v == null ? dflt : v;
-    }
-
-    private static BigDecimal bd(Double v) {
-        return v == null ? BigDecimal.ZERO : BigDecimal.valueOf(v);
-    }
-
-    private static BigDecimal or0(BigDecimal v) {
-        return v == null ? BigDecimal.ZERO : v;
-    }
-
-    private static double toDouble(BigDecimal bd) {
-        return bd == null ? 0 : bd.setScale(4, RoundingMode.HALF_UP).doubleValue();
     }
 }
