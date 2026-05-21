@@ -5,6 +5,7 @@ import com.ibm.icu.text.BreakIterator;
 import com.ibm.icu.text.RuleBasedNumberFormat;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Converts whole numbers to English words using either the Indian numbering
@@ -23,7 +24,7 @@ public final class NumberToWords {
     public static String amountInWords(BigDecimal value, SupportedCurrency supportedCurrency) {
         final var locale = supportedCurrency.locale().toLocale();
         final var formatter = new RuleBasedNumberFormat(supportedCurrency.locale(), RuleBasedNumberFormat.SPELLOUT);
-        final var words = formatter.format(value == null ? BigDecimal.ZERO : value);
+        final var words = formatter.format(value == null ? BigDecimal.ZERO : value.setScale(0, RoundingMode.DOWN));
 
         return UCharacter.toTitleCase(locale,
                 words.toLowerCase(),

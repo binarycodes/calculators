@@ -51,12 +51,12 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         addColumn(ProjectionRow::year).setHeader("Year");
         addColumn(ProjectionRow::age).setHeader("Age");
         addComponentColumn(row -> phaseBadge(row.isPost())).setHeader("Phase");
-        addMonthlyAndYearlyColumn("Expenses",   ProjectionRow::annualExp);
-        addMoneyColumn(           "Corpus (Start)", ProjectionRow::startCorpus);
-        addMonthlyAndYearlyColumn("Returns",    ProjectionRow::returns);
+        addMonthlyAndYearlyColumn("Expenses", ProjectionRow::annualExp);
+        addMoneyColumn("Corpus (Start)", ProjectionRow::startCorpus);
+        addMonthlyAndYearlyColumn("Returns", ProjectionRow::returns);
         addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment);
         addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal);
-        addMoneyColumn(           "Corpus (End)",   ProjectionRow::endCorpus)
+        addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus)
                 .setPartNameGenerator(ProjectionGrid::corpusEndPartName);
     }
 
@@ -77,10 +77,10 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
                                 + "<div class=\"money-cell-primary\" title=\"${item.monthlyWords}\">${item.monthly}</div>"
                                 + "<div class=\"money-cell-secondary\" title=\"${item.yearlyWords}\">${item.yearly}</div>"
                                 + "</div>")
-                .withProperty("monthly",      row -> formatMonthly(yearlyAccessor.apply(row)))
-                .withProperty("yearly",       row -> formatYearly(yearlyAccessor.apply(row)))
+                .withProperty("monthly", row -> formatMonthly(yearlyAccessor.apply(row)))
+                .withProperty("yearly", row -> formatYearly(yearlyAccessor.apply(row)))
                 .withProperty("monthlyWords", row -> wordsTooltip(monthlyOf(yearlyAccessor.apply(row))))
-                .withProperty("yearlyWords",  row -> wordsTooltip(yearlyAccessor.apply(row)));
+                .withProperty("yearlyWords", row -> wordsTooltip(yearlyAccessor.apply(row)));
 
         return addColumn(renderer)
                 .setHeader(header)

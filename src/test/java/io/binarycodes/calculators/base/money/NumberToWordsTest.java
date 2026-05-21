@@ -30,9 +30,8 @@ class NumberToWordsTest {
     @Test
     void indian_crore() {
         assertEquals("One Crore Fifty Lakh Rupees", words(15_000_000, SupportedCurrency.INR));
-        assertEquals(
-                "Twelve Crore Thirty-Four Lakh Fifty-Six Thousand Seven Hundred Eighty-Nine Rupees",
-                words(123_456_789, SupportedCurrency.INR));
+        assertEquals("Twelve Crore Thirty-Four Lakh Fifty-Six Thousand Seven Hundred Eighty-Nine Rupees",
+                words(123_456_789.345, SupportedCurrency.INR));
     }
 
     @Test
@@ -54,6 +53,10 @@ class NumberToWordsTest {
     }
 
     private static String words(long n, SupportedCurrency c) {
+        return NumberToWords.amountInWords(BigDecimal.valueOf(n), c);
+    }
+
+    private static String words(double n, SupportedCurrency c) {
         return NumberToWords.amountInWords(BigDecimal.valueOf(n), c);
     }
 }
