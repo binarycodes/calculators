@@ -49,3 +49,21 @@ vaadin-grid::part(corpus-end-healthy) {
     color: var(--color-success-text);
     font-weight: 600;
 }
+
+/* Dual monthly / yearly money cell --------------------------------------- */
+.money-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.25;
+}
+
+.money-cell-primary {
+    white-space: nowrap;
+}
+
+.money-cell-secondary {
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}

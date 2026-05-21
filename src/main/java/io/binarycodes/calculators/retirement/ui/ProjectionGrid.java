@@ -4,12 +4,15 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.data.renderer.LitRenderer;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
+import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.function.Function;
 
@@ -23,6 +26,7 @@ import java.util.function.Function;
 public class ProjectionGrid extends Grid<ProjectionRow> {
 
     private static final BigDecimal LOW_CORPUS_MULTIPLIER = BigDecimal.TEN;
+    private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
 
     private final UserPreferences preferences;
 
@@ -47,12 +51,12 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         addColumn(ProjectionRow::year).setHeader("Year");
         addColumn(ProjectionRow::age).setHeader("Age");
         addComponentColumn(row -> phaseBadge(row.isPost())).setHeader("Phase");
-        addMoneyColumn("Annual Expenses", ProjectionRow::annualExp);
-        addMoneyColumn("Corpus (Start)",  ProjectionRow::startCorpus);
-        addMoneyColumn("Returns",         ProjectionRow::returns);
-        addMoneyColumn("Investment",      ProjectionRow::investment);
-        addMoneyColumn("Withdrawal",      ProjectionRow::withdrawal);
-        addMoneyColumn("Corpus (End)",    ProjectionRow::endCorpus)
+        addMonthlyAndYearlyColumn("Expenses",   ProjectionRow::annualExp);
+        addMoneyColumn(           "Corpus (Start)", ProjectionRow::startCorpus);
+        addMonthlyAndYearlyColumn("Returns",    ProjectionRow::returns);
+        addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment);
+        addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal);
+        addMoneyColumn(           "Corpus (End)",   ProjectionRow::endCorpus)
                 .setPartNameGenerator(ProjectionGrid::corpusEndPartName);
     }
 
@@ -60,7 +64,55 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
             String header, Function<ProjectionRow, BigDecimal> moneyAccessor) {
         return addColumn(row -> moneyOrDash(moneyAccessor.apply(row), this.preferences.currency()))
                 .setHeader(header)
+                .setTextAlign(ColumnTextAlign.END)
+                .setTooltipGenerator(row -> wordsTooltip(moneyAccessor.apply(row)));
+    }
+
+    private Column<ProjectionRow> addMonthlyAndYearlyColumn(
+            String header, Function<ProjectionRow, BigDecimal> yearlyAccessor) {
+        // Each line carries its own ``title`` attribute so hovering over the
+        // monthly or yearly value surfaces the amount in words for that line.
+        final LitRenderer<ProjectionRow> renderer = LitRenderer.<ProjectionRow>of(
+                        "<div class=\"money-cell\">"
+                                + "<div class=\"money-cell-primary\" title=\"${item.monthlyWords}\">${item.monthly}</div>"
+                                + "<div class=\"money-cell-secondary\" title=\"${item.yearlyWords}\">${item.yearly}</div>"
+                                + "</div>")
+                .withProperty("monthly",      row -> formatMonthly(yearlyAccessor.apply(row)))
+                .withProperty("yearly",       row -> formatYearly(yearlyAccessor.apply(row)))
+                .withProperty("monthlyWords", row -> wordsTooltip(monthlyOf(yearlyAccessor.apply(row))))
+                .withProperty("yearlyWords",  row -> wordsTooltip(yearlyAccessor.apply(row)));
+
+        return addColumn(renderer)
+                .setHeader(header)
                 .setTextAlign(ColumnTextAlign.END);
+    }
+
+    private String formatMonthly(BigDecimal yearlyAmount) {
+        if (yearlyAmount == null || yearlyAmount.signum() == 0) {
+            return "—";
+        }
+        return MoneyFormatter.format(monthlyOf(yearlyAmount), this.preferences.currency()) + " /mo";
+    }
+
+    private String formatYearly(BigDecimal yearlyAmount) {
+        if (yearlyAmount == null || yearlyAmount.signum() == 0) {
+            return "";
+        }
+        return MoneyFormatter.format(yearlyAmount, this.preferences.currency()) + " /yr";
+    }
+
+    private static BigDecimal monthlyOf(BigDecimal yearlyAmount) {
+        if (yearlyAmount == null) {
+            return BigDecimal.ZERO;
+        }
+        return yearlyAmount.divide(MONTHS_PER_YEAR, 0, RoundingMode.HALF_UP);
+    }
+
+    private String wordsTooltip(BigDecimal amount) {
+        if (amount == null || amount.signum() == 0) {
+            return "";
+        }
+        return NumberToWords.amountInWords(amount, this.preferences.currency());
     }
 
     private static String corpusEndPartName(ProjectionRow row) {
