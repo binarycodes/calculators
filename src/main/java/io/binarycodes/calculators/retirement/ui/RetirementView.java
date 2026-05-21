@@ -6,22 +6,6 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.charts.Chart;
-import com.vaadin.flow.component.charts.model.ChartType;
-import com.vaadin.flow.component.charts.model.Configuration;
-import com.vaadin.flow.component.charts.model.DashStyle;
-import com.vaadin.flow.component.charts.model.DataSeries;
-import com.vaadin.flow.component.charts.model.DataSeriesItem;
-import com.vaadin.flow.component.charts.model.HorizontalAlign;
-import com.vaadin.flow.component.charts.model.LayoutDirection;
-import com.vaadin.flow.component.charts.model.ListSeries;
-import com.vaadin.flow.component.charts.model.Marker;
-import com.vaadin.flow.component.charts.model.PlotLine;
-import com.vaadin.flow.component.charts.model.VerticalAlign;
-import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
-import com.vaadin.flow.component.charts.model.PlotOptionsPie;
-import com.vaadin.flow.component.charts.model.XAxis;
-import com.vaadin.flow.component.charts.model.style.SolidColor;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
@@ -47,9 +31,10 @@ import io.binarycodes.calculators.retirement.service.RetirementInputsStore;
 import java.math.BigDecimal;
 
 /**
- * The retirement calculator screen. Composes the form, summary cards, charts,
- * and projection grid; owns no input fields directly — those live in
- * {@link RetirementCalculatorForm}.
+ * The retirement calculator screen. Composes the input form, summary cards,
+ * charts, and projection grid; owns no input fields or chart configuration
+ * directly — those live in {@link RetirementCalculatorForm}, {@link CorpusChart},
+ * {@link ExpensesChart}, and {@link InvestmentsChart}.
  */
 @Route("retirement")
 @RouteAlias("")
@@ -57,368 +42,300 @@ import java.math.BigDecimal;
 @PageTitle("Retirement Calculator")
 public class RetirementView extends VerticalLayout {
 
-    private final UserPreferences prefs;
-    private final DefaultsProvider defaults;
-    private final RetirementInputsStore store;
+    private static final BigDecimal LOW_CORPUS_MULTIPLIER     = BigDecimal.TEN;
+    private static final BigDecimal HEALTHY_CORPUS_MULTIPLIER = BigDecimal.valueOf(5);
+
+    private final UserPreferences preferences;
+    private final DefaultsProvider defaultsProvider;
+    private final RetirementInputsStore inputsStore;
 
     private final RetirementCalculatorForm form;
 
-    private final SummaryCard corpusAtRetirement = new SummaryCard("Corpus at Retirement");
+    private final SummaryCard corpusAtRetirement   = new SummaryCard("Corpus at Retirement");
     private final SummaryCard expensesAtRetirement = new SummaryCard("Annual Expenses at Retirement");
-    private final SummaryCard lastsUntil = new SummaryCard("Corpus Lasts Until");
-    private final SummaryCard finalCorpus = new SummaryCard("Final Corpus");
+    private final SummaryCard lastsUntil           = new SummaryCard("Corpus Lasts Until");
+    private final SummaryCard finalCorpus          = new SummaryCard("Final Corpus");
 
-    private final Chart corpusChart = new Chart(ChartType.AREASPLINE);
-    private final Chart expensesChart = new Chart(ChartType.AREASPLINE);
-    private final Chart investmentsChart = new Chart(ChartType.PIE);
+    private final CorpusChart       corpusChart      = new CorpusChart();
+    private final ExpensesChart     expensesChart    = new ExpensesChart();
+    private final InvestmentsChart  investmentsChart = new InvestmentsChart();
 
-    private final Grid<ProjectionRow> grid = new Grid<>(ProjectionRow.class, false);
+    private final Grid<ProjectionRow> projectionGrid = new Grid<>(ProjectionRow.class, false);
 
-    public RetirementView(UserPreferences prefs, DefaultsProvider defaults, RetirementInputsStore store) {
-        this.prefs = prefs;
-        this.defaults = defaults;
-        this.store = store;
+    public RetirementView(UserPreferences preferences,
+                          DefaultsProvider defaultsProvider,
+                          RetirementInputsStore inputsStore) {
+        this.preferences = preferences;
+        this.defaultsProvider = defaultsProvider;
+        this.inputsStore = inputsStore;
 
         addClassName("retirement-view");
         setWidthFull();
         setPadding(true);
         setSpacing(true);
 
-        this.form = new RetirementCalculatorForm(prefs);
+        this.form = new RetirementCalculatorForm(preferences);
         this.form.addInputChangeListener(this::onInputChanged);
 
         add(new H2("Retirement Calculator"));
         add(this.form);
-        add(buildActions());
-        add(buildSummary());
-        add(buildChartsBlock());
-        add(buildGridBlock());
+        add(buildActionRow());
+        add(buildSummaryRow());
+        add(buildChartsCard());
+        add(buildProjectionGridCard());
 
-        // React to currency switches: re-pull inputs for the new currency,
-        // re-format helper text & money values, recalculate.
-        prefs.addChangeListener(p -> onCurrencyOrPrefsChange());
+        preferences.addChangeListener(ignored -> onPreferencesChanged());
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        // Load persisted prefs + per-currency inputs from localStorage.
-        this.prefs.loadFromBrowser(() ->
-                this.store.load(map -> {
-                    applyForCurrency(this.prefs.currency());
+        // Browser localStorage is read asynchronously from the client, so the
+        // initial population has to wait until both prefs and inputs have loaded.
+        this.preferences.loadFromBrowser(() ->
+                this.inputsStore.load(unused -> {
+                    populateFormFromPersistedOrDefault(this.preferences.currency());
                     recalculate();
                 })
         );
     }
 
-    // ---- actions --------------------------------------------------------
+    private HorizontalLayout buildActionRow() {
+        final Button calculateButton = new Button("Calculate", event -> recalculate());
+        calculateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-    private HorizontalLayout buildActions() {
-        final Button calc = new Button("Calculate", e -> recalculate());
-        calc.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        final Button reset = new Button("Reset", e -> resetToDefaults());
-        final HorizontalLayout row = new HorizontalLayout(calc, reset);
-        row.addClassName("action-row");
-        row.setSpacing(true);
-        return row;
+        final Button resetButton = new Button("Reset", event -> resetToDefaults());
+
+        final HorizontalLayout actionRow = new HorizontalLayout(calculateButton, resetButton);
+        actionRow.addClassName("action-row");
+        actionRow.setSpacing(true);
+        return actionRow;
     }
 
-    private HorizontalLayout buildSummary() {
-        final HorizontalLayout row = new HorizontalLayout(
-                this.corpusAtRetirement, this.expensesAtRetirement, this.lastsUntil, this.finalCorpus);
-        row.addClassName("summary-row");
-        row.setWidthFull();
-        row.setFlexGrow(1, this.corpusAtRetirement, this.expensesAtRetirement, this.lastsUntil, this.finalCorpus);
-        row.setSpacing(true);
-        return row;
+    private HorizontalLayout buildSummaryRow() {
+        final HorizontalLayout summaryRow = new HorizontalLayout(
+                this.corpusAtRetirement, this.expensesAtRetirement,
+                this.lastsUntil, this.finalCorpus);
+        summaryRow.addClassName("summary-row");
+        summaryRow.setWidthFull();
+        summaryRow.setFlexGrow(1,
+                this.corpusAtRetirement, this.expensesAtRetirement,
+                this.lastsUntil, this.finalCorpus);
+        summaryRow.setSpacing(true);
+        return summaryRow;
     }
 
-    private VerticalLayout buildChartsBlock() {
-        final Tabs tabs = new Tabs(new Tab("Corpus"), new Tab("Annual Expenses"), new Tab("Investments"));
-        final VerticalLayout host = new VerticalLayout();
-        host.setPadding(false);
-        host.setSpacing(false);
-        host.setSizeFull();
-        host.add(this.corpusChart);
+    private VerticalLayout buildChartsCard() {
+        final Tabs chartTabs = new Tabs(
+                new Tab("Corpus"),
+                new Tab("Annual Expenses"),
+                new Tab("Investments"));
 
-        this.corpusChart.setWidthFull();
-        this.expensesChart.setWidthFull();
-        this.investmentsChart.setWidthFull();
+        final VerticalLayout activeChartContainer = new VerticalLayout();
+        activeChartContainer.setPadding(false);
+        activeChartContainer.setSpacing(false);
+        activeChartContainer.setSizeFull();
+        activeChartContainer.add(this.corpusChart);
 
-        this.corpusChart.setHeight("340px");
-        this.expensesChart.setHeight("340px");
-        this.investmentsChart.setHeight("340px");
-
-        tabs.addSelectedChangeListener(e -> {
-            host.removeAll();
-            switch (e.getSelectedTab().getLabel()) {
-                case "Corpus" -> host.add(this.corpusChart);
-                case "Annual Expenses" -> host.add(this.expensesChart);
-                case "Investments" -> host.add(this.investmentsChart);
+        chartTabs.addSelectedChangeListener(event -> {
+            activeChartContainer.removeAll();
+            switch (event.getSelectedTab().getLabel()) {
+                case "Corpus"          -> activeChartContainer.add(this.corpusChart);
+                case "Annual Expenses" -> activeChartContainer.add(this.expensesChart);
+                case "Investments"     -> activeChartContainer.add(this.investmentsChart);
             }
         });
 
-        final VerticalLayout block = new VerticalLayout(tabs, host);
-        block.addClassName("chart-card");
-        block.setPadding(false);
-        block.setSpacing(false);
-        block.setWidthFull();
-        return block;
+        final VerticalLayout chartsCard = new VerticalLayout(chartTabs, activeChartContainer);
+        chartsCard.addClassName("chart-card");
+        chartsCard.setPadding(false);
+        chartsCard.setSpacing(false);
+        chartsCard.setWidthFull();
+        return chartsCard;
     }
 
-    private VerticalLayout buildGridBlock() {
-        this.grid.addColumn(ProjectionRow::year).setHeader("Year");
-        this.grid.addColumn(ProjectionRow::age).setHeader("Age");
-        this.grid.addComponentColumn(r -> phaseBadge(r.isPost())).setHeader("Phase");
-        this.grid.addColumn(r -> moneyOrDash(r.annualExp(), this.prefs.currency())).setHeader("Annual Expenses").setTextAlign(ColumnTextAlign.END);
-        this.grid.addColumn(r -> moneyOrDash(r.startCorpus(), this.prefs.currency())).setHeader("Corpus (Start)").setTextAlign(ColumnTextAlign.END);
-        this.grid.addColumn(r -> moneyOrDash(r.returns(), this.prefs.currency())).setHeader("Returns").setTextAlign(ColumnTextAlign.END);
-        this.grid.addColumn(r -> moneyOrDash(r.investment(), this.prefs.currency())).setHeader("Investment").setTextAlign(ColumnTextAlign.END);
-        this.grid.addColumn(r -> moneyOrDash(r.withdrawal(), this.prefs.currency())).setHeader("Withdrawal").setTextAlign(ColumnTextAlign.END);
-        this.grid.addColumn(r -> moneyOrDash(r.endCorpus(), this.prefs.currency())).setHeader("Corpus (End)").setTextAlign(ColumnTextAlign.END)
-                .setPartNameGenerator(r -> {
-                    if (!r.isPost()) {
-                        return null;
-                    }
-                    if (r.endCorpus().signum() <= 0) {
-                        return "corpus-end-depleted";
-                    }
-                    if (r.endCorpus().compareTo(r.annualExp().multiply(BigDecimal.TEN)) < 0) {
-                        return "corpus-end-low";
-                    }
-                    return "corpus-end-healthy";
-                });
+    private VerticalLayout buildProjectionGridCard() {
+        this.projectionGrid.addColumn(ProjectionRow::year).setHeader("Year");
+        this.projectionGrid.addColumn(ProjectionRow::age).setHeader("Age");
+        this.projectionGrid.addComponentColumn(row -> phaseBadge(row.isPost())).setHeader("Phase");
+        addMoneyColumn("Annual Expenses", ProjectionRow::annualExp);
+        addMoneyColumn("Corpus (Start)",  ProjectionRow::startCorpus);
+        addMoneyColumn("Returns",         ProjectionRow::returns);
+        addMoneyColumn("Investment",      ProjectionRow::investment);
+        addMoneyColumn("Withdrawal",      ProjectionRow::withdrawal);
+        addMoneyColumn("Corpus (End)",    ProjectionRow::endCorpus)
+                .setPartNameGenerator(this::corpusEndPartName);
 
-        this.grid.setPartNameGenerator(r -> {
-            if (r.depleted()) {
-                return "depleted-row";
-            }
-            if (r.isRetireYear()) {
-                return "retirement-row";
-            }
-            if (r.isPost() && r.endCorpus().compareTo(r.annualExp().multiply(BigDecimal.TEN)) < 0) {
-                return "low-row";
-            }
-            return null;
-        });
+        this.projectionGrid.setPartNameGenerator(this::projectionRowPartName);
 
-        this.grid.getColumns().forEach(column -> {
+        this.projectionGrid.getColumns().forEach(column -> {
             column.setAutoWidth(true);
             column.setFlexGrow(1);
         });
+        this.projectionGrid.setAllRowsVisible(true);
+        this.projectionGrid.setWidthFull();
 
-        this.grid.setAllRowsVisible(true);
-        this.grid.setWidthFull();
-
-        final var block = new VerticalLayout(new H2("Year-on-Year Projection"), this.grid);
-        block.addClassName("grid-card");
-        block.setPadding(false);
-        block.setSpacing(true);
-        block.setWidthFull();
-        return block;
+        final VerticalLayout gridCard = new VerticalLayout(
+                new H2("Year-on-Year Projection"), this.projectionGrid);
+        gridCard.addClassName("grid-card");
+        gridCard.setPadding(false);
+        gridCard.setSpacing(true);
+        gridCard.setWidthFull();
+        return gridCard;
     }
 
-    // ---- state transitions ---------------------------------------------
+    private Grid.Column<ProjectionRow> addMoneyColumn(
+            String header,
+            java.util.function.Function<ProjectionRow, BigDecimal> moneyAccessor) {
+        return this.projectionGrid
+                .addColumn(row -> moneyOrDash(moneyAccessor.apply(row), this.preferences.currency()))
+                .setHeader(header)
+                .setTextAlign(ColumnTextAlign.END);
+    }
+
+    private String corpusEndPartName(ProjectionRow row) {
+        if (!row.isPost()) {
+            return null;
+        }
+        if (row.endCorpus().signum() <= 0) {
+            return "corpus-end-depleted";
+        }
+        if (isCorpusLow(row)) {
+            return "corpus-end-low";
+        }
+        return "corpus-end-healthy";
+    }
+
+    private String projectionRowPartName(ProjectionRow row) {
+        if (row.depleted()) {
+            return "depleted-row";
+        }
+        if (row.isRetireYear()) {
+            return "retirement-row";
+        }
+        if (row.isPost() && isCorpusLow(row)) {
+            return "low-row";
+        }
+        return null;
+    }
+
+    private static boolean isCorpusLow(ProjectionRow row) {
+        return row.endCorpus().compareTo(row.annualExp().multiply(LOW_CORPUS_MULTIPLIER)) < 0;
+    }
 
     private void onInputChanged() {
-        this.store.save(this.prefs.currency(), this.form.getInputs());
+        this.inputsStore.save(this.preferences.currency(), this.form.getInputs());
         recalculate();
     }
 
-    private void onCurrencyOrPrefsChange() {
-        applyForCurrency(this.prefs.currency());
+    private void onPreferencesChanged() {
+        populateFormFromPersistedOrDefault(this.preferences.currency());
         recalculate();
     }
 
-    private void applyForCurrency(SupportedCurrency c) {
-        RetirementInputs in = this.store.get(c);
-        if (in == null) {
-            in = this.defaults.forCurrency(c);
+    private void populateFormFromPersistedOrDefault(SupportedCurrency currency) {
+        RetirementInputs inputs = this.inputsStore.get(currency);
+        if (inputs == null) {
+            inputs = this.defaultsProvider.forCurrency(currency);
         }
-        this.form.setInputs(in);
+        this.form.setInputs(inputs);
     }
 
     private void resetToDefaults() {
-        final SupportedCurrency c = this.prefs.currency();
-        final RetirementInputs defs = this.defaults.forCurrency(c);
-        this.store.save(c, defs);
-        this.form.setInputs(defs);
+        final SupportedCurrency currency = this.preferences.currency();
+        final RetirementInputs defaultInputs = this.defaultsProvider.forCurrency(currency);
+        this.inputsStore.save(currency, defaultInputs);
+        this.form.setInputs(defaultInputs);
         recalculate();
     }
 
     private void recalculate() {
         if (!this.form.isValid()) {
             this.form.validate();
-            this.corpusAtRetirement.setValue("—", null);
-            this.expensesAtRetirement.setValue("—", null);
-            this.lastsUntil.setValue("—", null);
-            this.finalCorpus.setValue("Fix the highlighted fields to recalculate.", Status.DANGER);
+            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
             return;
         }
 
-        final RetirementInputs in = this.form.getInputs();
+        final RetirementInputs inputs = this.form.getInputs();
 
-        final RetirementResult r;
+        final RetirementResult result;
         try {
-            r = RetirementCalculator.calculate(in);
-        } catch (final IllegalArgumentException e) {
-            this.corpusAtRetirement.setValue("—", null);
-            this.expensesAtRetirement.setValue("—", null);
-            this.lastsUntil.setValue("—", null);
-            this.finalCorpus.setValue(e.getMessage(), Status.DANGER);
+            result = RetirementCalculator.calculate(inputs);
+        } catch (final IllegalArgumentException invalid) {
+            showInvalidFormPlaceholders(invalid.getMessage());
             return;
         }
 
-        final SupportedCurrency c = this.prefs.currency();
-        final ProjectionRow retire = r.rows().stream()
+        final SupportedCurrency currency = this.preferences.currency();
+        updateRetirementYearSummaries(result, currency);
+        updateLastsUntilSummary(result, inputs.getLifeExp());
+        updateFinalCorpusSummary(result, currency);
+
+        this.projectionGrid.setItems(result.rows());
+
+        this.corpusChart.update(inputs, result, currency);
+        this.expensesChart.update(result, currency);
+        this.investmentsChart.update(result, currency);
+    }
+
+    private void showInvalidFormPlaceholders(String dangerMessage) {
+        this.corpusAtRetirement.setValue("—", null);
+        this.expensesAtRetirement.setValue("—", null);
+        this.lastsUntil.setValue("—", null);
+        this.finalCorpus.setValue(dangerMessage, Status.DANGER);
+    }
+
+    private void updateRetirementYearSummaries(RetirementResult result, SupportedCurrency currency) {
+        final ProjectionRow retirementRow = result.rows().stream()
                 .filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
-        if (retire != null) {
-            this.corpusAtRetirement.setValue(MoneyFormatter.format(retire.startCorpus(), c), null);
-            this.expensesAtRetirement.setValue(MoneyFormatter.format(retire.annualExp(), c), null);
+        if (retirementRow == null) {
+            return;
         }
+        this.corpusAtRetirement.setValue(MoneyFormatter.format(retirementRow.startCorpus(), currency), null);
+        this.expensesAtRetirement.setValue(MoneyFormatter.format(retirementRow.annualExp(), currency), null);
+    }
 
-        if (r.corpusDepletedAt().isPresent()) {
-            final int age = r.corpusDepletedAt().get() - 1;
-            this.lastsUntil.setValue(age + " yrs", Status.DANGER);
+    private void updateLastsUntilSummary(RetirementResult result, int lifeExpectancy) {
+        if (result.corpusDepletedAt().isPresent()) {
+            final int lastFullyCoveredAge = result.corpusDepletedAt().get() - 1;
             this.lastsUntil.setLabel("Corpus Lasts Until");
+            this.lastsUntil.setValue(lastFullyCoveredAge + " yrs", Status.DANGER);
         } else {
-            this.lastsUntil.setValue("Beyond " + in.getLifeExp() + " yrs ✓", Status.SUCCESS);
+            this.lastsUntil.setValue("Beyond " + lifeExpectancy + " yrs ✓", Status.SUCCESS);
         }
+    }
 
-        final ProjectionRow lastRow = r.lastsUntilRow();
-        final Status tone;
-        if (lastRow.endCorpus().signum() <= 0) {
-            tone = Status.DANGER;
-        } else if (lastRow.endCorpus().compareTo(lastRow.annualExp().multiply(BigDecimal.valueOf(5))) < 0) {
-            tone = Status.WARNING;
-        } else {
-            tone = Status.SUCCESS;
-        }
-        this.finalCorpus.setLabel(r.corpusDepletedAt().isPresent()
-                ? "Final Corpus (at age " + lastRow.age() + ")"
+    private void updateFinalCorpusSummary(RetirementResult result, SupportedCurrency currency) {
+        final ProjectionRow lastsUntilRow = result.lastsUntilRow();
+        final Status tone = finalCorpusTone(lastsUntilRow);
+        this.finalCorpus.setLabel(result.corpusDepletedAt().isPresent()
+                ? "Final Corpus (at age " + lastsUntilRow.age() + ")"
                 : "Final Corpus (at life expectancy)");
-        this.finalCorpus.setValue(MoneyFormatter.format(lastRow.endCorpus(), c), tone);
-
-        this.grid.setItems(r.rows());
-
-        refreshCorpusChart(in, r);
-        refreshExpensesChart(r);
-        refreshInvestmentsChart(r);
+        this.finalCorpus.setValue(MoneyFormatter.format(lastsUntilRow.endCorpus(), currency), tone);
     }
 
-    private void refreshCorpusChart(RetirementInputs in, RetirementResult r) {
-        final DataSeries series = new DataSeries("Corpus");
-        series.add(new DataSeriesItem(in.getCurrentAge(), in.getCorpus().doubleValue()));
-        for (final ProjectionRow row : r.rows()) {
-            series.add(new DataSeriesItem(row.age() + 1, Math.max(row.endCorpus().doubleValue(), 0)));
+    private static Status finalCorpusTone(ProjectionRow lastsUntilRow) {
+        if (lastsUntilRow.endCorpus().signum() <= 0) {
+            return Status.DANGER;
         }
-
-        final PlotOptionsAreaspline plot = new PlotOptionsAreaspline();
-        plot.setMarker(new Marker(false));
-
-        final Configuration cfg = this.corpusChart.getConfiguration();
-        cfg.setTitle("Corpus Trajectory");
-        cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
-        cfg.getyAxis().setTitle(this.prefs.currency().name());
-        cfg.setSeries(series);
-        cfg.setPlotOptions(plot);
-
-        final PlotLine retireLine = new PlotLine();
-        retireLine.setValue(in.getRetireAge());
-        retireLine.setColor(new SolidColor("#14b8a6"));
-        retireLine.setDashStyle(DashStyle.SHORTDASH);
-        retireLine.setWidth(2);
-
-        final XAxis x = cfg.getxAxis();
-        x.setPlotLines();
-        x.addPlotLine(retireLine);
-
-        r.corpusDepletedAt().ifPresent(age -> {
-            final PlotLine pl = new PlotLine();
-            pl.setValue(age);
-            pl.setColor(new SolidColor("#ef4444"));
-            pl.setDashStyle(DashStyle.SHORTDASH);
-            pl.setWidth(2);
-            x.addPlotLine(pl);
-        });
-        this.corpusChart.drawChart(true);
-    }
-
-    private void refreshExpensesChart(RetirementResult r) {
-        final Configuration cfg = this.expensesChart.getConfiguration();
-        cfg.setTitle("Annual Expenses");
-        cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
-        cfg.getyAxis().setTitle(this.prefs.currency().name());
-
-        final Number[] ys = new Number[r.rows().size()];
-        final String[] cats = new String[r.rows().size()];
-        for (int i = 0; i < r.rows().size(); i++) {
-            ys[i] = r.rows().get(i).annualExp().doubleValue();
-            cats[i] = Integer.toString(r.rows().get(i).age());
+        final BigDecimal healthyThreshold =
+                lastsUntilRow.annualExp().multiply(HEALTHY_CORPUS_MULTIPLIER);
+        if (lastsUntilRow.endCorpus().compareTo(healthyThreshold) < 0) {
+            return Status.WARNING;
         }
-        final ListSeries series = new ListSeries("Annual Expenses", ys);
-        cfg.setSeries(series);
-        cfg.getxAxis().setCategories(cats);
-        this.expensesChart.drawChart(true);
+        return Status.SUCCESS;
     }
 
-    private void refreshInvestmentsChart(RetirementResult r) {
-        final SupportedCurrency c = this.prefs.currency();
-        final BigDecimal invested = r.investedAtRetirement();
-        final ProjectionRow retire = r.rows().stream().filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
-        final BigDecimal total = retire == null ? invested : retire.startCorpus();
-        final BigDecimal interest = total.subtract(invested).max(BigDecimal.ZERO);
-
-        // Slice names embed the formatted amount so they appear next to each
-        // legend swatch (Vaadin Charts builds the legend from series item names).
-        final DataSeriesItem investedItem = new DataSeriesItem(
-                "Invested · " + MoneyFormatter.format(invested, c), invested.doubleValue());
-        final DataSeriesItem interestItem = new DataSeriesItem(
-                "Interest · " + MoneyFormatter.format(interest, c), interest.doubleValue());
-
-        final DataSeries series = new DataSeries();
-        series.add(investedItem);
-        series.add(interestItem);
-
-        final PlotOptionsPie pie = new PlotOptionsPie();
-        pie.setInnerSize("65%");
-        pie.setShowInLegend(true);
-        pie.getDataLabels().setEnabled(true);
-        pie.getDataLabels().setFormat("<b>{point.percentage:.1f}%</b>");
-
-        final Configuration cfg = this.investmentsChart.getConfiguration();
-        cfg.setTitle("Investments at Retirement");
-        cfg.setSubTitle("Total · " + MoneyFormatter.format(total, c));
-        cfg.getTitle().setAlign(HorizontalAlign.LEFT);
-        cfg.getSubTitle().setAlign(HorizontalAlign.LEFT);
-        cfg.getChart().setStyledMode(true);
-        cfg.getLegend().setEnabled(true);
-        cfg.getLegend().setLayout(LayoutDirection.VERTICAL);
-        cfg.getLegend().setAlign(HorizontalAlign.RIGHT);
-        cfg.getLegend().setVerticalAlign(VerticalAlign.MIDDLE);
-        // Anchor the donut on the left half of the plot area so it stays
-        // aligned with the left-aligned title rather than drifting toward
-        // the legend on the right.
-        pie.setCenter("30%", "50%");
-        cfg.setSeries(series);
-        cfg.setPlotOptions(pie);
-        this.investmentsChart.drawChart(true);
-    }
-
-    // ---- helpers --------------------------------------------------------
-
-    private static String moneyOrDash(BigDecimal v, SupportedCurrency c) {
-        if (v == null || v.signum() == 0) {
+    private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
+        if (amount == null || amount.signum() == 0) {
             return "—";
         }
-        return MoneyFormatter.format(v, c);
+        return MoneyFormatter.format(amount, currency);
     }
 
-    private static Badge phaseBadge(boolean postRetirementPhase) {
+    private static Badge phaseBadge(boolean postRetirement) {
         final Badge badge;
-        if (postRetirementPhase) {
+        if (postRetirement) {
             badge = new Badge("Post");
         } else {
             badge = new Badge("Pre");
