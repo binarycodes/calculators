@@ -27,14 +27,18 @@
     --color-accent-text: #0f766e;
 
     /* Status — background tints (translucent so they layer over any surface) */
-    --color-danger-bg: color-mix(in srgb, #ef4444 14%, transparent);
-    --color-warning-bg: color-mix(in srgb, #f97316 12%, transparent);
-    --color-success-bg: color-mix(in srgb, #10b981 12%, transparent);
-    --color-accent-bg: color-mix(in srgb, #14b8a6 12%, transparent);
+    --color-danger-bg: color-mix(in srgb, var(--color-danger-text) 14%, transparent);
+    --color-warning-bg: color-mix(in srgb, var(--color-warning-text) 12%, transparent);
+    --color-success-bg: color-mix(in srgb, var(--color-success-text) 12%, transparent);
+    --color-accent-bg: color-mix(in srgb, var(--color-accent-text) 12%, transparent);
+    --color-primary-bg: color-mix(in srgb, var(--color-primary) 12%, transparent);
 
     /* Effects ----------------------------------------------------------- */
     --shadow-chip: 0 1px 2px rgba(15, 23, 42, 0.10),
     0 0 0 1px rgba(15, 23, 42, 0.05);
+
+    /* override vaadin colors */
+    --vaadin-text-color: var(--color-text-muted);
 }
 
 html.dark {

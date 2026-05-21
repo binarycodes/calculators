@@ -4,3 +4,8 @@
 
 **/target/
 **/generated/
+**/bundles/
+**/node_modules/
+**/*generated*
+
+types.d.ts

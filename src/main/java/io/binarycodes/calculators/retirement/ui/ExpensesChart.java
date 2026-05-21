@@ -4,10 +4,16 @@ import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.charts.model.ChartType;
 import com.vaadin.flow.component.charts.model.Configuration;
 import com.vaadin.flow.component.charts.model.ListSeries;
+import com.vaadin.flow.component.charts.model.Marker;
+import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
+import com.vaadin.flow.component.dependency.CssImport;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
 
-/** Area-spline chart of annual expenses across the years (inflation curve). */
+/**
+ * Area-spline chart of annual expenses across the years (inflation curve).
+ */
+@CssImport(value = "./shadow/expenses-chart.css", themeFor = "vaadin-chart")
 public class ExpensesChart extends Chart {
 
     public ExpensesChart() {
@@ -23,16 +29,21 @@ public class ExpensesChart extends Chart {
 
     public void update(RetirementResult result, SupportedCurrency currency) {
         final Number[] ys = new Number[result.rows().size()];
-        final String[] cats = new String[result.rows().size()];
+        final String[] categories = new String[result.rows().size()];
         for (int i = 0; i < result.rows().size(); i++) {
             ys[i] = result.rows().get(i).annualExp().doubleValue();
-            cats[i] = Integer.toString(result.rows().get(i).age());
+            categories[i] = Integer.toString(result.rows().get(i).age());
         }
 
-        final Configuration cfg = getConfiguration();
-        cfg.getyAxis().setTitle(currency.name());
-        cfg.setSeries(new ListSeries("Annual Expenses", ys));
-        cfg.getxAxis().setCategories(cats);
+        final var plotOptions = new PlotOptionsAreaspline();
+        plotOptions.setMarker(new Marker(false));
+
+        final var config = getConfiguration();
+        config.getyAxis().setTitle(currency.name());
+        config.setSeries(new ListSeries("Annual Expenses", ys));
+        config.getxAxis().setCategories(categories);
+        config.setPlotOptions(plotOptions);
+
         drawChart(true);
     }
 }

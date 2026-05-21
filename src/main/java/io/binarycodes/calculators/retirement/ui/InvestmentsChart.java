@@ -9,6 +9,7 @@ import com.vaadin.flow.component.charts.model.HorizontalAlign;
 import com.vaadin.flow.component.charts.model.LayoutDirection;
 import com.vaadin.flow.component.charts.model.PlotOptionsPie;
 import com.vaadin.flow.component.charts.model.VerticalAlign;
+import com.vaadin.flow.component.dependency.CssImport;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -16,10 +17,15 @@ import io.binarycodes.calculators.retirement.domain.RetirementResult;
 
 import java.math.BigDecimal;
 
-/** Donut chart breaking down the corpus at retirement into the principal
- *  the user contributed vs. the interest earned. Legend on the right
- *  carries the formatted money amounts. */
+/**
+ * Donut chart breaking down the corpus at retirement into the principal
+ * the user contributed vs. the interest earned. Legend on the right
+ * carries the formatted money amounts.
+ */
+@CssImport(value = "./shadow/investments-chart.css", themeFor = "vaadin-chart")
 public class InvestmentsChart extends Chart {
+    private static final String INVESTMENT_CLASSNAME = "investment";
+    private static final String INTEREST_CLASSNAME = "interest";
 
     public InvestmentsChart() {
         super(ChartType.PIE);
@@ -45,11 +51,13 @@ public class InvestmentsChart extends Chart {
 
         // Slice names embed the formatted amount so they appear next to each
         // legend swatch (Vaadin Charts builds the legend from series item names).
-        final DataSeries series = new DataSeries();
-        series.add(new DataSeriesItem(
-                "Invested · " + MoneyFormatter.format(invested, currency), invested.doubleValue()));
-        series.add(new DataSeriesItem(
-                "Interest · " + MoneyFormatter.format(interest, currency), interest.doubleValue()));
+        final var investedSeriesItem = new DataSeriesItem("Invested · " + MoneyFormatter.format(invested, currency), invested.doubleValue());
+        investedSeriesItem.setClassName(INVESTMENT_CLASSNAME);
+
+        final var interestSeriesItem = new DataSeriesItem("Interest · " + MoneyFormatter.format(interest, currency), interest.doubleValue());
+        interestSeriesItem.setClassName(INTEREST_CLASSNAME);
+
+        final DataSeries series = new DataSeries(investedSeriesItem, interestSeriesItem);
 
         final PlotOptionsPie pie = new PlotOptionsPie();
         pie.setInnerSize("65%");

@@ -1,0 +1,43 @@
+:host .highcharts-plot-line.retirement_point {
+    stroke: var(--color-primary);
+    stroke-width: 2px;
+}
+
+:host .highcharts-plot-line.depletion_point {
+    stroke: var(--color-danger-text);
+    stroke-width: 2px;
+}
+
+
+:host .pre-retirement-zone {
+    &.highcharts-area {
+        fill: var(--color-success-bg);
+        fill-opacity: 1;
+    }
+
+    &.highcharts-graph {
+        stroke: var(--color-success-bg);
+    }
+}
+
+:host .retirement-zone {
+    &.highcharts-area {
+        fill: var(--color-primary-bg);
+        fill-opacity: 1;
+    }
+
+    &.highcharts-graph {
+        stroke: var(--color-primary-bg);
+    }
+}
+
+:host .post-corpus-depletion-zone {
+    &.highcharts-area {
+        fill: var(--color-danger-bg);
+        fill-opacity: 1;
+    }
+
+    &.highcharts-graph {
+        stroke: var(--color-danger-bg);
+    }
+}
