@@ -1,0 +1,13 @@
+:host {
+    & .nominal > path {
+        fill: var(--chart-primary-color);
+        fill-opacity: 0.6;
+        stroke: var(--chart-primary-color);
+    }
+
+    & .real > path {
+        fill: var(--chart-warning-color);
+        fill-opacity: 0.6;
+        stroke: var(--chart-warning-color);
+    }
+}

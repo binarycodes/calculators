@@ -1,0 +1,13 @@
+:host {
+    & .returns > path {
+        fill: var(--chart-success-color);
+        fill-opacity: 1;
+        stroke: var(--chart-success-color);
+    }
+
+    & .withdrawal > path {
+        fill: var(--chart-danger-color);
+        fill-opacity: 1;
+        stroke: var(--chart-danger-color);
+    }
+}
