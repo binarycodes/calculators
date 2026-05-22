@@ -5,6 +5,7 @@ import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -111,7 +112,23 @@ public class RetirementInputsStore {
         n.put("sipStepUpPost",  plain(in.getSipStepUpPostPct()));
         n.put("taxRate",        plain(in.getTaxRatePct()));
         n.set("futureExpenses", futureExpensesToJson(in.getFutureExpenses()));
+        n.set("retirementBenefits", retirementBenefitsToJson(in.getRetirementBenefits()));
         return n;
+    }
+
+    private ArrayNode retirementBenefitsToJson(List<RetirementBenefit> benefits) {
+        final ArrayNode arr = this.om.createArrayNode();
+        if (benefits == null) {
+            return arr;
+        }
+        for (final RetirementBenefit benefit : benefits) {
+            final ObjectNode node = this.om.createObjectNode();
+            node.put("description", benefit.getDescription());
+            node.put("amount", plain(benefit.getAmount()));
+            node.put("taxRate", plain(benefit.getTaxRatePct()));
+            arr.add(node);
+        }
+        return arr;
     }
 
     private ArrayNode futureExpensesToJson(List<FutureExpense> expenses) {
@@ -152,7 +169,25 @@ public class RetirementInputsStore {
         inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
         inputs.setTaxRatePct(bd(n, "taxRate"));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
+        inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
         return inputs;
+    }
+
+    private static List<RetirementBenefit> readRetirementBenefits(JsonNode arrayNode) {
+        final List<RetirementBenefit> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var benefit = new RetirementBenefit();
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                benefit.setDescription(entry.get("description").asText());
+            }
+            benefit.setAmount(bd(entry, "amount"));
+            benefit.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(benefit);
+        }
+        return out;
     }
 
     private static List<FutureExpense> readFutureExpenses(JsonNode arrayNode) {

@@ -2,6 +2,7 @@ package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,7 +77,25 @@ public class DefaultsProvider {
         inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
         inputs.setTaxRatePct(bd(n, "taxRate"));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
+        inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
         return inputs;
+    }
+
+    private static List<RetirementBenefit> readRetirementBenefits(JsonNode arrayNode) {
+        final List<RetirementBenefit> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var benefit = new RetirementBenefit();
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                benefit.setDescription(entry.get("description").asText());
+            }
+            benefit.setAmount(bd(entry, "amount"));
+            benefit.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(benefit);
+        }
+        return out;
     }
 
     private static List<FutureExpense> readFutureExpenses(JsonNode arrayNode) {

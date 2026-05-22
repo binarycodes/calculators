@@ -33,6 +33,7 @@ public class RetirementCalculatorForm extends VerticalLayout {
 
     private final Binder<RetirementInputs> binder = new Binder<>(RetirementInputs.class);
     private final FutureExpensesTab futureExpensesTab;
+    private final RetirementBenefitsTab retirementBenefitsTab;
     private final List<Runnable> changeListeners = new ArrayList<>();
     private boolean suppressChangeEvents;
 
@@ -44,12 +45,14 @@ public class RetirementCalculatorForm extends VerticalLayout {
 
         this.futureExpensesTab = new FutureExpensesTab(prefs);
         this.futureExpensesTab.addInputChangeListener(this::notifyChangeListeners);
+        this.retirementBenefitsTab = new RetirementBenefitsTab(prefs);
+        this.retirementBenefitsTab.addInputChangeListener(this::notifyChangeListeners);
 
         final var tabSheet = new TabSheet();
         tabSheet.add("Basic", new BasicTab(this.binder, prefs));
         tabSheet.add("Investments", new InvestmentsTab(this.binder, prefs));
         tabSheet.add("Future Expenses", this.futureExpensesTab);
-        tabSheet.add("Retirement Benefits", new RetirementBenefitsTab());
+        tabSheet.add("Retirement Benefits", this.retirementBenefitsTab);
         tabSheet.setWidthFull();
         add(tabSheet);
 
@@ -61,6 +64,7 @@ public class RetirementCalculatorForm extends VerticalLayout {
         try {
             this.binder.readBean(inputs);
             this.futureExpensesTab.setFutureExpenses(inputs.getFutureExpenses());
+            this.retirementBenefitsTab.setRetirementBenefits(inputs.getRetirementBenefits());
         } finally {
             this.suppressChangeEvents = false;
         }
@@ -70,6 +74,7 @@ public class RetirementCalculatorForm extends VerticalLayout {
         final var target = new RetirementInputs();
         this.binder.writeBeanAsDraft(target);
         target.setFutureExpenses(this.futureExpensesTab.getFutureExpenses());
+        target.setRetirementBenefits(this.retirementBenefitsTab.getRetirementBenefits());
         return target;
     }
 

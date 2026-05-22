@@ -2,6 +2,7 @@ package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
+import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
 
@@ -231,6 +232,32 @@ class RetirementCalculatorTest {
         assertTrue(diff.compareTo(tolerance) <= 0,
                 "withdrawal at " + targetYear + " expected ≈" + expectedInflated
                         + " got " + targetRow.withdrawal());
+    }
+
+    @Test
+    void retirement_benefit_after_tax_offsets_withdrawal_in_retirement_year() {
+        final RetirementInputs baseline = inrDefaults();
+        final ProjectionRow baselineRetireRow = RetirementCalculator.calculate(baseline).rows().stream()
+                .filter(ProjectionRow::isRetireYear).findFirst().orElseThrow();
+        final BigDecimal baselineWithdrawal = baselineRetireRow.withdrawal();
+
+        final RetirementInputs withBenefit = inrDefaults();
+        final RetirementBenefit pension = new RetirementBenefit();
+        pension.setDescription("Gratuity");
+        pension.setAmount(bd(2_000_000));
+        pension.setTaxRatePct(bd(20));
+        withBenefit.setRetirementBenefits(List.of(pension));
+
+        final ProjectionRow withBenefitRetireRow = RetirementCalculator.calculate(withBenefit).rows().stream()
+                .filter(ProjectionRow::isRetireYear).findFirst().orElseThrow();
+
+        // Net benefit = 2,000,000 × (1 − 0.20) = 1,600,000.
+        final BigDecimal expectedNet = bd(1_600_000);
+        final BigDecimal expectedWithdrawal = baselineWithdrawal.subtract(expectedNet);
+        final BigDecimal diff = withBenefitRetireRow.withdrawal().subtract(expectedWithdrawal).abs();
+        final BigDecimal tolerance = expectedNet.movePointLeft(4);
+        assertTrue(diff.compareTo(tolerance) <= 0,
+                "withdrawal expected ≈" + expectedWithdrawal + " got " + withBenefitRetireRow.withdrawal());
     }
 
     @Test

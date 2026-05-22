@@ -2,6 +2,7 @@ package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
+import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
 
@@ -85,8 +86,12 @@ public final class RetirementCalculator {
 
             final BigDecimal futureExpensesThisYear = inflatedFutureExpensesFor(
                     in.getFutureExpenses(), year, currentYear);
+            final BigDecimal netBenefitsThisYear = isRetireYear
+                    ? netRetirementBenefits(in.getRetirementBenefits())
+                    : BigDecimal.ZERO;
             final BigDecimal withdrawal = (isPost ? annualExp : BigDecimal.ZERO)
-                    .add(futureExpensesThisYear, MC);
+                    .add(futureExpensesThisYear, MC)
+                    .subtract(netBenefitsThisYear, MC);
             final BigDecimal endCorpus;
 
             if (withdrawal.signum() == 0) {
@@ -130,6 +135,26 @@ public final class RetirementCalculator {
                 List.copyOf(rows),
                 Optional.ofNullable(corpusDepletedAt),
                 investedAtRetirement);
+    }
+
+    private static BigDecimal netRetirementBenefits(List<RetirementBenefit> benefits) {
+        if (benefits == null || benefits.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (final RetirementBenefit benefit : benefits) {
+            if (benefit == null) {
+                continue;
+            }
+            final BigDecimal amount = benefit.getAmount();
+            if (amount == null || amount.signum() <= 0) {
+                continue;
+            }
+            final BigDecimal taxRate = pctToFraction(benefit.getTaxRatePct());
+            final BigDecimal net = amount.multiply(BigDecimal.ONE.subtract(taxRate, MC), MC);
+            sum = sum.add(net, MC);
+        }
+        return sum;
     }
 
     private static BigDecimal inflatedFutureExpensesFor(List<FutureExpense> expenses,

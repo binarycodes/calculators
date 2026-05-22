@@ -41,4 +41,5 @@ public class RetirementInputs {
     private BigDecimal taxRatePct;
 
     private List<FutureExpense> futureExpenses = new ArrayList<>();
+    private List<RetirementBenefit> retirementBenefits = new ArrayList<>();
 }
