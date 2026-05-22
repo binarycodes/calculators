@@ -67,8 +67,10 @@ public class DefaultsProvider {
                 bd(n, "growthPost"),
                 bd(n, "monthlyInvPre"),
                 bd(n, "sipGrowthPre"),
+                bd(n, "sipStepUpPre"),
                 bd(n, "monthlyInvPost"),
-                bd(n, "sipGrowthPost"));
+                bd(n, "sipGrowthPost"),
+                bd(n, "sipStepUpPost"));
     }
 
     private static BigDecimal bd(JsonNode n, String field) {
@@ -84,7 +86,7 @@ public class DefaultsProvider {
                 BigDecimal.valueOf(5_000_000), BigDecimal.valueOf(50_000),
                 BigDecimal.valueOf(6),
                 BigDecimal.valueOf(12), BigDecimal.valueOf(8),
-                BigDecimal.valueOf(25_000), BigDecimal.valueOf(12),
-                BigDecimal.ZERO, BigDecimal.ZERO);
+                BigDecimal.valueOf(25_000), BigDecimal.valueOf(12), BigDecimal.ZERO,
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
     }
 }

@@ -31,6 +31,8 @@ public class RetirementInputs {
 
     private BigDecimal monthlyInvPre;
     private BigDecimal sipGrowthPrePct;
+    private BigDecimal sipStepUpPrePct;
     private BigDecimal monthlyInvPost;
     private BigDecimal sipGrowthPostPct;
+    private BigDecimal sipStepUpPostPct;
 }

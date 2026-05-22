@@ -10,8 +10,10 @@
     "growthPost": "8",
     "monthlyInvPre": "150000",
     "sipGrowthPre": "10",
+    "sipStepUpPre": "0",
     "monthlyInvPost": "0",
-    "sipGrowthPost": "0"
+    "sipGrowthPost": "0",
+    "sipStepUpPost": "0"
   },
   "EUR": {
     "currentAge": "38",
@@ -24,8 +26,10 @@
     "growthPost": "4",
     "monthlyInvPre": "1500",
     "sipGrowthPre": "9",
+    "sipStepUpPre": "0",
     "monthlyInvPost": "0",
-    "sipGrowthPost": "4"
+    "sipGrowthPost": "4",
+    "sipStepUpPost": "0"
   },
   "USD": {
     "currentAge": "38",
@@ -38,7 +42,9 @@
     "growthPost": "5",
     "monthlyInvPre": "500",
     "sipGrowthPre": "8",
+    "sipStepUpPre": "0",
     "monthlyInvPost": "0",
-    "sipGrowthPost": "5"
+    "sipGrowthPost": "5",
+    "sipStepUpPost": "0"
   }
 }

@@ -62,6 +62,8 @@ public class RetirementCalculatorForm extends VerticalLayout {
     private final NumberField corpusReturnsPostPct = percentageField("After Retirement");
     private final NumberField sipReturnsPrePct = percentageField("Growth Percentage");
     private final NumberField sipReturnsPostPct = percentageField("Growth Percentage");
+    private final NumberField sipStepUpPrePct = percentageField("Step Up (annual)");
+    private final NumberField sipStepUpPostPct = percentageField("Step Up (annual)");
 
     private final Binder<RetirementInputs> binder = new Binder<>(RetirementInputs.class);
     private final List<Runnable> changeListeners = new ArrayList<>();
@@ -122,9 +124,13 @@ public class RetirementCalculatorForm extends VerticalLayout {
                 withPercentageSuffix(this.corpusReturnsPostPct));
         final var sipContributionsSection = buildNestedSectionCard("Monthly SIP Contributions",
                 buildSectionCard("Before Retirement",
-                        this.monthlyInvestmentPre, withPercentageSuffix(this.sipReturnsPrePct)),
+                        this.monthlyInvestmentPre,
+                        withPercentageSuffix(this.sipReturnsPrePct),
+                        withPercentageSuffix(this.sipStepUpPrePct)),
                 buildSectionCard("After Retirement",
-                        this.monthlyInvestmentPost, withPercentageSuffix(this.sipReturnsPostPct))
+                        this.monthlyInvestmentPost,
+                        withPercentageSuffix(this.sipReturnsPostPct),
+                        withPercentageSuffix(this.sipStepUpPostPct))
         );
 
         add(timelineSection, currentFinancesSection, corpusReturnsSection, sipContributionsSection);
@@ -189,6 +195,10 @@ public class RetirementCalculatorForm extends VerticalLayout {
                 RetirementInputs::getSipGrowthPrePct, RetirementInputs::setSipGrowthPrePct);
         bindPercentage(this.sipReturnsPostPct,
                 RetirementInputs::getSipGrowthPostPct, RetirementInputs::setSipGrowthPostPct);
+        bindPercentage(this.sipStepUpPrePct,
+                RetirementInputs::getSipStepUpPrePct, RetirementInputs::setSipStepUpPrePct);
+        bindPercentage(this.sipStepUpPostPct,
+                RetirementInputs::getSipStepUpPostPct, RetirementInputs::setSipStepUpPostPct);
     }
 
     private void bindPercentage(NumberField field,

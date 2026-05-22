@@ -38,6 +38,8 @@ public final class RetirementCalculator {
         final BigDecimal growthPost = pctToFraction(in.getGrowthPostPct());
         final BigDecimal sipGrowthPre = pctToFraction(in.getSipGrowthPrePct());
         final BigDecimal sipGrowthPost = pctToFraction(in.getSipGrowthPostPct());
+        final BigDecimal sipStepUpPre = pctToFraction(in.getSipStepUpPrePct());
+        final BigDecimal sipStepUpPost = pctToFraction(in.getSipStepUpPostPct());
         final BigDecimal annualExp0 = in.getMonthlyExpenses().multiply(TWELVE, MC);
         final BigDecimal annualInvPre = in.getMonthlyInvPre().multiply(TWELVE, MC);
         final BigDecimal annualInvPost = in.getMonthlyInvPost().multiply(TWELVE, MC);
@@ -66,7 +68,9 @@ public final class RetirementCalculator {
 
             final BigDecimal mainRate = isPost ? growthPost : growthPre;
             final BigDecimal sipRate = isPost ? sipGrowthPost : sipGrowthPre;
-            final BigDecimal investment = isPost ? annualInvPost : annualInvPre;
+            final int yearsInPhase = isPost ? age - in.getRetireAge() : age - in.getCurrentAge();
+            final BigDecimal stepUpFactor = pow1plus(isPost ? sipStepUpPost : sipStepUpPre, yearsInPhase);
+            final BigDecimal investment = (isPost ? annualInvPost : annualInvPre).multiply(stepUpFactor, MC);
             totalInvested = totalInvested.add(investment, MC);
 
             final BigDecimal startCorpus = mainCorpus.add(sipCorpus, MC);

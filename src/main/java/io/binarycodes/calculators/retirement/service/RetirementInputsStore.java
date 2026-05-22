@@ -101,8 +101,10 @@ public class RetirementInputsStore {
         n.put("growthPost",     plain(in.getGrowthPostPct()));
         n.put("monthlyInvPre",  plain(in.getMonthlyInvPre()));
         n.put("sipGrowthPre",   plain(in.getSipGrowthPrePct()));
+        n.put("sipStepUpPre",   plain(in.getSipStepUpPrePct()));
         n.put("monthlyInvPost", plain(in.getMonthlyInvPost()));
         n.put("sipGrowthPost",  plain(in.getSipGrowthPostPct()));
+        n.put("sipStepUpPost",  plain(in.getSipStepUpPostPct()));
         return n;
     }
 
@@ -122,8 +124,10 @@ public class RetirementInputsStore {
                 bd(n, "growthPost"),
                 bd(n, "monthlyInvPre"),
                 bd(n, "sipGrowthPre"),
+                bd(n, "sipStepUpPre"),
                 bd(n, "monthlyInvPost"),
-                bd(n, "sipGrowthPost"));
+                bd(n, "sipGrowthPost"),
+                bd(n, "sipStepUpPost"));
     }
 
     private static BigDecimal bd(JsonNode n, String field) {
