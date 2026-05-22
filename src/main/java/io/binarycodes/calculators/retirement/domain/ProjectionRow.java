@@ -18,4 +18,9 @@ public record ProjectionRow(
         BigDecimal endCorpus,
         boolean depleted
 ) {
+    private static final BigDecimal LOW_CORPUS_MULTIPLIER = BigDecimal.TEN;
+
+    public boolean lowCorpus() {
+        return endCorpus().compareTo(annualExp().multiply(LOW_CORPUS_MULTIPLIER)) < 0;
+    }
 }

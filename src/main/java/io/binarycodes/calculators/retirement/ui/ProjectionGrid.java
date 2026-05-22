@@ -26,7 +26,6 @@ import java.util.function.Function;
  */
 public class ProjectionGrid extends Grid<ProjectionRow> {
 
-    private static final BigDecimal LOW_CORPUS_MULTIPLIER = BigDecimal.TEN;
     private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
 
     private final UserPreferences preferences;
@@ -51,26 +50,23 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
     private void configureColumns() {
         addColumn(ProjectionRow::year).setHeader("Year");
         addColumn(ProjectionRow::age).setHeader("Age");
-        addComponentColumn(row -> phaseBadge(row.isPost())).setHeader("Phase");
+        addComponentColumn(ProjectionGrid::phaseBadge).setHeader("Phase");
         addMonthlyAndYearlyColumn("Expenses", ProjectionRow::annualExp);
         addMoneyColumn("Corpus (Start)", ProjectionRow::startCorpus);
         addMonthlyAndYearlyColumn("Returns", ProjectionRow::returns);
         addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment);
         addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal);
-        addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus)
-                .setPartNameGenerator(ProjectionGrid::corpusEndPartName);
+        addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus).setPartNameGenerator(ProjectionGrid::corpusEndPartName);
     }
 
-    private Column<ProjectionRow> addMoneyColumn(
-            String header, Function<ProjectionRow, BigDecimal> moneyAccessor) {
+    private Column<ProjectionRow> addMoneyColumn(String header, Function<ProjectionRow, BigDecimal> moneyAccessor) {
         return addColumn(row -> moneyOrDash(moneyAccessor.apply(row), this.preferences.currency()))
                 .setHeader(header)
                 .setTextAlign(ColumnTextAlign.END)
                 .setTooltipGenerator(row -> wordsTooltip(moneyAccessor.apply(row)));
     }
 
-    private Column<ProjectionRow> addMonthlyAndYearlyColumn(
-            String header, Function<ProjectionRow, BigDecimal> yearlyAccessor) {
+    private Column<ProjectionRow> addMonthlyAndYearlyColumn(String header, Function<ProjectionRow, BigDecimal> yearlyAccessor) {
         // Each line carries its own ``title`` attribute so hovering over the
         // monthly or yearly value surfaces the amount in words for that line.
         final LitRenderer<ProjectionRow> renderer = LitRenderer.<ProjectionRow>of(
@@ -129,7 +125,7 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         if (row.endCorpus().signum() <= 0) {
             return "corpus-end-depleted";
         }
-        if (isCorpusLow(row)) {
+        if (row.lowCorpus()) {
             return "corpus-end-low";
         }
         return "corpus-end-healthy";
@@ -142,14 +138,10 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         if (row.isRetireYear()) {
             return "retirement-row";
         }
-        if (row.isPost() && isCorpusLow(row)) {
+        if (row.isPost() && row.lowCorpus()) {
             return "low-row";
         }
         return null;
-    }
-
-    private static boolean isCorpusLow(ProjectionRow row) {
-        return row.endCorpus().compareTo(row.annualExp().multiply(LOW_CORPUS_MULTIPLIER)) < 0;
     }
 
     private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
@@ -159,14 +151,21 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         return MoneyFormatter.format(amount, currency);
     }
 
-    private static Badge phaseBadge(boolean postRetirement) {
+    private static Badge phaseBadge(ProjectionRow row) {
         final Badge badge;
-        if (postRetirement) {
+        if (row.isPost()) {
             badge = new Badge("Post");
         } else {
             badge = new Badge("Pre");
             badge.addThemeVariants(BadgeVariant.SUCCESS);
         }
+
+        if (row.depleted()) {
+            badge.addThemeVariants(BadgeVariant.ERROR);
+        } else if (row.lowCorpus()) {
+            badge.addThemeVariants(BadgeVariant.WARNING);
+        }
+
         badge.addThemeVariants(BadgeVariant.SMALL);
         return badge;
     }
