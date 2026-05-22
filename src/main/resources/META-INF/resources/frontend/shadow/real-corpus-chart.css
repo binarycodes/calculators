@@ -1,13 +1,15 @@
 :host {
     & .nominal > path {
         fill: var(--chart-primary-color);
-        fill-opacity: 0.6;
+        fill-opacity: 1;
         stroke: var(--chart-primary-color);
+        stroke-width: 1px;
     }
 
     & .real > path {
         fill: var(--chart-warning-color);
-        fill-opacity: 0.6;
+        fill-opacity: 1;
         stroke: var(--chart-warning-color);
+        stroke-width: 1px;
     }
 }
