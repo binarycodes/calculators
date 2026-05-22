@@ -1,0 +1,13 @@
+:host {
+    & .investment {
+        fill: var(--color-primary-bg);
+        fill-opacity: 1;
+        stroke: var(--color-primary-bg);
+    }
+
+    & .interest {
+        fill: var(--color-success-bg);
+        fill-opacity: 1;
+        stroke: var(--color-success-bg);
+    }
+}

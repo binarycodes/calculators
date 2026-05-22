@@ -30,8 +30,8 @@ import java.math.BigDecimal;
  * The retirement calculator screen. Composes the input form, summary cards,
  * charts, and projection grid; owns no input fields, chart configuration, or
  * grid columns directly — those live in {@link RetirementCalculatorForm},
- * {@link CorpusChart}, {@link ExpensesChart}, {@link InvestmentsChart}, and
- * {@link ProjectionGrid}.
+ * {@link CorpusChart}, {@link ExpensesChart}, {@link InvestmentsChart},
+ * {@link ReturnOnInvestmentsChart}, and {@link ProjectionGrid}.
  */
 @Route("retirement")
 @RouteAlias("")
@@ -52,9 +52,10 @@ public class RetirementView extends VerticalLayout {
     private final SummaryCard lastsUntil           = new SummaryCard("Corpus Lasts Until");
     private final SummaryCard finalCorpus          = new SummaryCard("Final Corpus");
 
-    private final CorpusChart       corpusChart      = new CorpusChart();
-    private final ExpensesChart     expensesChart    = new ExpensesChart();
-    private final InvestmentsChart  investmentsChart = new InvestmentsChart();
+    private final CorpusChart                corpusChart                = new CorpusChart();
+    private final ExpensesChart              expensesChart              = new ExpensesChart();
+    private final InvestmentsChart           investmentsChart           = new InvestmentsChart();
+    private final ReturnOnInvestmentsChart   returnOnInvestmentsChart   = new ReturnOnInvestmentsChart();
 
     private final ProjectionGrid projectionGrid;
 
@@ -126,7 +127,8 @@ public class RetirementView extends VerticalLayout {
         final Tabs chartTabs = new Tabs(
                 new Tab("Corpus"),
                 new Tab("Annual Expenses"),
-                new Tab("Investments"));
+                new Tab("Investments"),
+                new Tab("Return on Investments"));
 
         final VerticalLayout activeChartContainer = new VerticalLayout();
         activeChartContainer.setPadding(false);
@@ -137,9 +139,10 @@ public class RetirementView extends VerticalLayout {
         chartTabs.addSelectedChangeListener(event -> {
             activeChartContainer.removeAll();
             switch (event.getSelectedTab().getLabel()) {
-                case "Corpus"          -> activeChartContainer.add(this.corpusChart);
-                case "Annual Expenses" -> activeChartContainer.add(this.expensesChart);
-                case "Investments"     -> activeChartContainer.add(this.investmentsChart);
+                case "Corpus"                -> activeChartContainer.add(this.corpusChart);
+                case "Annual Expenses"       -> activeChartContainer.add(this.expensesChart);
+                case "Investments"           -> activeChartContainer.add(this.investmentsChart);
+                case "Return on Investments" -> activeChartContainer.add(this.returnOnInvestmentsChart);
             }
         });
 
@@ -214,6 +217,7 @@ public class RetirementView extends VerticalLayout {
         this.corpusChart.update(inputs, result, currency);
         this.expensesChart.update(result, currency);
         this.investmentsChart.update(result, currency);
+        this.returnOnInvestmentsChart.update(inputs, result, currency);
     }
 
     private void showInvalidFormPlaceholders(String dangerMessage) {
