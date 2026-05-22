@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
 import com.vaadin.flow.component.charts.model.ZoneAxis;
 import com.vaadin.flow.component.charts.model.Zones;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
@@ -53,6 +54,7 @@ public class CorpusChart extends Chart {
 
         final var config = getConfiguration();
         config.getyAxis().setTitle(currency.name());
+        config.getyAxis().getLabels().setFormatter(MoneyFormatter.compactAxisFormatterJs(currency));
         config.setSeries(series);
         config.setPlotOptions(plotOptions);
 

@@ -41,4 +41,28 @@ public final class MoneyFormatter {
                 .format(value)
                 .toString();
     }
+
+    /**
+     * JS function (as a string) suitable for {@code Highcharts} axis labels.
+     * Uses the browser's {@code Intl.NumberFormat} with compact notation —
+     * the browser implementation is backed by the same CLDR / ICU data this
+     * class uses server-side, so the output matches {@link #formatShort}
+     * (Indian → L / Cr, Western → K / M / B / T) for the currency's locale.
+     */
+    public static String compactAxisFormatterJs(SupportedCurrency supportedCurrency) {
+        return """
+                function() {
+                    const formatter = new Intl.NumberFormat('%s', {
+                        notation: 'compact',
+                        maximumFractionDigits: 1,
+                        style: 'currency',
+                        currency: '%s',
+                        currencyDisplay: 'narrowSymbol'
+                    });
+                    return formatter.format(this.value);
+                }
+                """.formatted(
+                supportedCurrency.locale().toLanguageTag(),
+                supportedCurrency.name());
+    }
 }

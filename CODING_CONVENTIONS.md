@@ -78,6 +78,10 @@ code should follow it without being prompted.
 - `BigDecimal` is the right type for money. Use `MathContext.DECIMAL64` for
   intermediate arithmetic, `RoundingMode.HALF_UP` for display rounding.
 - Use `var` for locals when the right-hand side makes the type obvious.
+- **Multi-line strings use Java text blocks (`""" … """`), never string
+  concatenation with `+`.** Applies to anything that spans more than one
+  line — HTML / JS / Lit / SQL templates, formatted error messages, etc.
+  Combine with `.formatted(...)` for interpolation rather than `+`.
 
 ## 5. Vaadin / form binding
 

@@ -4,6 +4,7 @@ import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.charts.model.ChartType;
 import com.vaadin.flow.component.charts.model.Configuration;
 import com.vaadin.flow.component.charts.model.ListSeries;
+import io.binarycodes.calculators.base.money.MoneyFormatter;
 import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -40,6 +41,7 @@ public class ExpensesChart extends Chart {
 
         final var config = getConfiguration();
         config.getyAxis().setTitle(currency.name());
+        config.getyAxis().getLabels().setFormatter(MoneyFormatter.compactAxisFormatterJs(currency));
         config.setSeries(new ListSeries("Annual Expenses", ys));
         config.getxAxis().setCategories(categories);
         config.setPlotOptions(plotOptions);
