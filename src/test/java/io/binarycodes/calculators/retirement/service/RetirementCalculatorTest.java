@@ -22,8 +22,8 @@ class RetirementCalculatorTest {
                 bd(15_000_000), bd(100_000),
                 bd(8),
                 bd(12), bd(8),
-                bd(150_000), bd(12),
-                bd(0), bd(0));
+                bd(150_000), bd(12), bd(0),
+                bd(0), bd(0), bd(0));
     }
 
     @Test
@@ -101,14 +101,14 @@ class RetirementCalculatorTest {
     @Test
     void rejects_currentAge_ge_retireAge() {
         final var bad = new RetirementInputs(50, 50, 90,
-                bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
+                bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
         assertThrows(IllegalArgumentException.class, () -> RetirementCalculator.calculate(bad));
     }
 
     @Test
     void rejects_retireAge_ge_lifeExp() {
         final var bad = new RetirementInputs(35, 90, 90,
-                bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
+                bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
         assertThrows(IllegalArgumentException.class, () -> RetirementCalculator.calculate(bad));
     }
 
