@@ -1,11 +1,11 @@
 :host {
     & .investment {
-        fill: var(--color-primary-bg);
+        fill: var(--chart-primary-color);
         fill-opacity: 1;
     }
 
     & .interest {
-        fill: var(--color-success-bg);
+        fill: var(--chart-success-color);
         fill-opacity: 1;
     }
 }

@@ -1,13 +1,13 @@
 :host {
-    & .investment {
-        fill: var(--color-primary-bg);
+    & .investment > path {
+        fill: var(--chart-primary-color);
         fill-opacity: 1;
-        stroke: var(--color-primary-bg);
+        stroke: var(--chart-primary-color);
     }
 
-    & .interest {
-        fill: var(--color-success-bg);
+    & .interest > path {
+        fill: var(--chart-success-color);
         fill-opacity: 1;
-        stroke: var(--color-success-bg);
+        stroke: var(--chart-success-color);
     }
 }

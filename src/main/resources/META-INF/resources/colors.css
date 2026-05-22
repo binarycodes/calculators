@@ -37,6 +37,14 @@
     --shadow-chip: 0 1px 2px rgba(15, 23, 42, 0.10),
     0 0 0 1px rgba(15, 23, 42, 0.05);
 
+
+    /* Charts ----------------------------------------------------------- */
+    --chart-primary-color: #7C9CBF;
+    --chart-secondary-color: #B7A7C9;
+    --chart-success-color: #9DBD9E;
+    --chart-warning-color: #D8B47A;
+    --chart-danger-color: #D79A9A;
+
     /* override vaadin colors */
     --vaadin-text-color: var(--color-text-muted);
 }
@@ -68,6 +76,14 @@ html.dark {
     --color-warning-text: #fbbf24;
     --color-success-text: #34d399;
     --color-accent-text: #5eead4;
+
+    /* Charts ----------------------------------------------------------- */
+    --chart-primary-color: #7FAEDC;
+    --chart-secondary-color: #B8A6D6;
+    --chart-success-color: #9FC8A1;
+    --chart-warning-color: #DDB678;
+    --chart-danger-color: #D89A9A;
+
 
     /* Status backgrounds (tints work in either theme via color-mix) ----- */
     /* Effects ----------------------------------------------------------- */

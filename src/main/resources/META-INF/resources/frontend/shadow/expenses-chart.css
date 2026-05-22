@@ -1,10 +1,10 @@
 :host {
     & .highcharts-area {
-        fill: var(--color-primary-bg);
+        fill: var(--chart-primary-color);
         fill-opacity: 1;
     }
 
     & .highcharts-graph {
-        stroke: var(--color-primary-bg);
+        stroke: var(--chart-primary-color);
     }
 }
