@@ -2,6 +2,8 @@ package io.binarycodes.calculators.retirement.ui;
 
 import com.vaadin.browserless.BrowserlessExtension;
 import com.vaadin.browserless.BrowserlessTest;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.NumberField;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -39,6 +41,13 @@ class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
     @Test
     void renders_two_step_up_fields() {
         final var form = new RetirementCalculatorForm(new UserPreferences());
+        // TabSheet swaps the selected tab's content into the component tree on
+        // the next client round trip, so attach the form to a UI and flush
+        // before searching for fields in the (initially-inactive) Investments
+        // tab.
+        UI.getCurrent().add(form);
+        find(TabSheet.class, form).single().setSelectedIndex(1);
+        roundTrip();
 
         final List<NumberField> stepUpFields = find(NumberField.class, form)
                 .withCaption("Step Up Percentage (Yearly)").all();
@@ -51,13 +60,22 @@ class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
     void step_up_values_round_trip_through_binder() {
         final var form = new RetirementCalculatorForm(new UserPreferences());
 
-        final RetirementInputs initial = new RetirementInputs(
-                38, 45, 90,
-                BigDecimal.valueOf(15_000_000), BigDecimal.valueOf(100_000),
-                BigDecimal.valueOf(8),
-                BigDecimal.valueOf(12), BigDecimal.valueOf(8),
-                BigDecimal.valueOf(150_000), BigDecimal.valueOf(12), BigDecimal.valueOf(10),
-                BigDecimal.valueOf(50_000), BigDecimal.valueOf(8), BigDecimal.valueOf(5));
+        final RetirementInputs initial = new RetirementInputs();
+        initial.setCurrentAge(38);
+        initial.setRetireAge(45);
+        initial.setLifeExp(90);
+        initial.setCorpus(BigDecimal.valueOf(15_000_000));
+        initial.setMonthlyExpenses(BigDecimal.valueOf(100_000));
+        initial.setInflationPct(BigDecimal.valueOf(8));
+        initial.setGrowthPrePct(BigDecimal.valueOf(12));
+        initial.setGrowthPostPct(BigDecimal.valueOf(8));
+        initial.setMonthlyInvPre(BigDecimal.valueOf(150_000));
+        initial.setSipGrowthPrePct(BigDecimal.valueOf(12));
+        initial.setSipStepUpPrePct(BigDecimal.valueOf(10));
+        initial.setMonthlyInvPost(BigDecimal.valueOf(50_000));
+        initial.setSipGrowthPostPct(BigDecimal.valueOf(8));
+        initial.setSipStepUpPostPct(BigDecimal.valueOf(5));
+        initial.setTaxRatePct(BigDecimal.valueOf(15));
         form.setInputs(initial);
 
         final RetirementInputs roundTripped = form.getInputs();

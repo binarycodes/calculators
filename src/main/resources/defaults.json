@@ -13,7 +13,8 @@
     "sipStepUpPre": "0",
     "monthlyInvPost": "0",
     "sipGrowthPost": "0",
-    "sipStepUpPost": "0"
+    "sipStepUpPost": "0",
+    "taxRate": "0"
   },
   "EUR": {
     "currentAge": "38",
@@ -29,7 +30,8 @@
     "sipStepUpPre": "0",
     "monthlyInvPost": "0",
     "sipGrowthPost": "4",
-    "sipStepUpPost": "0"
+    "sipStepUpPost": "0",
+    "taxRate": "0"
   },
   "USD": {
     "currentAge": "38",
@@ -45,6 +47,7 @@
     "sipStepUpPre": "0",
     "monthlyInvPost": "0",
     "sipGrowthPost": "5",
-    "sipStepUpPost": "0"
+    "sipStepUpPost": "0",
+    "taxRate": "0"
   }
 }

@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +14,9 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,21 +59,44 @@ public class DefaultsProvider {
     }
 
     private RetirementInputs toInputs(JsonNode n) {
-        return new RetirementInputs(
-                n.get("currentAge").asInt(),
-                n.get("retireAge").asInt(),
-                n.get("lifeExp").asInt(),
-                bd(n, "corpus"),
-                bd(n, "monthlyExp"),
-                bd(n, "inflation"),
-                bd(n, "growthPre"),
-                bd(n, "growthPost"),
-                bd(n, "monthlyInvPre"),
-                bd(n, "sipGrowthPre"),
-                bd(n, "sipStepUpPre"),
-                bd(n, "monthlyInvPost"),
-                bd(n, "sipGrowthPost"),
-                bd(n, "sipStepUpPost"));
+        final var inputs = new RetirementInputs();
+        inputs.setCurrentAge(n.get("currentAge").asInt());
+        inputs.setRetireAge(n.get("retireAge").asInt());
+        inputs.setLifeExp(n.get("lifeExp").asInt());
+        inputs.setCorpus(bd(n, "corpus"));
+        inputs.setMonthlyExpenses(bd(n, "monthlyExp"));
+        inputs.setInflationPct(bd(n, "inflation"));
+        inputs.setGrowthPrePct(bd(n, "growthPre"));
+        inputs.setGrowthPostPct(bd(n, "growthPost"));
+        inputs.setMonthlyInvPre(bd(n, "monthlyInvPre"));
+        inputs.setSipGrowthPrePct(bd(n, "sipGrowthPre"));
+        inputs.setSipStepUpPrePct(bd(n, "sipStepUpPre"));
+        inputs.setMonthlyInvPost(bd(n, "monthlyInvPost"));
+        inputs.setSipGrowthPostPct(bd(n, "sipGrowthPost"));
+        inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
+        inputs.setTaxRatePct(bd(n, "taxRate"));
+        inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
+        return inputs;
+    }
+
+    private static List<FutureExpense> readFutureExpenses(JsonNode arrayNode) {
+        final List<FutureExpense> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var expense = new FutureExpense();
+            if (entry.has("year") && !entry.get("year").isNull()) {
+                expense.setYear(entry.get("year").asInt());
+            }
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                expense.setDescription(entry.get("description").asText());
+            }
+            expense.setAmount(bd(entry, "amount"));
+            expense.setInflationPct(bd(entry, "inflation"));
+            out.add(expense);
+        }
+        return out;
     }
 
     private static BigDecimal bd(JsonNode n, String field) {
@@ -82,11 +108,22 @@ public class DefaultsProvider {
     }
 
     private static RetirementInputs fallback() {
-        return new RetirementInputs(35, 60, 90,
-                BigDecimal.valueOf(5_000_000), BigDecimal.valueOf(50_000),
-                BigDecimal.valueOf(6),
-                BigDecimal.valueOf(12), BigDecimal.valueOf(8),
-                BigDecimal.valueOf(25_000), BigDecimal.valueOf(12), BigDecimal.ZERO,
-                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        final var inputs = new RetirementInputs();
+        inputs.setCurrentAge(35);
+        inputs.setRetireAge(60);
+        inputs.setLifeExp(90);
+        inputs.setCorpus(BigDecimal.valueOf(5_000_000));
+        inputs.setMonthlyExpenses(BigDecimal.valueOf(50_000));
+        inputs.setInflationPct(BigDecimal.valueOf(6));
+        inputs.setGrowthPrePct(BigDecimal.valueOf(12));
+        inputs.setGrowthPostPct(BigDecimal.valueOf(8));
+        inputs.setMonthlyInvPre(BigDecimal.valueOf(25_000));
+        inputs.setSipGrowthPrePct(BigDecimal.valueOf(12));
+        inputs.setSipStepUpPrePct(BigDecimal.ZERO);
+        inputs.setMonthlyInvPost(BigDecimal.ZERO);
+        inputs.setSipGrowthPostPct(BigDecimal.ZERO);
+        inputs.setSipStepUpPostPct(BigDecimal.ZERO);
+        inputs.setTaxRatePct(BigDecimal.ZERO);
+        return inputs;
     }
 }

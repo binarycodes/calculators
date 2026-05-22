@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.retirement.service;
 
+import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
@@ -9,6 +10,7 @@ import java.math.MathContext;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -81,7 +83,10 @@ public final class RetirementCalculator {
             BigDecimal mainAfter = mainCorpus.add(mainReturns, MC);
             BigDecimal sipAfter = sipCorpus.add(sipReturns, MC).add(investment, MC);
 
-            final BigDecimal withdrawal = isPost ? annualExp : BigDecimal.ZERO;
+            final BigDecimal futureExpensesThisYear = inflatedFutureExpensesFor(
+                    in.getFutureExpenses(), year, currentYear);
+            final BigDecimal withdrawal = (isPost ? annualExp : BigDecimal.ZERO)
+                    .add(futureExpensesThisYear, MC);
             final BigDecimal endCorpus;
 
             if (withdrawal.signum() == 0) {
@@ -125,6 +130,27 @@ public final class RetirementCalculator {
                 List.copyOf(rows),
                 Optional.ofNullable(corpusDepletedAt),
                 investedAtRetirement);
+    }
+
+    private static BigDecimal inflatedFutureExpensesFor(List<FutureExpense> expenses,
+                                                        int year, int currentYear) {
+        if (expenses == null || expenses.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (final FutureExpense expense : expenses) {
+            if (expense == null || !Objects.equals(expense.getYear(), year)) {
+                continue;
+            }
+            final BigDecimal amount = expense.getAmount();
+            if (amount == null || amount.signum() <= 0) {
+                continue;
+            }
+            final BigDecimal itemInflation = pctToFraction(expense.getInflationPct());
+            final int yearsFromNow = Math.max(0, year - currentYear);
+            sum = sum.add(amount.multiply(pow1plus(itemInflation, yearsFromNow), MC), MC);
+        }
+        return sum;
     }
 
     private static BigDecimal pctToFraction(BigDecimal pct) {

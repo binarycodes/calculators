@@ -4,15 +4,19 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -105,7 +109,25 @@ public class RetirementInputsStore {
         n.put("monthlyInvPost", plain(in.getMonthlyInvPost()));
         n.put("sipGrowthPost",  plain(in.getSipGrowthPostPct()));
         n.put("sipStepUpPost",  plain(in.getSipStepUpPostPct()));
+        n.put("taxRate",        plain(in.getTaxRatePct()));
+        n.set("futureExpenses", futureExpensesToJson(in.getFutureExpenses()));
         return n;
+    }
+
+    private ArrayNode futureExpensesToJson(List<FutureExpense> expenses) {
+        final ArrayNode arr = this.om.createArrayNode();
+        if (expenses == null) {
+            return arr;
+        }
+        for (final FutureExpense expense : expenses) {
+            final ObjectNode node = this.om.createObjectNode();
+            node.put("year", expense.getYear() == null ? null : Integer.toString(expense.getYear()));
+            node.put("description", expense.getDescription());
+            node.put("amount", plain(expense.getAmount()));
+            node.put("inflation", plain(expense.getInflationPct()));
+            arr.add(node);
+        }
+        return arr;
     }
 
     private static String plain(BigDecimal v) {
@@ -113,21 +135,44 @@ public class RetirementInputsStore {
     }
 
     private RetirementInputs toInputs(JsonNode n) {
-        return new RetirementInputs(
-                n.get("currentAge").asInt(),
-                n.get("retireAge").asInt(),
-                n.get("lifeExp").asInt(),
-                bd(n, "corpus"),
-                bd(n, "monthlyExp"),
-                bd(n, "inflation"),
-                bd(n, "growthPre"),
-                bd(n, "growthPost"),
-                bd(n, "monthlyInvPre"),
-                bd(n, "sipGrowthPre"),
-                bd(n, "sipStepUpPre"),
-                bd(n, "monthlyInvPost"),
-                bd(n, "sipGrowthPost"),
-                bd(n, "sipStepUpPost"));
+        final var inputs = new RetirementInputs();
+        inputs.setCurrentAge(n.get("currentAge").asInt());
+        inputs.setRetireAge(n.get("retireAge").asInt());
+        inputs.setLifeExp(n.get("lifeExp").asInt());
+        inputs.setCorpus(bd(n, "corpus"));
+        inputs.setMonthlyExpenses(bd(n, "monthlyExp"));
+        inputs.setInflationPct(bd(n, "inflation"));
+        inputs.setGrowthPrePct(bd(n, "growthPre"));
+        inputs.setGrowthPostPct(bd(n, "growthPost"));
+        inputs.setMonthlyInvPre(bd(n, "monthlyInvPre"));
+        inputs.setSipGrowthPrePct(bd(n, "sipGrowthPre"));
+        inputs.setSipStepUpPrePct(bd(n, "sipStepUpPre"));
+        inputs.setMonthlyInvPost(bd(n, "monthlyInvPost"));
+        inputs.setSipGrowthPostPct(bd(n, "sipGrowthPost"));
+        inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
+        inputs.setTaxRatePct(bd(n, "taxRate"));
+        inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
+        return inputs;
+    }
+
+    private static List<FutureExpense> readFutureExpenses(JsonNode arrayNode) {
+        final List<FutureExpense> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var expense = new FutureExpense();
+            if (entry.has("year") && !entry.get("year").isNull()) {
+                expense.setYear(Integer.valueOf(entry.get("year").asText()));
+            }
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                expense.setDescription(entry.get("description").asText());
+            }
+            expense.setAmount(bd(entry, "amount"));
+            expense.setInflationPct(bd(entry, "inflation"));
+            out.add(expense);
+        }
+        return out;
     }
 
     private static BigDecimal bd(JsonNode n, String field) {

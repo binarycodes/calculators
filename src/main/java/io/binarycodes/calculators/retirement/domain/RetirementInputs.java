@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Mutable input bean for the retirement calculator. Percentages are stored as
@@ -35,4 +37,8 @@ public class RetirementInputs {
     private BigDecimal monthlyInvPost;
     private BigDecimal sipGrowthPostPct;
     private BigDecimal sipStepUpPostPct;
+
+    private BigDecimal taxRatePct;
+
+    private List<FutureExpense> futureExpenses = new ArrayList<>();
 }

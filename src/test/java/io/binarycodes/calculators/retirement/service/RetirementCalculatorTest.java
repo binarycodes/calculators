@@ -1,8 +1,12 @@
 package io.binarycodes.calculators.retirement.service;
 
+import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
+
+import java.time.Year;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -17,13 +21,43 @@ class RetirementCalculatorTest {
      * INR defaults from defaults.json — matches what loadCurrentCurrencyValues() applies.
      */
     private static RetirementInputs inrDefaults() {
-        return new RetirementInputs(
-                38, 45, 90,
-                bd(15_000_000), bd(100_000),
-                bd(8),
-                bd(12), bd(8),
-                bd(150_000), bd(12), bd(0),
-                bd(0), bd(0), bd(0));
+        final var inputs = new RetirementInputs();
+        inputs.setCurrentAge(38);
+        inputs.setRetireAge(45);
+        inputs.setLifeExp(90);
+        inputs.setCorpus(bd(15_000_000));
+        inputs.setMonthlyExpenses(bd(100_000));
+        inputs.setInflationPct(bd(8));
+        inputs.setGrowthPrePct(bd(12));
+        inputs.setGrowthPostPct(bd(8));
+        inputs.setMonthlyInvPre(bd(150_000));
+        inputs.setSipGrowthPrePct(bd(12));
+        inputs.setSipStepUpPrePct(bd(0));
+        inputs.setMonthlyInvPost(bd(0));
+        inputs.setSipGrowthPostPct(bd(0));
+        inputs.setSipStepUpPostPct(bd(0));
+        inputs.setTaxRatePct(bd(0));
+        return inputs;
+    }
+
+    private static RetirementInputs allOnes(int currentAge, int retireAge, int lifeExp) {
+        final var inputs = new RetirementInputs();
+        inputs.setCurrentAge(currentAge);
+        inputs.setRetireAge(retireAge);
+        inputs.setLifeExp(lifeExp);
+        inputs.setCorpus(bd(1));
+        inputs.setMonthlyExpenses(bd(1));
+        inputs.setInflationPct(bd(1));
+        inputs.setGrowthPrePct(bd(1));
+        inputs.setGrowthPostPct(bd(1));
+        inputs.setMonthlyInvPre(bd(1));
+        inputs.setSipGrowthPrePct(bd(1));
+        inputs.setSipStepUpPrePct(bd(1));
+        inputs.setMonthlyInvPost(bd(1));
+        inputs.setSipGrowthPostPct(bd(1));
+        inputs.setSipStepUpPostPct(bd(1));
+        inputs.setTaxRatePct(bd(1));
+        return inputs;
     }
 
     @Test
@@ -171,17 +205,44 @@ class RetirementCalculatorTest {
     }
 
     @Test
+    void future_expense_inflates_and_adds_to_withdrawal_in_target_year() {
+        final int currentYear = Year.now().getValue();
+        final int targetYear = currentYear + 4;
+
+        final RetirementInputs inputs = inrDefaults();
+        final FutureExpense car = new FutureExpense();
+        car.setYear(targetYear);
+        car.setDescription("Buy a car");
+        car.setAmount(bd(1_000_000));
+        car.setInflationPct(bd(7));
+        inputs.setFutureExpenses(List.of(car));
+
+        final RetirementResult result = RetirementCalculator.calculate(inputs);
+
+        final ProjectionRow targetRow = result.rows().stream()
+                .filter(row -> row.year() == targetYear).findFirst().orElseThrow();
+        // Expense at target year = 1,000,000 × (1.07)^4 ≈ 1,310,796.
+        final BigDecimal expectedInflated = bd(1_000_000)
+                .multiply(new BigDecimal("1.07").pow(4));
+        // Pre-retirement year (age 42, since current is 38 + 4 = 42, retire is 45),
+        // so the only withdrawal that year is the future expense.
+        final BigDecimal diff = targetRow.withdrawal().subtract(expectedInflated).abs();
+        final BigDecimal tolerance = expectedInflated.movePointLeft(4);
+        assertTrue(diff.compareTo(tolerance) <= 0,
+                "withdrawal at " + targetYear + " expected ≈" + expectedInflated
+                        + " got " + targetRow.withdrawal());
+    }
+
+    @Test
     void rejects_currentAge_ge_retireAge() {
-        final var bad = new RetirementInputs(50, 50, 90,
-                bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
-        assertThrows(IllegalArgumentException.class, () -> RetirementCalculator.calculate(bad));
+        assertThrows(IllegalArgumentException.class,
+                () -> RetirementCalculator.calculate(allOnes(50, 50, 90)));
     }
 
     @Test
     void rejects_retireAge_ge_lifeExp() {
-        final var bad = new RetirementInputs(35, 90, 90,
-                bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
-        assertThrows(IllegalArgumentException.class, () -> RetirementCalculator.calculate(bad));
+        assertThrows(IllegalArgumentException.class,
+                () -> RetirementCalculator.calculate(allOnes(35, 90, 90)));
     }
 
     private static BigDecimal bd(long n) {
