@@ -99,6 +99,78 @@ class RetirementCalculatorTest {
     }
 
     @Test
+    void step_up_zero_does_not_grow_investments() {
+        // With step-up = 0, every pre-retirement row's investment equals the
+        // base annual SIP (the default inrDefaults has post-SIP = 0, so we
+        // only need to check the pre-retirement window).
+        final RetirementResult result = RetirementCalculator.calculate(inrDefaults());
+        final BigDecimal baseAnnualSip = bd(150_000).multiply(BigDecimal.valueOf(12));
+        result.rows().stream().filter(row -> !row.isPost()).forEach(row ->
+                assertEquals(0, row.investment().compareTo(baseAnnualSip),
+                        "pre-retirement investment should be constant at age " + row.age()));
+    }
+
+    @Test
+    void pre_step_up_compounds_year_over_year() {
+        // 10% annual step-up on a 150,000 monthly SIP: each successive
+        // pre-retirement year's investment is 1.1x the previous one.
+        final RetirementInputs inputs = inrDefaults();
+        inputs.setSipStepUpPrePct(bd(10));
+        final RetirementResult result = RetirementCalculator.calculate(inputs);
+
+        final java.util.List<ProjectionRow> preRows = result.rows().stream()
+                .filter(row -> !row.isPost()).toList();
+        final BigDecimal stepUp = new BigDecimal("1.10");
+        for (int i = 1; i < preRows.size(); i++) {
+            final BigDecimal expected = preRows.get(i - 1).investment().multiply(stepUp);
+            final BigDecimal actual = preRows.get(i).investment();
+            // Use small tolerance because BigDecimal DECIMAL64 carries float-ish drift.
+            final BigDecimal diff = expected.subtract(actual).abs();
+            final BigDecimal tolerance = expected.movePointLeft(6);
+            assertTrue(diff.compareTo(tolerance) <= 0,
+                    "year " + preRows.get(i).age() + " expected ≈" + expected + " got " + actual);
+        }
+    }
+
+    @Test
+    void post_step_up_resets_at_retirement() {
+        // Aggressive pre step-up (20%) plus a non-zero post-retirement SIP.
+        // The first post-retirement row's investment must equal the base
+        // post-SIP × 1 (no inherited compounding from the pre phase).
+        final RetirementInputs inputs = inrDefaults();
+        inputs.setSipStepUpPrePct(bd(20));
+        inputs.setMonthlyInvPost(bd(50_000));
+        inputs.setSipStepUpPostPct(bd(0));
+        final RetirementResult result = RetirementCalculator.calculate(inputs);
+
+        final ProjectionRow firstPostRow = result.rows().stream()
+                .filter(ProjectionRow::isPost).findFirst().orElseThrow();
+        final BigDecimal baseAnnualPostSip = bd(50_000).multiply(BigDecimal.valueOf(12));
+        assertEquals(0, firstPostRow.investment().compareTo(baseAnnualPostSip),
+                "post phase must start at base SIP — pre step-up factor must not bleed over");
+
+        // And with post step-up = 0, every later post row also equals base.
+        result.rows().stream().filter(ProjectionRow::isPost).forEach(row ->
+                assertEquals(0, row.investment().compareTo(baseAnnualPostSip),
+                        "post row " + row.age() + " should stay at base SIP"));
+    }
+
+    @Test
+    void step_up_increases_invested_at_retirement() {
+        final BigDecimal baseInvested = RetirementCalculator
+                .calculate(inrDefaults()).investedAtRetirement();
+
+        final RetirementInputs withStepUp = inrDefaults();
+        withStepUp.setSipStepUpPrePct(bd(10));
+        final BigDecimal stepUpInvested = RetirementCalculator
+                .calculate(withStepUp).investedAtRetirement();
+
+        assertTrue(stepUpInvested.compareTo(baseInvested) > 0,
+                "10% step-up must raise total invested at retirement; base=" + baseInvested
+                        + " step-up=" + stepUpInvested);
+    }
+
+    @Test
     void rejects_currentAge_ge_retireAge() {
         final var bad = new RetirementInputs(50, 50, 90,
                 bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1), bd(1));
