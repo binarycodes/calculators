@@ -9,7 +9,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <vaadin.version>25.1.5</vaadin.version>
+        <vaadin.version>25.2.0-alpha8</vaadin.version>
         <icu4j.version>78.3</icu4j.version>
     </properties>
 
@@ -103,9 +103,19 @@
             </snapshots>
         </repository>
         <repository>
-            <id>vaadin-directory</id>
-            <url>https://maven.vaadin.com/vaadin-addons</url>
+            <id>vaadin-prereleases</id>
+            <url>
+                https://maven.vaadin.com/vaadin-prereleases/
+            </url>
         </repository>
     </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>vaadin-prereleases</id>
+            <url>
+                https://maven.vaadin.com/vaadin-prereleases/
+            </url>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>
