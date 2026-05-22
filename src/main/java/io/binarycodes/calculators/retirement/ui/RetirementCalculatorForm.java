@@ -62,8 +62,8 @@ public class RetirementCalculatorForm extends VerticalLayout {
     private final NumberField corpusReturnsPostPct = percentageField("After Retirement");
     private final NumberField sipReturnsPrePct = percentageField("Growth Percentage");
     private final NumberField sipReturnsPostPct = percentageField("Growth Percentage");
-    private final NumberField sipStepUpPrePct = percentageField("Step Up (annual)");
-    private final NumberField sipStepUpPostPct = percentageField("Step Up (annual)");
+    private final NumberField sipStepUpPrePct = percentageField("Step Up Percentage (Yearly)");
+    private final NumberField sipStepUpPostPct = percentageField("Step Up Percentage (Yearly)");
 
     private final Binder<RetirementInputs> binder = new Binder<>(RetirementInputs.class);
     private final List<Runnable> changeListeners = new ArrayList<>();
