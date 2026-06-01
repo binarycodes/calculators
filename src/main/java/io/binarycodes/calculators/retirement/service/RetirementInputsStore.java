@@ -4,8 +4,11 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
+import io.binarycodes.calculators.retirement.domain.RecurringExpense;
+import io.binarycodes.calculators.retirement.domain.RecurringIncome;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.springframework.stereotype.Component;
@@ -117,7 +120,45 @@ public class RetirementInputsStore {
         n.set("futureExpenses", futureExpensesToJson(in.getFutureExpenses()));
         n.set("retirementBenefits", retirementBenefitsToJson(in.getRetirementBenefits()));
         n.set("futureIncomes", futureIncomesToJson(in.getFutureIncomes()));
+        n.set("recurringExpenses", recurringExpensesToJson(in.getRecurringExpenses()));
+        n.set("recurringIncomes", recurringIncomesToJson(in.getRecurringIncomes()));
         return n;
+    }
+
+    private ArrayNode recurringExpensesToJson(List<RecurringExpense> expenses) {
+        final ArrayNode arr = this.om.createArrayNode();
+        if (expenses == null) {
+            return arr;
+        }
+        for (final RecurringExpense expense : expenses) {
+            final ObjectNode node = this.om.createObjectNode();
+            node.put("year", expense.getYear() == null ? null : Integer.toString(expense.getYear()));
+            node.put("stopYear", expense.getStopYear() == null ? null : Integer.toString(expense.getStopYear()));
+            node.put("description", expense.getDescription());
+            node.put("frequency", expense.getFrequency() == null ? null : expense.getFrequency().name());
+            node.put("amount", plain(expense.getAmount()));
+            node.put("inflation", plain(expense.getInflationPct()));
+            arr.add(node);
+        }
+        return arr;
+    }
+
+    private ArrayNode recurringIncomesToJson(List<RecurringIncome> incomes) {
+        final ArrayNode arr = this.om.createArrayNode();
+        if (incomes == null) {
+            return arr;
+        }
+        for (final RecurringIncome income : incomes) {
+            final ObjectNode node = this.om.createObjectNode();
+            node.put("year", income.getYear() == null ? null : Integer.toString(income.getYear()));
+            node.put("stopYear", income.getStopYear() == null ? null : Integer.toString(income.getStopYear()));
+            node.put("description", income.getDescription());
+            node.put("frequency", income.getFrequency() == null ? null : income.getFrequency().name());
+            node.put("amount", plain(income.getAmount()));
+            node.put("taxRate", plain(income.getTaxRatePct()));
+            arr.add(node);
+        }
+        return arr;
     }
 
     private ArrayNode futureIncomesToJson(List<FutureIncome> incomes) {
@@ -193,7 +234,68 @@ public class RetirementInputsStore {
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
         inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
         inputs.setFutureIncomes(readFutureIncomes(n.get("futureIncomes")));
+        inputs.setRecurringExpenses(readRecurringExpenses(n.get("recurringExpenses")));
+        inputs.setRecurringIncomes(readRecurringIncomes(n.get("recurringIncomes")));
         return inputs;
+    }
+
+    private static List<RecurringExpense> readRecurringExpenses(JsonNode arrayNode) {
+        final List<RecurringExpense> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var expense = new RecurringExpense();
+            if (entry.has("year") && !entry.get("year").isNull()) {
+                expense.setYear(Integer.valueOf(entry.get("year").asText()));
+            }
+            if (entry.has("stopYear") && !entry.get("stopYear").isNull()) {
+                expense.setStopYear(Integer.valueOf(entry.get("stopYear").asText()));
+            }
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                expense.setDescription(entry.get("description").asText());
+            }
+            expense.setFrequency(readFrequency(entry.get("frequency")));
+            expense.setAmount(bd(entry, "amount"));
+            expense.setInflationPct(bdOrNull(entry, "inflation"));
+            out.add(expense);
+        }
+        return out;
+    }
+
+    private static List<RecurringIncome> readRecurringIncomes(JsonNode arrayNode) {
+        final List<RecurringIncome> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var income = new RecurringIncome();
+            if (entry.has("year") && !entry.get("year").isNull()) {
+                income.setYear(Integer.valueOf(entry.get("year").asText()));
+            }
+            if (entry.has("stopYear") && !entry.get("stopYear").isNull()) {
+                income.setStopYear(Integer.valueOf(entry.get("stopYear").asText()));
+            }
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                income.setDescription(entry.get("description").asText());
+            }
+            income.setFrequency(readFrequency(entry.get("frequency")));
+            income.setAmount(bd(entry, "amount"));
+            income.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(income);
+        }
+        return out;
+    }
+
+    private static Frequency readFrequency(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return Frequency.MONTHLY;
+        }
+        try {
+            return Frequency.valueOf(node.asText().toUpperCase());
+        } catch (final IllegalArgumentException ignored) {
+            return Frequency.MONTHLY;
+        }
     }
 
     private static List<FutureIncome> readFutureIncomes(JsonNode arrayNode) {
@@ -257,6 +359,14 @@ public class RetirementInputsStore {
         final JsonNode v = n.get(field);
         if (v == null || v.isNull()) {
             return BigDecimal.ZERO;
+        }
+        return new BigDecimal(v.asText());
+    }
+
+    private static BigDecimal bdOrNull(JsonNode n, String field) {
+        final JsonNode v = n.get(field);
+        if (v == null || v.isNull() || v.asText().isBlank()) {
+            return null;
         }
         return new BigDecimal(v.asText());
     }

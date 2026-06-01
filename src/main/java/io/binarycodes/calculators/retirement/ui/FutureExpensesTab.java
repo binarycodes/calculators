@@ -1,18 +1,23 @@
 package io.binarycodes.calculators.retirement.ui;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.RecurringExpense;
 
 import java.math.BigDecimal;
 import java.time.Year;
@@ -23,19 +28,27 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.percentageFiel
 import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentageSuffix;
 
 /**
- * Editable list of one-off planned expenses (car purchase, wedding, knee
- * replacement…). Each row captures the target year, a short description, the
- * amount in today's money, and a per-item annual inflation rate so the
- * calculator can project it forward to the target year. State is held in
- * {@link FutureExpenseRow}-per-row form; the parent form pulls it via
- * {@link #getFutureExpenses()} and writes it back via
- * {@link #setFutureExpenses(List)}.
+ * Future expenses, split into two cards:
+ *
+ * <ul>
+ *   <li><b>Fixed</b> — one-off planned expenses in a specific year (car
+ *       purchase, wedding, knee replacement, etc.).</li>
+ *   <li><b>Recurring</b> — repeating expenses (rent, school fees) starting
+ *       in {@code year} and continuing indefinitely. The amount is per
+ *       period (Monthly or Yearly) and is projected forward at the per-item
+ *       inflation rate.</li>
+ * </ul>
+ *
+ * <p>Both cards hold their state separately; the parent form pulls both
+ * lists into {@code RetirementInputs} when computing inputs.</p>
  */
 class FutureExpensesTab extends VerticalLayout {
 
     private final UserPreferences prefs;
-    private final VerticalLayout rowsContainer = new VerticalLayout();
-    private final List<FutureExpenseRow> rows = new ArrayList<>();
+    private final VerticalLayout fixedRowsContainer = new VerticalLayout();
+    private final List<FutureExpenseRow> fixedRows = new ArrayList<>();
+    private final VerticalLayout recurringRowsContainer = new VerticalLayout();
+    private final List<RecurringExpenseRow> recurringRowsList = new ArrayList<>();
     private final List<Runnable> changeListeners = new ArrayList<>();
     private boolean suppressChangeEvents;
 
@@ -43,18 +56,58 @@ class FutureExpensesTab extends VerticalLayout {
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
-final Span intro = new Span("Plan one-off expenses (home improvements, children's education, cars, medicals, etc.). Amounts are entered in today's monetary value and projected to the target year using the per-item inflation rate.");
 
+        add(buildFixedCard(), buildRecurringCard());
+    }
+
+    private Component buildFixedCard() {
+        final Span intro = new Span("One-off expenses (home improvements, "
+                + "children's education, cars, medicals, etc.). Amounts are in "
+                + "today's money and projected to the target year using the "
+                + "per-item inflation rate.");
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
-        this.rowsContainer.setPadding(false);
-        this.rowsContainer.setSpacing(true);
-        this.rowsContainer.setWidthFull();
+        this.fixedRowsContainer.setPadding(false);
+        this.fixedRowsContainer.setSpacing(true);
+        this.fixedRowsContainer.setWidthFull();
 
-        final Button addButton = new Button("Add expense", VaadinIcon.PLUS.create(), e -> addRow(new FutureExpense()));
+        final Button addButton = new Button("Add expense", VaadinIcon.PLUS.create(),
+                e -> addFixedRow(new FutureExpense()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        add(intro, this.rowsContainer, addButton);
+        return wrapInCard("Fixed", intro, this.fixedRowsContainer, addButton);
+    }
+
+    private Component buildRecurringCard() {
+        final Span intro = new Span("Repeating expenses (rent, school fees, "
+                + "club dues, etc.) starting in the selected year and "
+                + "continuing thereafter. Amounts are in today's money. "
+                + "Set a per-item inflation rate (medical, education, food "
+                + "all differ from general inflation) — if you leave it "
+                + "blank the amount grows at the overall inflation rate.");
+        intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
+
+        this.recurringRowsContainer.setPadding(false);
+        this.recurringRowsContainer.setSpacing(true);
+        this.recurringRowsContainer.setWidthFull();
+
+        final Button addButton = new Button("Add recurring expense", VaadinIcon.PLUS.create(),
+                e -> addRecurringRow(new RecurringExpense()));
+        addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        return wrapInCard("Recurring", intro, this.recurringRowsContainer, addButton);
+    }
+
+    private static Component wrapInCard(String title, Component... children) {
+        final var inner = new VerticalLayout(children);
+        inner.setPadding(false);
+        inner.setSpacing(true);
+
+        final Card card = new Card();
+        card.setTitle(title);
+        card.setWidthFull();
+        card.add(inner);
+        return card;
     }
 
     void addInputChangeListener(Runnable listener) {
@@ -63,7 +116,7 @@ final Span intro = new Span("Plan one-off expenses (home improvements, children'
 
     List<FutureExpense> getFutureExpenses() {
         final List<FutureExpense> out = new ArrayList<>();
-        for (final FutureExpenseRow row : this.rows) {
+        for (final FutureExpenseRow row : this.fixedRows) {
             out.add(row.snapshot());
         }
         return out;
@@ -72,11 +125,11 @@ final Span intro = new Span("Plan one-off expenses (home improvements, children'
     void setFutureExpenses(List<FutureExpense> expenses) {
         this.suppressChangeEvents = true;
         try {
-            this.rowsContainer.removeAll();
-            this.rows.clear();
+            this.fixedRowsContainer.removeAll();
+            this.fixedRows.clear();
             if (expenses != null) {
                 for (final FutureExpense expense : expenses) {
-                    addRow(expense);
+                    addFixedRow(expense);
                 }
             }
         } finally {
@@ -84,17 +137,55 @@ final Span intro = new Span("Plan one-off expenses (home improvements, children'
         }
     }
 
-    private void addRow(FutureExpense expense) {
-        final FutureExpenseRow row = new FutureExpenseRow(this.prefs, expense, this::removeRow,
-                this::notifyChangeListeners);
-        this.rows.add(row);
-        this.rowsContainer.add(row);
+    List<RecurringExpense> getRecurringExpenses() {
+        final List<RecurringExpense> out = new ArrayList<>();
+        for (final RecurringExpenseRow row : this.recurringRowsList) {
+            out.add(row.snapshot());
+        }
+        return out;
+    }
+
+    void setRecurringExpenses(List<RecurringExpense> expenses) {
+        this.suppressChangeEvents = true;
+        try {
+            this.recurringRowsContainer.removeAll();
+            this.recurringRowsList.clear();
+            if (expenses != null) {
+                for (final RecurringExpense expense : expenses) {
+                    addRecurringRow(expense);
+                }
+            }
+        } finally {
+            this.suppressChangeEvents = false;
+        }
+    }
+
+    private void addFixedRow(FutureExpense expense) {
+        final FutureExpenseRow row = new FutureExpenseRow(this.prefs, expense,
+                this::removeFixedRow, this::notifyChangeListeners);
+        this.fixedRows.add(row);
+        this.fixedRowsContainer.add(row);
         notifyChangeListeners();
     }
 
-    private void removeRow(FutureExpenseRow row) {
-        if (this.rows.remove(row)) {
-            this.rowsContainer.remove(row);
+    private void removeFixedRow(FutureExpenseRow row) {
+        if (this.fixedRows.remove(row)) {
+            this.fixedRowsContainer.remove(row);
+            notifyChangeListeners();
+        }
+    }
+
+    private void addRecurringRow(RecurringExpense expense) {
+        final RecurringExpenseRow row = new RecurringExpenseRow(this.prefs, expense,
+                this::removeRecurringRow, this::notifyChangeListeners);
+        this.recurringRowsList.add(row);
+        this.recurringRowsContainer.add(row);
+        notifyChangeListeners();
+    }
+
+    private void removeRecurringRow(RecurringExpenseRow row) {
+        if (this.recurringRowsList.remove(row)) {
+            this.recurringRowsContainer.remove(row);
             notifyChangeListeners();
         }
     }
@@ -106,8 +197,17 @@ final Span intro = new Span("Plan one-off expenses (home improvements, children'
         this.changeListeners.forEach(Runnable::run);
     }
 
+    private static IntegerField yearField(String label) {
+        final IntegerField field = new IntegerField(label);
+        field.setMin(Year.now().getValue());
+        field.setMax(Year.now().getValue() + 100);
+        field.setStepButtonsVisible(false);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
+        return field;
+    }
+
     private static final class FutureExpenseRow extends HorizontalLayout {
-        private final IntegerField yearField = yearField();
+        private final IntegerField yearField = yearField("Year");
         private final TextField descriptionField = new TextField("Description");
         private final MoneyField amountField;
         private final NumberField inflationField = withPercentageSuffix(percentageField("Inflation"));
@@ -150,14 +250,85 @@ final Span intro = new Span("Plan one-off expenses (home improvements, children'
             out.setInflationPct(inflation == null ? null : BigDecimal.valueOf(inflation));
             return out;
         }
+    }
 
-        private static IntegerField yearField() {
-            final IntegerField field = new IntegerField("Year");
-            field.setMin(Year.now().getValue());
-            field.setMax(Year.now().getValue() + 100);
-            field.setStepButtonsVisible(false);
-            field.setValueChangeMode(ValueChangeMode.LAZY);
-            return field;
+    private static final class RecurringExpenseRow extends HorizontalLayout {
+        private final IntegerField yearField = yearField("Start Year");
+        private final IntegerField stopYearField = optionalStopYearField();
+        private final TextField descriptionField = new TextField("Description");
+        private final Select<Frequency> frequencyField = new Select<>();
+        private final MoneyField amountField;
+        private final NumberField inflationField = optionalInflationField();
+
+        RecurringExpenseRow(UserPreferences prefs, RecurringExpense initial,
+                            java.util.function.Consumer<RecurringExpenseRow> onRemove,
+                            Runnable onChanged) {
+            this.amountField = new MoneyField("Amount (today)", prefs);
+
+            this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
+            this.descriptionField.setWidthFull();
+
+            this.frequencyField.setLabel("Frequency");
+            this.frequencyField.setItems(Frequency.values());
+            this.frequencyField.setItemLabelGenerator(Frequency::displayName);
+            this.frequencyField.setValue(initial.getFrequency() == null
+                    ? Frequency.MONTHLY : initial.getFrequency());
+
+            this.yearField.setValue(initial.getYear());
+            this.stopYearField.setValue(initial.getStopYear());
+            this.descriptionField.setValue(initial.getDescription() == null ? "" : initial.getDescription());
+            this.amountField.setValue(initial.getAmount());
+            this.inflationField.setValue(initial.getInflationPct() == null
+                    ? null : initial.getInflationPct().doubleValue());
+
+            this.yearField.addValueChangeListener(e -> onChanged.run());
+            this.stopYearField.addValueChangeListener(e -> onChanged.run());
+            this.descriptionField.addValueChangeListener(e -> onChanged.run());
+            this.frequencyField.addValueChangeListener(e -> onChanged.run());
+            this.amountField.addValueChangeListener(e -> onChanged.run());
+            this.inflationField.addValueChangeListener(e -> onChanged.run());
+
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
+            removeButton.getElement().setAttribute("aria-label", "Remove recurring expense");
+
+            setWidthFull();
+            setAlignItems(Alignment.BASELINE);
+            add(this.yearField, this.stopYearField, this.descriptionField, this.frequencyField,
+                    this.amountField, this.inflationField, removeButton);
+            expand(this.descriptionField);
         }
+
+        RecurringExpense snapshot() {
+            final RecurringExpense out = new RecurringExpense();
+            out.setYear(this.yearField.getValue());
+            out.setStopYear(this.stopYearField.getValue());
+            out.setDescription(this.descriptionField.getValue());
+            out.setFrequency(this.frequencyField.getValue());
+            out.setAmount(this.amountField.getValue());
+            final Double inflation = this.inflationField.getValue();
+            out.setInflationPct(inflation == null ? null : BigDecimal.valueOf(inflation));
+            return out;
+        }
+    }
+
+    private static NumberField optionalInflationField() {
+        final NumberField field = withPercentageSuffix(percentageField("Inflation"));
+        field.setPlaceholder("Overall rate");
+        field.setHelperText("Leave blank for overall inflation");
+        field.setClearButtonVisible(true);
+        return field;
+    }
+
+    private static IntegerField optionalStopYearField() {
+        final IntegerField field = new IntegerField("Stop Year");
+        field.setMin(Year.now().getValue());
+        field.setMax(Year.now().getValue() + 100);
+        field.setStepButtonsVisible(false);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
+        field.setPlaceholder("Forever");
+        field.setHelperText("Leave blank for no end");
+        field.setClearButtonVisible(true);
+        return field;
     }
 }

@@ -1,8 +1,11 @@
 package io.binarycodes.calculators.retirement.service;
 
+import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
+import io.binarycodes.calculators.retirement.domain.RecurringExpense;
+import io.binarycodes.calculators.retirement.domain.RecurringIncome;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
@@ -106,9 +109,12 @@ public final class RetirementCalculator {
                     : BigDecimal.ZERO;
             final BigDecimal netFutureIncomeThisYear = netFutureIncomesFor(
                     in.getFutureIncomes(), year);
+            final BigDecimal netRecurringIncomeThisYear = netRecurringIncomesFor(
+                    in.getRecurringIncomes(), year);
             final BigDecimal investment = sipContribution
                     .add(netBenefitsThisYear, MC)
-                    .add(netFutureIncomeThisYear, MC);
+                    .add(netFutureIncomeThisYear, MC)
+                    .add(netRecurringIncomeThisYear, MC);
             totalInvested = totalInvested.add(investment, MC);
             sip.contribute(investment);
 
@@ -121,8 +127,11 @@ public final class RetirementCalculator {
 
             final BigDecimal futureExpensesThisYear = inflatedFutureExpensesFor(
                     in.getFutureExpenses(), year, currentYear);
+            final BigDecimal recurringExpensesThisYear = inflatedRecurringExpensesFor(
+                    in.getRecurringExpenses(), year, currentYear, inflation);
             final BigDecimal withdrawal = (isPost ? annualExp : BigDecimal.ZERO)
-                    .add(futureExpensesThisYear, MC);
+                    .add(futureExpensesThisYear, MC)
+                    .add(recurringExpensesThisYear, MC);
 
             // Drain from the bucket with the lower current growth rate first;
             // tie-break in favour of main. This preserves the higher-yielding
@@ -270,6 +279,70 @@ public final class RetirementCalculator {
             sum = sum.add(net, MC);
         }
         return sum;
+    }
+
+    private static BigDecimal netRecurringIncomesFor(List<RecurringIncome> incomes, int year) {
+        if (incomes == null || incomes.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (final RecurringIncome income : incomes) {
+            if (income == null || income.getYear() == null || year < income.getYear()) {
+                continue;
+            }
+            if (income.getStopYear() != null && year > income.getStopYear()) {
+                continue;
+            }
+            final BigDecimal amount = income.getAmount();
+            if (amount == null || amount.signum() <= 0) {
+                continue;
+            }
+            final BigDecimal annualised = annualise(amount, income.getFrequency());
+            final BigDecimal taxRate = pctToFraction(income.getTaxRatePct());
+            final BigDecimal net = annualised.multiply(BigDecimal.ONE.subtract(taxRate, MC), MC);
+            sum = sum.add(net, MC);
+        }
+        return sum;
+    }
+
+    private static BigDecimal inflatedRecurringExpensesFor(List<RecurringExpense> expenses,
+                                                           int year, int currentYear,
+                                                           BigDecimal inflation) {
+        if (expenses == null || expenses.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (final RecurringExpense expense : expenses) {
+            if (expense == null || expense.getYear() == null || year < expense.getYear()) {
+                continue;
+            }
+            if (expense.getStopYear() != null && year > expense.getStopYear()) {
+                continue;
+            }
+            final BigDecimal amount = expense.getAmount();
+            if (amount == null || amount.signum() <= 0) {
+                continue;
+            }
+            final BigDecimal annualised = annualise(amount, expense.getFrequency());
+            // Use the per-item inflation rate when supplied; otherwise fall
+            // back to the main rate so amounts at least keep pace with general
+            // inflation (medical, education, food etc. usually differ — the
+            // per-item field lets the user override).
+            final BigDecimal itemInflation = expense.getInflationPct() == null
+                    || expense.getInflationPct().signum() <= 0
+                    ? inflation
+                    : pctToFraction(expense.getInflationPct());
+            final int yearsFromNow = Math.max(0, year - currentYear);
+            sum = sum.add(annualised.multiply(pow1plus(itemInflation, yearsFromNow), MC), MC);
+        }
+        return sum;
+    }
+
+    private static BigDecimal annualise(BigDecimal amount, Frequency frequency) {
+        // Default to monthly if unspecified — matches the form default and is
+        // the more conservative (larger) interpretation if a value sneaks
+        // through without a frequency tag.
+        return frequency == Frequency.YEARLY ? amount : amount.multiply(TWELVE, MC);
     }
 
     private static BigDecimal inflatedFutureExpensesFor(List<FutureExpense> expenses,

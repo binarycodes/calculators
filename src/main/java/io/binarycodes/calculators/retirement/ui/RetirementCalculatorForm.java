@@ -68,8 +68,10 @@ public class RetirementCalculatorForm extends VerticalLayout {
         try {
             this.binder.readBean(inputs);
             this.futureExpensesTab.setFutureExpenses(inputs.getFutureExpenses());
+            this.futureExpensesTab.setRecurringExpenses(inputs.getRecurringExpenses());
             this.retirementBenefitsTab.setRetirementBenefits(inputs.getRetirementBenefits());
             this.futureIncomesTab.setFutureIncomes(inputs.getFutureIncomes());
+            this.futureIncomesTab.setRecurringIncomes(inputs.getRecurringIncomes());
         } finally {
             this.suppressChangeEvents = false;
         }
@@ -79,8 +81,10 @@ public class RetirementCalculatorForm extends VerticalLayout {
         final var target = new RetirementInputs();
         this.binder.writeBeanAsDraft(target);
         target.setFutureExpenses(this.futureExpensesTab.getFutureExpenses());
+        target.setRecurringExpenses(this.futureExpensesTab.getRecurringExpenses());
         target.setRetirementBenefits(this.retirementBenefitsTab.getRetirementBenefits());
         target.setFutureIncomes(this.futureIncomesTab.getFutureIncomes());
+        target.setRecurringIncomes(this.futureIncomesTab.getRecurringIncomes());
         return target;
     }
 

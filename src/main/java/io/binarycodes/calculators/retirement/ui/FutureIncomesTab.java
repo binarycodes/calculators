@@ -1,18 +1,23 @@
 package io.binarycodes.calculators.retirement.ui;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
+import io.binarycodes.calculators.retirement.domain.RecurringIncome;
 
 import java.math.BigDecimal;
 import java.time.Year;
@@ -23,18 +28,23 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.percentageFiel
 import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentageSuffix;
 
 /**
- * Editable list of one-off future inflows (house sale, business
- * liquidation, inheritance, windfalls…). Each row captures the target
- * year, a short description, the gross amount expected in that year, and
- * a tax rate applied immediately on receipt. The net amount lands in the
- * main corpus at the start of the target year and grows thereafter at
- * the main corpus's growth rate.
+ * Future incomes, split into two cards:
+ *
+ * <ul>
+ *   <li><b>Fixed</b> — one-off inflows in a specific year (house sale,
+ *       business liquidation, inheritance, etc.).</li>
+ *   <li><b>Recurring</b> — repeating inflows (rental income, side-gig)
+ *       starting in {@code year} and continuing indefinitely. The amount
+ *       is per period (Monthly or Yearly) and is not inflated.</li>
+ * </ul>
  */
 class FutureIncomesTab extends VerticalLayout {
 
     private final UserPreferences prefs;
-    private final VerticalLayout rowsContainer = new VerticalLayout();
-    private final List<FutureIncomeRow> rows = new ArrayList<>();
+    private final VerticalLayout fixedRowsContainer = new VerticalLayout();
+    private final List<FutureIncomeRow> fixedRows = new ArrayList<>();
+    private final VerticalLayout recurringRowsContainer = new VerticalLayout();
+    private final List<RecurringIncomeRow> recurringRowsList = new ArrayList<>();
     private final List<Runnable> changeListeners = new ArrayList<>();
     private boolean suppressChangeEvents;
 
@@ -42,19 +52,57 @@ class FutureIncomesTab extends VerticalLayout {
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
-final Span intro = new Span("Plan one-off future inflows (house sale, business liquidation, inheritance, windfalls, etc.). Amounts are the nominal value at the target year; the tax rate is applied immediately on receipt and the net lands in the corpus.");
 
+        add(buildFixedCard(), buildRecurringCard());
+    }
+
+    private Component buildFixedCard() {
+        final Span intro = new Span("One-off inflows (house sale, business "
+                + "liquidation, inheritance, windfalls…). Amounts are the "
+                + "nominal value at the target year; the tax rate is applied "
+                + "immediately on receipt.");
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
-        this.rowsContainer.setPadding(false);
-        this.rowsContainer.setSpacing(true);
-        this.rowsContainer.setWidthFull();
+        this.fixedRowsContainer.setPadding(false);
+        this.fixedRowsContainer.setSpacing(true);
+        this.fixedRowsContainer.setWidthFull();
 
         final Button addButton = new Button("Add income", VaadinIcon.PLUS.create(),
-                e -> addRow(new FutureIncome()));
+                e -> addFixedRow(new FutureIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        add(intro, this.rowsContainer, addButton);
+        return wrapInCard("Fixed", intro, this.fixedRowsContainer, addButton);
+    }
+
+    private Component buildRecurringCard() {
+        final Span intro = new Span("Repeating inflows (rental income, "
+                + "side-gig, etc.) starting in the selected year. Choose "
+                + "monthly or yearly cadence; amounts are nominal "
+                + "(not auto-inflated) and the tax rate applies on each "
+                + "period's receipt.");
+        intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
+
+        this.recurringRowsContainer.setPadding(false);
+        this.recurringRowsContainer.setSpacing(true);
+        this.recurringRowsContainer.setWidthFull();
+
+        final Button addButton = new Button("Add recurring income", VaadinIcon.PLUS.create(),
+                e -> addRecurringRow(new RecurringIncome()));
+        addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        return wrapInCard("Recurring", intro, this.recurringRowsContainer, addButton);
+    }
+
+    private static Component wrapInCard(String title, Component... children) {
+        final var inner = new VerticalLayout(children);
+        inner.setPadding(false);
+        inner.setSpacing(true);
+
+        final Card card = new Card();
+        card.setTitle(title);
+        card.setWidthFull();
+        card.add(inner);
+        return card;
     }
 
     void addInputChangeListener(Runnable listener) {
@@ -63,7 +111,7 @@ final Span intro = new Span("Plan one-off future inflows (house sale, business l
 
     List<FutureIncome> getFutureIncomes() {
         final List<FutureIncome> out = new ArrayList<>();
-        for (final FutureIncomeRow row : this.rows) {
+        for (final FutureIncomeRow row : this.fixedRows) {
             out.add(row.snapshot());
         }
         return out;
@@ -72,11 +120,11 @@ final Span intro = new Span("Plan one-off future inflows (house sale, business l
     void setFutureIncomes(List<FutureIncome> incomes) {
         this.suppressChangeEvents = true;
         try {
-            this.rowsContainer.removeAll();
-            this.rows.clear();
+            this.fixedRowsContainer.removeAll();
+            this.fixedRows.clear();
             if (incomes != null) {
                 for (final FutureIncome income : incomes) {
-                    addRow(income);
+                    addFixedRow(income);
                 }
             }
         } finally {
@@ -84,17 +132,55 @@ final Span intro = new Span("Plan one-off future inflows (house sale, business l
         }
     }
 
-    private void addRow(FutureIncome income) {
-        final FutureIncomeRow row = new FutureIncomeRow(this.prefs, income, this::removeRow,
-                this::notifyChangeListeners);
-        this.rows.add(row);
-        this.rowsContainer.add(row);
+    List<RecurringIncome> getRecurringIncomes() {
+        final List<RecurringIncome> out = new ArrayList<>();
+        for (final RecurringIncomeRow row : this.recurringRowsList) {
+            out.add(row.snapshot());
+        }
+        return out;
+    }
+
+    void setRecurringIncomes(List<RecurringIncome> incomes) {
+        this.suppressChangeEvents = true;
+        try {
+            this.recurringRowsContainer.removeAll();
+            this.recurringRowsList.clear();
+            if (incomes != null) {
+                for (final RecurringIncome income : incomes) {
+                    addRecurringRow(income);
+                }
+            }
+        } finally {
+            this.suppressChangeEvents = false;
+        }
+    }
+
+    private void addFixedRow(FutureIncome income) {
+        final FutureIncomeRow row = new FutureIncomeRow(this.prefs, income,
+                this::removeFixedRow, this::notifyChangeListeners);
+        this.fixedRows.add(row);
+        this.fixedRowsContainer.add(row);
         notifyChangeListeners();
     }
 
-    private void removeRow(FutureIncomeRow row) {
-        if (this.rows.remove(row)) {
-            this.rowsContainer.remove(row);
+    private void removeFixedRow(FutureIncomeRow row) {
+        if (this.fixedRows.remove(row)) {
+            this.fixedRowsContainer.remove(row);
+            notifyChangeListeners();
+        }
+    }
+
+    private void addRecurringRow(RecurringIncome income) {
+        final RecurringIncomeRow row = new RecurringIncomeRow(this.prefs, income,
+                this::removeRecurringRow, this::notifyChangeListeners);
+        this.recurringRowsList.add(row);
+        this.recurringRowsContainer.add(row);
+        notifyChangeListeners();
+    }
+
+    private void removeRecurringRow(RecurringIncomeRow row) {
+        if (this.recurringRowsList.remove(row)) {
+            this.recurringRowsContainer.remove(row);
             notifyChangeListeners();
         }
     }
@@ -106,8 +192,17 @@ final Span intro = new Span("Plan one-off future inflows (house sale, business l
         this.changeListeners.forEach(Runnable::run);
     }
 
+    private static IntegerField yearField(String label) {
+        final IntegerField field = new IntegerField(label);
+        field.setMin(Year.now().getValue());
+        field.setMax(Year.now().getValue() + 100);
+        field.setStepButtonsVisible(false);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
+        return field;
+    }
+
     private static final class FutureIncomeRow extends HorizontalLayout {
-        private final IntegerField yearField = yearField();
+        private final IntegerField yearField = yearField("Year");
         private final TextField descriptionField = new TextField("Description");
         private final MoneyField amountField;
         private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
@@ -150,14 +245,77 @@ final Span intro = new Span("Plan one-off future inflows (house sale, business l
             out.setTaxRatePct(taxRate == null ? null : BigDecimal.valueOf(taxRate));
             return out;
         }
+    }
 
-        private static IntegerField yearField() {
-            final IntegerField field = new IntegerField("Year");
-            field.setMin(Year.now().getValue());
-            field.setMax(Year.now().getValue() + 100);
-            field.setStepButtonsVisible(false);
-            field.setValueChangeMode(ValueChangeMode.LAZY);
-            return field;
+    private static final class RecurringIncomeRow extends HorizontalLayout {
+        private final IntegerField yearField = yearField("Start Year");
+        private final IntegerField stopYearField = optionalStopYearField();
+        private final TextField descriptionField = new TextField("Description");
+        private final Select<Frequency> frequencyField = new Select<>();
+        private final MoneyField amountField;
+        private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+
+        RecurringIncomeRow(UserPreferences prefs, RecurringIncome initial,
+                           java.util.function.Consumer<RecurringIncomeRow> onRemove,
+                           Runnable onChanged) {
+            this.amountField = new MoneyField("Amount", prefs);
+
+            this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
+            this.descriptionField.setWidthFull();
+
+            this.frequencyField.setLabel("Frequency");
+            this.frequencyField.setItems(Frequency.values());
+            this.frequencyField.setItemLabelGenerator(Frequency::displayName);
+            this.frequencyField.setValue(initial.getFrequency() == null
+                    ? Frequency.MONTHLY : initial.getFrequency());
+
+            this.yearField.setValue(initial.getYear());
+            this.stopYearField.setValue(initial.getStopYear());
+            this.descriptionField.setValue(initial.getDescription() == null ? "" : initial.getDescription());
+            this.amountField.setValue(initial.getAmount());
+            this.taxField.setValue(initial.getTaxRatePct() == null
+                    ? null : initial.getTaxRatePct().doubleValue());
+
+            this.yearField.addValueChangeListener(e -> onChanged.run());
+            this.stopYearField.addValueChangeListener(e -> onChanged.run());
+            this.descriptionField.addValueChangeListener(e -> onChanged.run());
+            this.frequencyField.addValueChangeListener(e -> onChanged.run());
+            this.amountField.addValueChangeListener(e -> onChanged.run());
+            this.taxField.addValueChangeListener(e -> onChanged.run());
+
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
+            removeButton.getElement().setAttribute("aria-label", "Remove recurring income");
+
+            setWidthFull();
+            setAlignItems(Alignment.BASELINE);
+            add(this.yearField, this.stopYearField, this.descriptionField, this.frequencyField,
+                    this.amountField, this.taxField, removeButton);
+            expand(this.descriptionField);
         }
+
+        RecurringIncome snapshot() {
+            final RecurringIncome out = new RecurringIncome();
+            out.setYear(this.yearField.getValue());
+            out.setStopYear(this.stopYearField.getValue());
+            out.setDescription(this.descriptionField.getValue());
+            out.setFrequency(this.frequencyField.getValue());
+            out.setAmount(this.amountField.getValue());
+            final Double taxRate = this.taxField.getValue();
+            out.setTaxRatePct(taxRate == null ? null : BigDecimal.valueOf(taxRate));
+            return out;
+        }
+    }
+
+    private static IntegerField optionalStopYearField() {
+        final IntegerField field = new IntegerField("Stop Year");
+        field.setMin(Year.now().getValue());
+        field.setMax(Year.now().getValue() + 100);
+        field.setStepButtonsVisible(false);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
+        field.setPlaceholder("Forever");
+        field.setHelperText("Leave blank for no end");
+        field.setClearButtonVisible(true);
+        return field;
     }
 }
