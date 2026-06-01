@@ -43,11 +43,8 @@ class FutureExpensesTab extends VerticalLayout {
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
+final Span intro = new Span("Plan one-off expenses (home improvements, children's education, cars, medicals, etc.). Amounts are entered in today's monetary value and projected to the target year using the per-item inflation rate.");
 
-        final Span intro = new Span(
-                "Plan one-off expenses (cars, weddings, knee replacements…). "
-                        + "Amounts are entered in today's money and projected to the target year "
-                        + "using the per-item inflation rate.");
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         this.rowsContainer.setPadding(false);

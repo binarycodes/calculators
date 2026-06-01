@@ -42,12 +42,8 @@ class FutureIncomesTab extends VerticalLayout {
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
+final Span intro = new Span("Plan one-off future inflows (house sale, business liquidation, inheritance, windfalls, etc.). Amounts are the nominal value at the target year; the tax rate is applied immediately on receipt and the net lands in the corpus.");
 
-        final Span intro = new Span(
-                "Plan one-off future inflows (house sale, business "
-                        + "liquidation, inheritance, windfalls…). Amounts are the "
-                        + "nominal value at the target year; the tax rate is applied "
-                        + "immediately on receipt and the net lands in the corpus.");
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         this.rowsContainer.setPadding(false);

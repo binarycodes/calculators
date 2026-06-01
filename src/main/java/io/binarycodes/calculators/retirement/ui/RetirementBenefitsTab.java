@@ -38,12 +38,8 @@ class RetirementBenefitsTab extends VerticalLayout {
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
+final Span intro = new Span("Plan retirement-period inflows (gratuities, provident fund payouts, etc) received on the retirement-age year. The tax rate is applied immediately on receipt; the net amount lands in the corpus that year.");
 
-        final Span intro = new Span(
-                "Plan retirement-period inflows (pensions, gratuities, "
-                        + "annuity payouts…) received on the retirement-age year. "
-                        + "The tax rate is applied immediately on receipt; the "
-                        + "net amount lands in the corpus that year.");
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         this.rowsContainer.setPadding(false);
