@@ -42,4 +42,5 @@ public class RetirementInputs {
 
     private List<FutureExpense> futureExpenses = new ArrayList<>();
     private List<RetirementBenefit> retirementBenefits = new ArrayList<>();
+    private List<FutureIncome> futureIncomes = new ArrayList<>();
 }

@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Per-session user preferences (currency / theme / font size). Persisted to
- * browser localStorage under the key {@value #STORAGE_KEY} as compact JSON so
- * that they survive across sessions on the same browser.
+ * Per-session user preferences (currency / theme). Persisted to browser
+ * localStorage under the key {@value #STORAGE_KEY} as compact JSON so that
+ * they survive across sessions on the same browser.
  *
  * <p>Listeners registered via {@link #addChangeListener} are invoked on any
  * change. The bean is {@code VaadinSessionScope} so each browser session has
@@ -27,7 +27,6 @@ public class UserPreferences {
 
     private SupportedCurrency supportedCurrency = SupportedCurrency.INR;
     private Theme theme = Theme.LIGHT;
-    private FontSize fontSize = FontSize.MEDIUM;
     private boolean loaded = false;
 
     private final List<Consumer<UserPreferences>> listeners = new ArrayList<>();
@@ -38,10 +37,6 @@ public class UserPreferences {
 
     public Theme theme() {
         return this.theme;
-    }
-
-    public FontSize fontSize() {
-        return this.fontSize;
     }
 
     public void setCurrency(SupportedCurrency c) {
@@ -57,14 +52,6 @@ public class UserPreferences {
             return;
         }
         this.theme = t;
-        notifyAndPersist();
-    }
-
-    public void setFontSize(FontSize s) {
-        if (s == null || s == this.fontSize) {
-            return;
-        }
-        this.fontSize = s;
         notifyAndPersist();
     }
 
@@ -97,9 +84,13 @@ public class UserPreferences {
                 parseJson(raw);
             }
             this.loaded = true;
-            // Apply to client (theme class / font size) and notify view listeners.
+            // Apply to client (theme class) and notify view listeners.
             applyToClient();
-            this.listeners.forEach(l -> l.accept(this));
+            // Iterate a snapshot — a listener may attach a new component (e.g.
+            // form rebuild creating fresh MoneyField instances) which in turn
+            // subscribes back to this list, and direct iteration would throw
+            // ConcurrentModificationException.
+            new ArrayList<>(this.listeners).forEach(l -> l.accept(this));
             if (onLoaded != null) {
                 onLoaded.run();
             }
@@ -107,7 +98,7 @@ public class UserPreferences {
     }
 
     /**
-     * Apply theme class + font size to the document via JS.
+     * Apply theme class to the document via JS.
      */
     public void applyToClient() {
         final UI ui = UI.getCurrent();
@@ -115,14 +106,14 @@ public class UserPreferences {
             return;
         }
         ui.getPage().executeJs(
-                "document.documentElement.classList.toggle('dark', $0);" +
-                        "document.documentElement.style.fontSize = $1 + 'px';",
-                this.theme == Theme.DARK, this.fontSize.px());
+                "document.documentElement.classList.toggle('dark', $0);",
+                this.theme == Theme.DARK);
     }
 
     private void notifyAndPersist() {
         applyToClient();
-        this.listeners.forEach(l -> l.accept(this));
+        // Snapshot iteration — see loadFromBrowser comment.
+        new ArrayList<>(this.listeners).forEach(l -> l.accept(this));
         persist();
     }
 
@@ -132,13 +123,12 @@ public class UserPreferences {
             return;
         }
         final String json = "{\"currency\":\"" + this.supportedCurrency.name() +
-                "\",\"theme\":\"" + this.theme.name().toLowerCase() +
-                "\",\"fontSize\":\"" + this.fontSize.name() + "\"}";
+                "\",\"theme\":\"" + this.theme.name().toLowerCase() + "\"}";
         WebStorage.setItem(STORAGE_KEY, json);
     }
 
     private void parseJson(String raw) {
-        // Lightweight parse: no Jackson dep needed for three known fields.
+        // Lightweight parse: no Jackson dep needed for two known fields.
         final String curMatch = match(raw, "\"currency\"\\s*:\\s*\"([A-Z]+)\"");
         if (curMatch != null) {
             try {
@@ -150,24 +140,6 @@ public class UserPreferences {
         final String themeMatch = match(raw, "\"theme\"\\s*:\\s*\"(\\w+)\"");
         if (themeMatch != null) {
             this.theme = "dark".equalsIgnoreCase(themeMatch) ? Theme.DARK : Theme.LIGHT;
-        }
-
-        // Accept the new enum form ("MEDIUM") or, for backward compatibility, an
-        // older numeric value ("16") — map nearest size via FontSize.fromPx.
-        final String fontEnum = match(raw, "\"fontSize\"\\s*:\\s*\"(\\w+)\"");
-        if (fontEnum != null) {
-            try {
-                this.fontSize = FontSize.valueOf(fontEnum);
-            } catch (final Exception ignore) {
-            }
-        } else {
-            final String fontInt = match(raw, "\"fontSize\"\\s*:\\s*(\\d+)");
-            if (fontInt != null) {
-                try {
-                    this.fontSize = FontSize.fromPx(Integer.parseInt(fontInt));
-                } catch (final Exception ignore) {
-                }
-            }
         }
     }
 

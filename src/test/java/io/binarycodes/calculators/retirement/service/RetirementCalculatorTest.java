@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -235,10 +236,11 @@ class RetirementCalculatorTest {
     }
 
     @Test
-    void retirement_benefit_after_tax_offsets_withdrawal_in_retirement_year() {
+    void retirement_benefit_after_tax_adds_to_investment_in_retirement_year() {
         final RetirementInputs baseline = inrDefaults();
         final ProjectionRow baselineRetireRow = RetirementCalculator.calculate(baseline).rows().stream()
                 .filter(ProjectionRow::isRetireYear).findFirst().orElseThrow();
+        final BigDecimal baselineInvestment = baselineRetireRow.investment();
         final BigDecimal baselineWithdrawal = baselineRetireRow.withdrawal();
 
         final RetirementInputs withBenefit = inrDefaults();
@@ -251,13 +253,47 @@ class RetirementCalculatorTest {
         final ProjectionRow withBenefitRetireRow = RetirementCalculator.calculate(withBenefit).rows().stream()
                 .filter(ProjectionRow::isRetireYear).findFirst().orElseThrow();
 
-        // Net benefit = 2,000,000 × (1 − 0.20) = 1,600,000.
+        // Net benefit = 2,000,000 × (1 − 0.20) = 1,600,000. It should land in
+        // that year's investment column, not change the withdrawal column.
         final BigDecimal expectedNet = bd(1_600_000);
-        final BigDecimal expectedWithdrawal = baselineWithdrawal.subtract(expectedNet);
-        final BigDecimal diff = withBenefitRetireRow.withdrawal().subtract(expectedWithdrawal).abs();
+        final BigDecimal expectedInvestment = baselineInvestment.add(expectedNet);
+        final BigDecimal diff = withBenefitRetireRow.investment().subtract(expectedInvestment).abs();
         final BigDecimal tolerance = expectedNet.movePointLeft(4);
         assertTrue(diff.compareTo(tolerance) <= 0,
-                "withdrawal expected ≈" + expectedWithdrawal + " got " + withBenefitRetireRow.withdrawal());
+                "investment expected ≈" + expectedInvestment + " got " + withBenefitRetireRow.investment());
+        assertEquals(0, withBenefitRetireRow.withdrawal().compareTo(baselineWithdrawal),
+                "withdrawal must be unchanged when benefits flow through investment");
+    }
+
+    @Test
+    void future_income_after_tax_adds_to_investment_in_target_year() {
+        final int currentYear = Year.now().getValue();
+        final int targetYear = currentYear + 10; // post-retirement (retire at 45 = +7)
+
+        final RetirementInputs baseline = inrDefaults();
+        final ProjectionRow baselineRow = RetirementCalculator.calculate(baseline).rows().stream()
+                .filter(r -> r.year() == targetYear).findFirst().orElseThrow();
+
+        final RetirementInputs withIncome = inrDefaults();
+        final FutureIncome houseSale = new FutureIncome();
+        houseSale.setYear(targetYear);
+        houseSale.setDescription("House sale");
+        houseSale.setAmount(bd(5_000_000));
+        houseSale.setTaxRatePct(bd(20));
+        withIncome.setFutureIncomes(List.of(houseSale));
+
+        final ProjectionRow withIncomeRow = RetirementCalculator.calculate(withIncome).rows().stream()
+                .filter(r -> r.year() == targetYear).findFirst().orElseThrow();
+
+        // Net income = 5,000,000 × (1 − 0.20) = 4,000,000.
+        final BigDecimal expectedNet = bd(4_000_000);
+        final BigDecimal expectedInvestment = baselineRow.investment().add(expectedNet);
+        final BigDecimal diff = withIncomeRow.investment().subtract(expectedInvestment).abs();
+        final BigDecimal tolerance = expectedNet.movePointLeft(4);
+        assertTrue(diff.compareTo(tolerance) <= 0,
+                "investment expected ≈" + expectedInvestment + " got " + withIncomeRow.investment());
+        assertEquals(0, withIncomeRow.withdrawal().compareTo(baselineRow.withdrawal()),
+                "withdrawal must be unchanged when income flows through investment");
     }
 
     @Test

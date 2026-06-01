@@ -5,6 +5,7 @@ import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.springframework.stereotype.Component;
@@ -113,7 +114,24 @@ public class RetirementInputsStore {
         n.put("taxRate",        plain(in.getTaxRatePct()));
         n.set("futureExpenses", futureExpensesToJson(in.getFutureExpenses()));
         n.set("retirementBenefits", retirementBenefitsToJson(in.getRetirementBenefits()));
+        n.set("futureIncomes", futureIncomesToJson(in.getFutureIncomes()));
         return n;
+    }
+
+    private ArrayNode futureIncomesToJson(List<FutureIncome> incomes) {
+        final ArrayNode arr = this.om.createArrayNode();
+        if (incomes == null) {
+            return arr;
+        }
+        for (final FutureIncome income : incomes) {
+            final ObjectNode node = this.om.createObjectNode();
+            node.put("year", income.getYear() == null ? null : Integer.toString(income.getYear()));
+            node.put("description", income.getDescription());
+            node.put("amount", plain(income.getAmount()));
+            node.put("taxRate", plain(income.getTaxRatePct()));
+            arr.add(node);
+        }
+        return arr;
     }
 
     private ArrayNode retirementBenefitsToJson(List<RetirementBenefit> benefits) {
@@ -170,7 +188,28 @@ public class RetirementInputsStore {
         inputs.setTaxRatePct(bd(n, "taxRate"));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
         inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
+        inputs.setFutureIncomes(readFutureIncomes(n.get("futureIncomes")));
         return inputs;
+    }
+
+    private static List<FutureIncome> readFutureIncomes(JsonNode arrayNode) {
+        final List<FutureIncome> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var income = new FutureIncome();
+            if (entry.has("year") && !entry.get("year").isNull()) {
+                income.setYear(Integer.valueOf(entry.get("year").asText()));
+            }
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                income.setDescription(entry.get("description").asText());
+            }
+            income.setAmount(bd(entry, "amount"));
+            income.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(income);
+        }
+        return out;
     }
 
     private static List<RetirementBenefit> readRetirementBenefits(JsonNode arrayNode) {

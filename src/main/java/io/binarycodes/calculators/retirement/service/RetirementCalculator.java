@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -73,7 +74,18 @@ public final class RetirementCalculator {
             final BigDecimal sipRate = isPost ? sipGrowthPost : sipGrowthPre;
             final int yearsInPhase = isPost ? age - in.getRetireAge() : age - in.getCurrentAge();
             final BigDecimal stepUpFactor = pow1plus(isPost ? sipStepUpPost : sipStepUpPre, yearsInPhase);
-            final BigDecimal investment = (isPost ? annualInvPost : annualInvPre).multiply(stepUpFactor, MC);
+            final BigDecimal sipContribution = (isPost ? annualInvPost : annualInvPre).multiply(stepUpFactor, MC);
+            // Net benefits / future incomes received this year are folded into
+            // the year's investment so they enter the corpus the same way SIPs
+            // do (rather than offsetting withdrawal).
+            final BigDecimal netBenefitsThisYear = isRetireYear
+                    ? netRetirementBenefits(in.getRetirementBenefits())
+                    : BigDecimal.ZERO;
+            final BigDecimal netFutureIncomeThisYear = netFutureIncomesFor(
+                    in.getFutureIncomes(), year);
+            final BigDecimal investment = sipContribution
+                    .add(netBenefitsThisYear, MC)
+                    .add(netFutureIncomeThisYear, MC);
             totalInvested = totalInvested.add(investment, MC);
 
             final BigDecimal startCorpus = mainCorpus.add(sipCorpus, MC);
@@ -86,12 +98,8 @@ public final class RetirementCalculator {
 
             final BigDecimal futureExpensesThisYear = inflatedFutureExpensesFor(
                     in.getFutureExpenses(), year, currentYear);
-            final BigDecimal netBenefitsThisYear = isRetireYear
-                    ? netRetirementBenefits(in.getRetirementBenefits())
-                    : BigDecimal.ZERO;
             final BigDecimal withdrawal = (isPost ? annualExp : BigDecimal.ZERO)
-                    .add(futureExpensesThisYear, MC)
-                    .subtract(netBenefitsThisYear, MC);
+                    .add(futureExpensesThisYear, MC);
             final BigDecimal endCorpus;
 
             if (withdrawal.signum() == 0) {
@@ -151,6 +159,26 @@ public final class RetirementCalculator {
                 continue;
             }
             final BigDecimal taxRate = pctToFraction(benefit.getTaxRatePct());
+            final BigDecimal net = amount.multiply(BigDecimal.ONE.subtract(taxRate, MC), MC);
+            sum = sum.add(net, MC);
+        }
+        return sum;
+    }
+
+    private static BigDecimal netFutureIncomesFor(List<FutureIncome> incomes, int year) {
+        if (incomes == null || incomes.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (final FutureIncome income : incomes) {
+            if (income == null || !Objects.equals(income.getYear(), year)) {
+                continue;
+            }
+            final BigDecimal amount = income.getAmount();
+            if (amount == null || amount.signum() <= 0) {
+                continue;
+            }
+            final BigDecimal taxRate = pctToFraction(income.getTaxRatePct());
             final BigDecimal net = amount.multiply(BigDecimal.ONE.subtract(taxRate, MC), MC);
             sum = sum.add(net, MC);
         }

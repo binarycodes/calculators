@@ -2,6 +2,7 @@ package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
+import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import jakarta.annotation.PostConstruct;
@@ -78,7 +79,28 @@ public class DefaultsProvider {
         inputs.setTaxRatePct(bd(n, "taxRate"));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
         inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
+        inputs.setFutureIncomes(readFutureIncomes(n.get("futureIncomes")));
         return inputs;
+    }
+
+    private static List<FutureIncome> readFutureIncomes(JsonNode arrayNode) {
+        final List<FutureIncome> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var income = new FutureIncome();
+            if (entry.has("year") && !entry.get("year").isNull()) {
+                income.setYear(entry.get("year").asInt());
+            }
+            if (entry.has("description") && !entry.get("description").isNull()) {
+                income.setDescription(entry.get("description").asText());
+            }
+            income.setAmount(bd(entry, "amount"));
+            income.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(income);
+        }
+        return out;
     }
 
     private static List<RetirementBenefit> readRetirementBenefits(JsonNode arrayNode) {
