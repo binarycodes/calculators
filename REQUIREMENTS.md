@@ -262,6 +262,10 @@ Investment | Withdrawal | Tax Paid | Corpus (End)`. Rows are themed by
 status (retirement-year, depleted, low-corpus). Monthly/yearly amounts are
 shown for the cashflow columns; hovering exposes the amount in words.
 
+A column-chooser icon (cog) at the top-right of the grid opens a checkable
+menu listing every column; toggling an item hides or shows that column
+without recomputing the projection.
+
 ### 5.2 Summary cards
 
 `Corpus at Retirement`, `Annual Expenses at Retirement`,
@@ -278,6 +282,7 @@ shown for the cashflow columns; hovering exposes the amount in words.
 | Return on Investments | Stacked column | Yearly principal + interest until depletion or life expectancy |
 | Withdrawal vs Returns | Grouped column | Post-retirement withdrawal vs. returns by year |
 | Real Corpus | Split-pane area-spline | Nominal vs. inflation-deflated corpus, on independent y-scales |
+
 
 ## 6. Test coverage
 

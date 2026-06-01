@@ -162,8 +162,13 @@ public class RetirementView extends VerticalLayout {
     }
 
     private VerticalLayout buildProjectionGridCard() {
-        final VerticalLayout gridCard = new VerticalLayout(
-                new H2("Year-on-Year Projection"), this.projectionGrid);
+        final H2 title = new H2("Year-on-Year Projection");
+        final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createColumnChooser());
+        header.setWidthFull();
+        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+        header.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+
+        final VerticalLayout gridCard = new VerticalLayout(header, this.projectionGrid);
         gridCard.addClassName("grid-card");
         gridCard.setPadding(false);
         gridCard.setSpacing(true);

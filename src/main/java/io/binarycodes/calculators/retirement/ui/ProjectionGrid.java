@@ -2,8 +2,13 @@ package io.binarycodes.calculators.retirement.ui;
 
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
@@ -13,7 +18,9 @@ import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -29,6 +36,9 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
     private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
 
     private final UserPreferences preferences;
+    // Header → column; insertion order preserved so the chooser lists columns
+    // in the same order as the grid renders them.
+    private final Map<String, Column<ProjectionRow>> columnsByHeader = new LinkedHashMap<>();
 
     public ProjectionGrid(UserPreferences preferences) {
         super(ProjectionRow.class, false);
@@ -48,16 +58,44 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
     }
 
     private void configureColumns() {
-        addColumn(ProjectionRow::year).setHeader("Year");
-        addColumn(ProjectionRow::age).setHeader("Age");
-        addComponentColumn(ProjectionGrid::phaseBadge).setHeader("Phase");
-        addMonthlyAndYearlyColumn("Expenses", ProjectionRow::annualExp);
-        addMoneyColumn("Corpus (Start)", ProjectionRow::startCorpus);
-        addMonthlyAndYearlyColumn("Returns", ProjectionRow::returns);
-        addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment);
-        addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal);
-        addMoneyColumn("Tax Paid", ProjectionRow::taxPaid);
-        addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus).setPartNameGenerator(ProjectionGrid::corpusEndPartName);
+        track("Year",          addColumn(ProjectionRow::year).setHeader("Year"));
+        track("Age",           addColumn(ProjectionRow::age).setHeader("Age"));
+        track("Phase",         addComponentColumn(ProjectionGrid::phaseBadge).setHeader("Phase"));
+        track("Expenses",      addMonthlyAndYearlyColumn("Expenses", ProjectionRow::annualExp));
+        track("Corpus (Start)", addMoneyColumn("Corpus (Start)", ProjectionRow::startCorpus));
+        track("Returns",       addMonthlyAndYearlyColumn("Returns", ProjectionRow::returns));
+        track("Investment",    addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment));
+        track("Withdrawal",    addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal));
+        track("Tax Paid",      addMoneyColumn("Tax Paid", ProjectionRow::taxPaid));
+        track("Corpus (End)",  addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus)
+                .setPartNameGenerator(ProjectionGrid::corpusEndPartName));
+    }
+
+    private void track(String header, Column<ProjectionRow> column) {
+        this.columnsByHeader.put(header, column);
+    }
+
+    /**
+     * A button-style menu listing every column with a checkable toggle.
+     * Toggling an item hides or shows the corresponding grid column. Intended
+     * to be placed adjacent to (or above) the grid by the parent view.
+     */
+    public MenuBar createColumnChooser() {
+        final MenuBar menuBar = new MenuBar();
+        menuBar.addThemeVariants(MenuBarVariant.LUMO_TERTIARY, MenuBarVariant.LUMO_ICON);
+        final var rootItem = menuBar.addItem(VaadinIcon.COG.create());
+        Tooltip.forComponent(rootItem).setText("Choose columns");
+        rootItem.getElement().setAttribute("aria-label", "Choose columns");
+
+        final SubMenu submenu = rootItem.getSubMenu();
+        for (final var entry : this.columnsByHeader.entrySet()) {
+            final Column<ProjectionRow> column = entry.getValue();
+            final var item = submenu.addItem(entry.getKey());
+            item.setCheckable(true);
+            item.setChecked(column.isVisible());
+            item.addClickListener(e -> column.setVisible(item.isChecked()));
+        }
+        return menuBar;
     }
 
     private Column<ProjectionRow> addMoneyColumn(String header, Function<ProjectionRow, BigDecimal> moneyAccessor) {
