@@ -56,6 +56,7 @@ public class ProjectionGrid extends Grid<ProjectionRow> {
         addMonthlyAndYearlyColumn("Returns", ProjectionRow::returns);
         addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment);
         addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal);
+        addMoneyColumn("Tax Paid", ProjectionRow::taxPaid);
         addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus).setPartNameGenerator(ProjectionGrid::corpusEndPartName);
     }
 

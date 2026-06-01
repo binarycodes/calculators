@@ -30,15 +30,16 @@ public class RetirementInputs {
     private BigDecimal inflationPct;
     private BigDecimal growthPrePct;
     private BigDecimal growthPostPct;
+    private BigDecimal corpusTaxRatePct;
 
     private BigDecimal monthlyInvPre;
     private BigDecimal sipGrowthPrePct;
     private BigDecimal sipStepUpPrePct;
+    private BigDecimal taxRatePrePct;
     private BigDecimal monthlyInvPost;
     private BigDecimal sipGrowthPostPct;
     private BigDecimal sipStepUpPostPct;
-
-    private BigDecimal taxRatePct;
+    private BigDecimal taxRatePostPct;
 
     private List<FutureExpense> futureExpenses = new ArrayList<>();
     private List<RetirementBenefit> retirementBenefits = new ArrayList<>();

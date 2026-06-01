@@ -70,13 +70,15 @@ public class DefaultsProvider {
         inputs.setInflationPct(bd(n, "inflation"));
         inputs.setGrowthPrePct(bd(n, "growthPre"));
         inputs.setGrowthPostPct(bd(n, "growthPost"));
+        inputs.setCorpusTaxRatePct(bd(n, "corpusTaxRate"));
         inputs.setMonthlyInvPre(bd(n, "monthlyInvPre"));
         inputs.setSipGrowthPrePct(bd(n, "sipGrowthPre"));
         inputs.setSipStepUpPrePct(bd(n, "sipStepUpPre"));
+        inputs.setTaxRatePrePct(bd(n, "taxRatePre"));
         inputs.setMonthlyInvPost(bd(n, "monthlyInvPost"));
         inputs.setSipGrowthPostPct(bd(n, "sipGrowthPost"));
         inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
-        inputs.setTaxRatePct(bd(n, "taxRate"));
+        inputs.setTaxRatePostPct(bd(n, "taxRatePost"));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
         inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
         inputs.setFutureIncomes(readFutureIncomes(n.get("futureIncomes")));
@@ -158,13 +160,15 @@ public class DefaultsProvider {
         inputs.setInflationPct(BigDecimal.valueOf(6));
         inputs.setGrowthPrePct(BigDecimal.valueOf(12));
         inputs.setGrowthPostPct(BigDecimal.valueOf(8));
+        inputs.setCorpusTaxRatePct(BigDecimal.ZERO);
         inputs.setMonthlyInvPre(BigDecimal.valueOf(25_000));
         inputs.setSipGrowthPrePct(BigDecimal.valueOf(12));
         inputs.setSipStepUpPrePct(BigDecimal.ZERO);
+        inputs.setTaxRatePrePct(BigDecimal.ZERO);
         inputs.setMonthlyInvPost(BigDecimal.ZERO);
         inputs.setSipGrowthPostPct(BigDecimal.ZERO);
         inputs.setSipStepUpPostPct(BigDecimal.ZERO);
-        inputs.setTaxRatePct(BigDecimal.ZERO);
+        inputs.setTaxRatePostPct(BigDecimal.ZERO);
         return inputs;
     }
 }

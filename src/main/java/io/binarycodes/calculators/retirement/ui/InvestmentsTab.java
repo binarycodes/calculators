@@ -17,45 +17,48 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.percentageFiel
 import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentageSuffix;
 
 /**
- * The "Investments" tab: existing corpus growth, pre/post SIP contributions
- * (with growth + step-up), and the (currently UI-only) tax rate.
+ * The "Investments" tab: existing corpus growth, and pre/post monthly
+ * contributions (with growth, step-up, and per-phase tax rate on
+ * investment gains).
  */
 class InvestmentsTab extends VerticalLayout {
 
     private final NumberField corpusReturnsPrePct = percentageField("Before Retirement");
     private final NumberField corpusReturnsPostPct = percentageField("After Retirement");
+    private final NumberField corpusTaxRatePct = percentageField("Tax Rate");
 
     private final MoneyField monthlyInvestmentPre;
     private final NumberField sipReturnsPrePct = percentageField("Growth Percentage");
     private final NumberField sipStepUpPrePct = percentageField("Step Up Percentage (Yearly)");
+    private final NumberField taxRatePrePct = percentageField("Tax Rate");
 
     private final MoneyField monthlyInvestmentPost;
     private final NumberField sipReturnsPostPct = percentageField("Growth Percentage");
     private final NumberField sipStepUpPostPct = percentageField("Step Up Percentage (Yearly)");
-
-    private final NumberField taxRatePct = percentageField("Tax Rate (on investment gains)");
+    private final NumberField taxRatePostPct = percentageField("Tax Rate");
 
     InvestmentsTab(Binder<RetirementInputs> binder, UserPreferences prefs) {
-        this.monthlyInvestmentPre = new MoneyField("Monthly SIP", prefs);
-        this.monthlyInvestmentPost = new MoneyField("Monthly SIP", prefs);
+        this.monthlyInvestmentPre = new MoneyField("Amount", prefs);
+        this.monthlyInvestmentPost = new MoneyField("Amount", prefs);
 
         setPadding(false);
         setSpacing(true);
         add(
                 buildSectionCard("Existing Corpus Returns",
                         withPercentageSuffix(this.corpusReturnsPrePct),
-                        withPercentageSuffix(this.corpusReturnsPostPct)),
-                buildNestedSectionCard("Monthly SIP Contributions",
+                        withPercentageSuffix(this.corpusReturnsPostPct),
+                        withPercentageSuffix(this.corpusTaxRatePct)),
+                buildNestedSectionCard("Monthly Contributions",
                         buildSectionCard("Before Retirement",
                                 this.monthlyInvestmentPre,
                                 withPercentageSuffix(this.sipReturnsPrePct),
-                                withPercentageSuffix(this.sipStepUpPrePct)),
+                                withPercentageSuffix(this.sipStepUpPrePct),
+                                withPercentageSuffix(this.taxRatePrePct)),
                         buildSectionCard("After Retirement",
                                 this.monthlyInvestmentPost,
                                 withPercentageSuffix(this.sipReturnsPostPct),
-                                withPercentageSuffix(this.sipStepUpPostPct))),
-                buildSectionCard("Taxation",
-                        withPercentageSuffix(this.taxRatePct)));
+                                withPercentageSuffix(this.sipStepUpPostPct),
+                                withPercentageSuffix(this.taxRatePostPct))));
 
         configureBindings(binder);
     }
@@ -85,7 +88,11 @@ class InvestmentsTab extends VerticalLayout {
                 RetirementInputs::getSipStepUpPrePct, RetirementInputs::setSipStepUpPrePct);
         bindPercentage(binder, this.sipStepUpPostPct,
                 RetirementInputs::getSipStepUpPostPct, RetirementInputs::setSipStepUpPostPct);
-        bindPercentage(binder, this.taxRatePct,
-                RetirementInputs::getTaxRatePct, RetirementInputs::setTaxRatePct);
+        bindPercentage(binder, this.taxRatePrePct,
+                RetirementInputs::getTaxRatePrePct, RetirementInputs::setTaxRatePrePct);
+        bindPercentage(binder, this.taxRatePostPct,
+                RetirementInputs::getTaxRatePostPct, RetirementInputs::setTaxRatePostPct);
+        bindPercentage(binder, this.corpusTaxRatePct,
+                RetirementInputs::getCorpusTaxRatePct, RetirementInputs::setCorpusTaxRatePct);
     }
 }

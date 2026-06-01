@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,6 +20,25 @@ import java.util.Optional;
  * Arithmetic uses {@link BigDecimal} under {@link MathContext#DECIMAL64} —
  * matches IEEE 754 double precision while avoiding rounding drift on equality
  * assertions.
+ *
+ * <p>The calculator models two persistent buckets that each track their own
+ * principal and gains:</p>
+ *
+ * <ul>
+ *     <li><b>Main corpus</b> — seeded with the user's existing corpus, grows
+ *         at {@code growthPre}/{@code growthPost}, taxed at
+ *         {@code corpusTaxRate} on gains.</li>
+ *     <li><b>SIP corpus</b> — seeded at zero, accumulates monthly
+ *         contributions plus retirement benefits and future incomes. Grows
+ *         at {@code sipGrowthPre}/{@code sipGrowthPost}. Gains taxed at the
+ *         current phase's {@code taxRatePre}/{@code taxRatePost}.</li>
+ * </ul>
+ *
+ * <p>Each year's withdrawal is satisfied by draining the bucket with the
+ * lower current growth rate first, so the higher-yielding bucket compounds
+ * longer. When a bucket is drawn down, the gains portion of the draw
+ * incurs tax (reported separately; it doesn't reduce the gross corpus
+ * drawdown).</p>
  */
 public final class RetirementCalculator {
 
@@ -40,17 +60,21 @@ public final class RetirementCalculator {
         final BigDecimal inflation = pctToFraction(in.getInflationPct());
         final BigDecimal growthPre = pctToFraction(in.getGrowthPrePct());
         final BigDecimal growthPost = pctToFraction(in.getGrowthPostPct());
+        final BigDecimal corpusTaxRate = pctToFraction(in.getCorpusTaxRatePct());
         final BigDecimal sipGrowthPre = pctToFraction(in.getSipGrowthPrePct());
         final BigDecimal sipGrowthPost = pctToFraction(in.getSipGrowthPostPct());
         final BigDecimal sipStepUpPre = pctToFraction(in.getSipStepUpPrePct());
         final BigDecimal sipStepUpPost = pctToFraction(in.getSipStepUpPostPct());
+        final BigDecimal sipTaxRatePre = pctToFraction(in.getTaxRatePrePct());
+        final BigDecimal sipTaxRatePost = pctToFraction(in.getTaxRatePostPct());
         final BigDecimal annualExp0 = in.getMonthlyExpenses().multiply(TWELVE, MC);
         final BigDecimal annualInvPre = in.getMonthlyInvPre().multiply(TWELVE, MC);
         final BigDecimal annualInvPost = in.getMonthlyInvPost().multiply(TWELVE, MC);
 
+        final Bucket main = new Bucket(in.getCorpus(), in.getCorpus());
+        final Bucket sip = new Bucket(BigDecimal.ZERO, BigDecimal.ZERO);
+
         final List<ProjectionRow> rows = new ArrayList<>();
-        BigDecimal mainCorpus = in.getCorpus();
-        BigDecimal sipCorpus = BigDecimal.ZERO;
         BigDecimal totalInvested = in.getCorpus();
         BigDecimal investedAtRetirement = BigDecimal.ZERO;
         Integer corpusDepletedAt = null;
@@ -63,21 +87,20 @@ public final class RetirementCalculator {
             final boolean isPost = age >= in.getRetireAge();
             final BigDecimal annualExp = annualExp0.multiply(pow1plus(inflation, yearsFromNow), MC);
 
-            // At retirement, fold the SIP-accumulated corpus into the main corpus.
             if (isRetireYear) {
                 investedAtRetirement = totalInvested;
-                mainCorpus = mainCorpus.add(sipCorpus, MC);
-                sipCorpus = BigDecimal.ZERO;
             }
 
             final BigDecimal mainRate = isPost ? growthPost : growthPre;
             final BigDecimal sipRate = isPost ? sipGrowthPost : sipGrowthPre;
+            final BigDecimal sipTaxRate = isPost ? sipTaxRatePost : sipTaxRatePre;
+
+            // This year's investment = SIP contribution (step-up applied) +
+            // any retirement benefits received this year + future incomes due
+            // this year. All land as principal in the SIP bucket.
             final int yearsInPhase = isPost ? age - in.getRetireAge() : age - in.getCurrentAge();
             final BigDecimal stepUpFactor = pow1plus(isPost ? sipStepUpPost : sipStepUpPre, yearsInPhase);
             final BigDecimal sipContribution = (isPost ? annualInvPost : annualInvPre).multiply(stepUpFactor, MC);
-            // Net benefits / future incomes received this year are folded into
-            // the year's investment so they enter the corpus the same way SIPs
-            // do (rather than offsetting withdrawal).
             final BigDecimal netBenefitsThisYear = isRetireYear
                     ? netRetirementBenefits(in.getRetirementBenefits())
                     : BigDecimal.ZERO;
@@ -87,53 +110,66 @@ public final class RetirementCalculator {
                     .add(netBenefitsThisYear, MC)
                     .add(netFutureIncomeThisYear, MC);
             totalInvested = totalInvested.add(investment, MC);
+            sip.contribute(investment);
 
-            final BigDecimal startCorpus = mainCorpus.add(sipCorpus, MC);
-            final BigDecimal mainReturns = mainCorpus.multiply(mainRate, MC);
-            final BigDecimal sipReturns = sipCorpus.multiply(sipRate, MC);
+            final BigDecimal startCorpus = main.balance.add(sip.balance, MC);
+
+            // Apply this year's growth before any withdrawal.
+            final BigDecimal mainReturns = main.applyGrowth(mainRate);
+            final BigDecimal sipReturns = sip.applyGrowth(sipRate);
             final BigDecimal returns = mainReturns.add(sipReturns, MC);
-
-            BigDecimal mainAfter = mainCorpus.add(mainReturns, MC);
-            BigDecimal sipAfter = sipCorpus.add(sipReturns, MC).add(investment, MC);
 
             final BigDecimal futureExpensesThisYear = inflatedFutureExpensesFor(
                     in.getFutureExpenses(), year, currentYear);
             final BigDecimal withdrawal = (isPost ? annualExp : BigDecimal.ZERO)
                     .add(futureExpensesThisYear, MC);
-            final BigDecimal endCorpus;
 
-            if (withdrawal.signum() == 0) {
-                endCorpus = mainAfter.add(sipAfter, MC);
-            } else {
-                final BigDecimal pool = mainAfter.add(sipAfter, MC);
-                if (pool.compareTo(withdrawal) >= 0) {
-                    // proportional draw — both buckets shrink in proportion to their share
-                    final BigDecimal mainShare = pool.signum() > 0
-                            ? mainAfter.divide(pool, MC)
-                            : BigDecimal.ZERO;
-                    mainAfter = mainAfter.subtract(withdrawal.multiply(mainShare, MC), MC);
-                    sipAfter = sipAfter.subtract(
-                            withdrawal.multiply(BigDecimal.ONE.subtract(mainShare, MC), MC), MC);
-                    endCorpus = mainAfter.add(sipAfter, MC);
-                } else {
-                    // shortfall — surface the deficit (negative) so callers can see the gap
-                    endCorpus = pool.subtract(withdrawal, MC);
-                    mainAfter = BigDecimal.ZERO;
-                    sipAfter = BigDecimal.ZERO;
+            // Drain from the bucket with the lower current growth rate first;
+            // tie-break in favour of main. This preserves the higher-yielding
+            // bucket for longer compounding.
+            final List<BucketDraw> drawOrder = new ArrayList<>();
+            drawOrder.add(new BucketDraw(main, mainRate, corpusTaxRate));
+            drawOrder.add(new BucketDraw(sip, sipRate, sipTaxRate));
+            drawOrder.sort(Comparator.comparing((BucketDraw d) -> d.growthRate));
+
+            BigDecimal remaining = withdrawal;
+            BigDecimal taxPaid = BigDecimal.ZERO;
+            for (final BucketDraw d : drawOrder) {
+                if (remaining.signum() <= 0) {
+                    break;
+                }
+                final BigDecimal balanceBefore = d.bucket.balance;
+                final BigDecimal principalBefore = d.bucket.principal;
+                remaining = d.bucket.drain(remaining);
+                final BigDecimal drawn = balanceBefore.subtract(d.bucket.balance, MC);
+                if (drawn.signum() > 0 && balanceBefore.signum() > 0) {
+                    final BigDecimal gainsBefore = balanceBefore.subtract(principalBefore, MC);
+                    final BigDecimal gainsDrawn = drawn.multiply(gainsBefore, MC)
+                            .divide(balanceBefore, MC);
+                    if (gainsDrawn.signum() > 0) {
+                        taxPaid = taxPaid.add(gainsDrawn.multiply(d.taxRate, MC), MC);
+                    }
                 }
             }
 
-            final boolean depleted = endCorpus.signum() < 0;
+            final BigDecimal endCorpus;
+            final boolean depleted;
+            if (remaining.signum() > 0) {
+                // Shortfall — surface as negative endCorpus.
+                endCorpus = remaining.negate();
+                depleted = true;
+            } else {
+                endCorpus = main.balance.add(sip.balance, MC);
+                depleted = endCorpus.signum() < 0;
+            }
+
             rows.add(new ProjectionRow(year, age, isRetireYear, isPost,
                     annualExp, startCorpus, returns, investment, withdrawal,
-                    endCorpus, depleted));
+                    taxPaid, endCorpus, depleted));
 
             if (depleted && corpusDepletedAt == null) {
                 corpusDepletedAt = age;
             }
-
-            mainCorpus = mainAfter.signum() > 0 ? mainAfter : BigDecimal.ZERO;
-            sipCorpus = sipAfter.signum() > 0 ? sipAfter : BigDecimal.ZERO;
             if (depleted) {
                 break;
             }
@@ -143,6 +179,57 @@ public final class RetirementCalculator {
                 List.copyOf(rows),
                 Optional.ofNullable(corpusDepletedAt),
                 investedAtRetirement);
+    }
+
+    /**
+     * Mutable per-bucket state. Tracks total balance and principal; gains
+     * are derived as {@code balance − principal}.
+     */
+    private static final class Bucket {
+        BigDecimal balance;
+        BigDecimal principal;
+
+        Bucket(BigDecimal balance, BigDecimal principal) {
+            this.balance = balance;
+            this.principal = principal;
+        }
+
+        void contribute(BigDecimal amount) {
+            this.balance = this.balance.add(amount, MC);
+            this.principal = this.principal.add(amount, MC);
+        }
+
+        BigDecimal applyGrowth(BigDecimal rate) {
+            final BigDecimal earnings = this.balance.multiply(rate, MC);
+            this.balance = this.balance.add(earnings, MC);
+            return earnings;
+        }
+
+        /**
+         * Draw up to {@code request} from this bucket. Returns whatever
+         * couldn't be satisfied (so the caller can roll over to the next
+         * bucket). Updates principal proportionally so the gains-vs-principal
+         * mix of the remaining balance is preserved.
+         */
+        BigDecimal drain(BigDecimal request) {
+            if (request.signum() <= 0 || this.balance.signum() <= 0) {
+                return request;
+            }
+            if (request.compareTo(this.balance) >= 0) {
+                final BigDecimal shortfall = request.subtract(this.balance, MC);
+                this.balance = BigDecimal.ZERO;
+                this.principal = BigDecimal.ZERO;
+                return shortfall;
+            }
+            final BigDecimal principalDrawn = request.multiply(this.principal, MC)
+                    .divide(this.balance, MC);
+            this.principal = this.principal.subtract(principalDrawn, MC);
+            this.balance = this.balance.subtract(request, MC);
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private record BucketDraw(Bucket bucket, BigDecimal growthRate, BigDecimal taxRate) {
     }
 
     private static BigDecimal netRetirementBenefits(List<RetirementBenefit> benefits) {

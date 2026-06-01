@@ -32,13 +32,15 @@ class RetirementCalculatorTest {
         inputs.setInflationPct(bd(8));
         inputs.setGrowthPrePct(bd(12));
         inputs.setGrowthPostPct(bd(8));
+        inputs.setCorpusTaxRatePct(bd(0));
         inputs.setMonthlyInvPre(bd(150_000));
         inputs.setSipGrowthPrePct(bd(12));
         inputs.setSipStepUpPrePct(bd(0));
+        inputs.setTaxRatePrePct(bd(0));
         inputs.setMonthlyInvPost(bd(0));
         inputs.setSipGrowthPostPct(bd(0));
         inputs.setSipStepUpPostPct(bd(0));
-        inputs.setTaxRatePct(bd(0));
+        inputs.setTaxRatePostPct(bd(0));
         return inputs;
     }
 
@@ -52,13 +54,15 @@ class RetirementCalculatorTest {
         inputs.setInflationPct(bd(1));
         inputs.setGrowthPrePct(bd(1));
         inputs.setGrowthPostPct(bd(1));
+        inputs.setCorpusTaxRatePct(bd(1));
         inputs.setMonthlyInvPre(bd(1));
         inputs.setSipGrowthPrePct(bd(1));
         inputs.setSipStepUpPrePct(bd(1));
+        inputs.setTaxRatePrePct(bd(1));
         inputs.setMonthlyInvPost(bd(1));
         inputs.setSipGrowthPostPct(bd(1));
         inputs.setSipStepUpPostPct(bd(1));
-        inputs.setTaxRatePct(bd(1));
+        inputs.setTaxRatePostPct(bd(1));
         return inputs;
     }
 
@@ -294,6 +298,32 @@ class RetirementCalculatorTest {
                 "investment expected ≈" + expectedInvestment + " got " + withIncomeRow.investment());
         assertEquals(0, withIncomeRow.withdrawal().compareTo(baselineRow.withdrawal()),
                 "withdrawal must be unchanged when income flows through investment");
+    }
+
+    @Test
+    void lowest_yield_first_outlasts_proportional_drain() {
+        // Configure a scenario where the main corpus grows much faster than
+        // the SIP corpus post-retirement, so the SIP bucket should be drained
+        // first. With pre-retirement bucket growth as well, the SIP corpus
+        // ends up with a significant balance at retirement, but its zero
+        // post-retirement growth means it's the natural sink for withdrawals
+        // until it empties. As long as the main corpus survives life
+        // expectancy, the calculator should not flag depletion.
+        final RetirementInputs inputs = inrDefaults();
+        inputs.setGrowthPostPct(bd(10));      // fat main bucket post-retirement
+        inputs.setSipGrowthPostPct(bd(0));    // SIP earns nothing post-retirement
+        inputs.setMonthlyInvPost(bd(0));      // no further SIP contributions
+        // Initial corpus is generous — under proportional-drain we'd be eating
+        // into the high-yielding main from day one. Under lowest-first the SIP
+        // bucket goes first and main keeps compounding at 10%.
+        inputs.setCorpus(bd(30_000_000));
+
+        final RetirementResult result = RetirementCalculator.calculate(inputs);
+
+        assertTrue(result.corpusDepletedAt().isEmpty(),
+                "lowest-yield-first must let the higher-yielding bucket compound "
+                        + "untouched until the slower bucket empties; depleted at "
+                        + result.corpusDepletedAt().orElse(null));
     }
 
     @Test

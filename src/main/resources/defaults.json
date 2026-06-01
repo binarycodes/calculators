@@ -8,13 +8,15 @@
     "inflation": "8",
     "growthPre": "10",
     "growthPost": "8",
+    "corpusTaxRate": "12.5",
     "monthlyInvPre": "150000",
     "sipGrowthPre": "10",
     "sipStepUpPre": "0",
+    "taxRatePre": "12.5",
     "monthlyInvPost": "0",
     "sipGrowthPost": "0",
     "sipStepUpPost": "0",
-    "taxRate": "0"
+    "taxRatePost": "12.5"
   },
   "EUR": {
     "currentAge": "38",
@@ -25,13 +27,15 @@
     "inflation": "2.5",
     "growthPre": "9",
     "growthPost": "4",
+    "corpusTaxRate": "30",
     "monthlyInvPre": "1500",
     "sipGrowthPre": "9",
     "sipStepUpPre": "0",
+    "taxRatePre": "30",
     "monthlyInvPost": "0",
     "sipGrowthPost": "4",
     "sipStepUpPost": "0",
-    "taxRate": "0"
+    "taxRatePost": "30"
   },
   "USD": {
     "currentAge": "38",
@@ -42,12 +46,14 @@
     "inflation": "3",
     "growthPre": "8",
     "growthPost": "5",
+    "corpusTaxRate": "30",
     "monthlyInvPre": "500",
     "sipGrowthPre": "8",
     "sipStepUpPre": "0",
+    "taxRatePre": "30",
     "monthlyInvPost": "0",
     "sipGrowthPost": "5",
     "sipStepUpPost": "0",
-    "taxRate": "0"
+    "taxRatePost": "30"
   }
 }

@@ -15,6 +15,7 @@ public record ProjectionRow(
         BigDecimal returns,
         BigDecimal investment,
         BigDecimal withdrawal,
+        BigDecimal taxPaid,
         BigDecimal endCorpus,
         boolean depleted
 ) {

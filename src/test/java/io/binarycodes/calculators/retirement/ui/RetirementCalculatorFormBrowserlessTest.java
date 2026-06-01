@@ -69,13 +69,15 @@ class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
         initial.setInflationPct(BigDecimal.valueOf(8));
         initial.setGrowthPrePct(BigDecimal.valueOf(12));
         initial.setGrowthPostPct(BigDecimal.valueOf(8));
+        initial.setCorpusTaxRatePct(BigDecimal.valueOf(5));
         initial.setMonthlyInvPre(BigDecimal.valueOf(150_000));
         initial.setSipGrowthPrePct(BigDecimal.valueOf(12));
         initial.setSipStepUpPrePct(BigDecimal.valueOf(10));
+        initial.setTaxRatePrePct(BigDecimal.valueOf(15));
         initial.setMonthlyInvPost(BigDecimal.valueOf(50_000));
         initial.setSipGrowthPostPct(BigDecimal.valueOf(8));
         initial.setSipStepUpPostPct(BigDecimal.valueOf(5));
-        initial.setTaxRatePct(BigDecimal.valueOf(15));
+        initial.setTaxRatePostPct(BigDecimal.valueOf(20));
         form.setInputs(initial);
 
         final RetirementInputs roundTripped = form.getInputs();
