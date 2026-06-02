@@ -8,6 +8,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.Binder.Binding;
 import com.vaadin.flow.data.binder.Result;
 import com.vaadin.flow.data.binder.Setter;
 import com.vaadin.flow.data.converter.Converter;
@@ -92,10 +93,11 @@ final class FormFields {
         return card;
     }
 
-    static void bindPercentage(Binder<RetirementInputs> binder, NumberField field,
-                               ValueProvider<RetirementInputs, BigDecimal> getter,
-                               Setter<RetirementInputs, BigDecimal> setter) {
-        binder.forField(field)
+    static Binding<RetirementInputs, BigDecimal> bindPercentage(
+            Binder<RetirementInputs> binder, NumberField field,
+            ValueProvider<RetirementInputs, BigDecimal> getter,
+            Setter<RetirementInputs, BigDecimal> setter) {
+        return binder.forField(field)
                 .asRequired("Required")
                 .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())

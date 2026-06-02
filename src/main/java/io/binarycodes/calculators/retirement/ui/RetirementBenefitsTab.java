@@ -9,6 +9,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.signals.Signal;
+import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
@@ -31,14 +33,13 @@ class RetirementBenefitsTab extends VerticalLayout {
     private final UserPreferences prefs;
     private final VerticalLayout rowsContainer = new VerticalLayout();
     private final List<RetirementBenefitRow> rows = new ArrayList<>();
-    private final List<Runnable> changeListeners = new ArrayList<>();
-    private boolean suppressChangeEvents;
+    private final ValueSignal<List<RetirementBenefit>> benefitsSignal = new ValueSignal<>(List.of());
 
     RetirementBenefitsTab(UserPreferences prefs) {
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
-final Span intro = new Span("Plan retirement-period inflows (gratuities, provident fund payouts, etc) received on the retirement-age year. The tax rate is applied immediately on receipt; the net amount lands in the corpus that year.");
+        final Span intro = new Span("Plan retirement-period inflows (gratuities, provident fund payouts, etc) received on the retirement-age year. The tax rate is applied immediately on receipt; the net amount lands in the corpus that year.");
 
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
@@ -47,59 +48,56 @@ final Span intro = new Span("Plan retirement-period inflows (gratuities, provide
         this.rowsContainer.setWidthFull();
 
         final Button addButton = new Button("Add benefit", VaadinIcon.PLUS.create(),
-                e -> addRow(new RetirementBenefit()));
+                event -> addRow(new RetirementBenefit()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         add(intro, this.rowsContainer, addButton);
     }
 
-    void addInputChangeListener(Runnable listener) {
-        this.changeListeners.add(listener);
+    Signal<List<RetirementBenefit>> retirementBenefitsSignal() {
+        return this.benefitsSignal.asReadonly();
     }
 
     List<RetirementBenefit> getRetirementBenefits() {
-        final List<RetirementBenefit> out = new ArrayList<>();
-        for (final RetirementBenefitRow row : this.rows) {
-            out.add(row.snapshot());
-        }
-        return out;
+        return snapshotRows();
     }
 
     void setRetirementBenefits(List<RetirementBenefit> benefits) {
-        this.suppressChangeEvents = true;
-        try {
-            this.rowsContainer.removeAll();
-            this.rows.clear();
-            if (benefits != null) {
-                for (final RetirementBenefit benefit : benefits) {
-                    addRow(benefit);
-                }
+        this.rowsContainer.removeAll();
+        this.rows.clear();
+        if (benefits != null) {
+            for (final RetirementBenefit benefit : benefits) {
+                addRow(benefit);
             }
-        } finally {
-            this.suppressChangeEvents = false;
         }
+        publishSnapshot();
     }
 
     private void addRow(RetirementBenefit benefit) {
-        final RetirementBenefitRow row = new RetirementBenefitRow(this.prefs, benefit, this::removeRow,
-                this::notifyChangeListeners);
+        final RetirementBenefitRow row = new RetirementBenefitRow(this.prefs, benefit,
+                this::removeRow, this::publishSnapshot);
         this.rows.add(row);
         this.rowsContainer.add(row);
-        notifyChangeListeners();
+        publishSnapshot();
     }
 
     private void removeRow(RetirementBenefitRow row) {
         if (this.rows.remove(row)) {
             this.rowsContainer.remove(row);
-            notifyChangeListeners();
+            publishSnapshot();
         }
     }
 
-    private void notifyChangeListeners() {
-        if (this.suppressChangeEvents) {
-            return;
+    private void publishSnapshot() {
+        this.benefitsSignal.set(snapshotRows());
+    }
+
+    private List<RetirementBenefit> snapshotRows() {
+        final List<RetirementBenefit> out = new ArrayList<>();
+        for (final RetirementBenefitRow row : this.rows) {
+            out.add(row.snapshot());
         }
-        this.changeListeners.forEach(Runnable::run);
+        return out;
     }
 
     private static final class RetirementBenefitRow extends HorizontalLayout {
@@ -120,11 +118,11 @@ final Span intro = new Span("Plan retirement-period inflows (gratuities, provide
             this.taxField.setValue(initial.getTaxRatePct() == null
                     ? null : initial.getTaxRatePct().doubleValue());
 
-            this.descriptionField.addValueChangeListener(e -> onChanged.run());
-            this.amountField.addValueChangeListener(e -> onChanged.run());
-            this.taxField.addValueChangeListener(e -> onChanged.run());
+            this.descriptionField.addValueChangeListener(event -> onChanged.run());
+            this.amountField.addValueChangeListener(event -> onChanged.run());
+            this.taxField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
             removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
             removeButton.getElement().setAttribute("aria-label", "Remove benefit");
 

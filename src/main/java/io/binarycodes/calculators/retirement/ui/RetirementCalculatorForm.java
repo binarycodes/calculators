@@ -4,19 +4,16 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.BinderValidationStatus;
-import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The retirement-calculator input form. Composes one tab per logical group
  * ({@link BasicTab}, {@link InvestmentsTab}, {@link FutureExpensesTab},
  * {@link RetirementBenefitsTab}) into a single {@link TabSheet}. The basic
- * and investment tabs share one {@link Binder}; the future-expenses tab
- * manages its own list and is harvested at {@link #getInputs()} time.
+ * and investment tabs share one {@link Binder}; the list-based tabs expose
+ * their state as {@link Signal}s.
  *
  * <h3>API</h3>
  * <ul>
@@ -25,18 +22,22 @@ import java.util.List;
  *   <li>{@link #isValid()} — current binder validity.</li>
  *   <li>{@link #validate()} — force-validate; returns a status object that
  *       carries the per-field errors.</li>
- *   <li>{@link #addInputChangeListener(Runnable)} — fires after any field
- *       changes, except while {@link #setInputs} is running.</li>
+ *   <li>{@link #inputsSignal()} — reactive view of the form contents.
+ *       Observers (e.g. {@link RetirementView}) subscribe via
+ *       {@link Signal#effect(com.vaadin.flow.component.Component,
+ *       com.vaadin.flow.signals.function.ContextualEffectAction)} to be
+ *       notified whenever any input changes.</li>
  * </ul>
  */
 public class RetirementCalculatorForm extends VerticalLayout {
 
     private final Binder<RetirementInputs> binder = new Binder<>(RetirementInputs.class);
+    private final BasicTab basicTab;
+    private final InvestmentsTab investmentsTab;
     private final FutureExpensesTab futureExpensesTab;
     private final RetirementBenefitsTab retirementBenefitsTab;
     private final FutureIncomesTab futureIncomesTab;
-    private final List<Runnable> changeListeners = new ArrayList<>();
-    private boolean suppressChangeEvents;
+    private final Signal<RetirementInputs> inputsSignal;
 
     public RetirementCalculatorForm(UserPreferences prefs) {
         addClassName("retirement-form");
@@ -44,48 +45,55 @@ public class RetirementCalculatorForm extends VerticalLayout {
         setSpacing(true);
         setWidthFull();
 
+        this.basicTab = new BasicTab(this.binder, prefs);
+        this.investmentsTab = new InvestmentsTab(this.binder, prefs);
         this.futureExpensesTab = new FutureExpensesTab(prefs);
-        this.futureExpensesTab.addInputChangeListener(this::notifyChangeListeners);
         this.retirementBenefitsTab = new RetirementBenefitsTab(prefs);
-        this.retirementBenefitsTab.addInputChangeListener(this::notifyChangeListeners);
         this.futureIncomesTab = new FutureIncomesTab(prefs);
-        this.futureIncomesTab.addInputChangeListener(this::notifyChangeListeners);
 
         final var tabSheet = new TabSheet();
-        tabSheet.add("Basic", new BasicTab(this.binder, prefs));
-        tabSheet.add("Investments", new InvestmentsTab(this.binder, prefs));
+        tabSheet.add("Basic", this.basicTab);
+        tabSheet.add("Investments", this.investmentsTab);
         tabSheet.add("Future Expenses", this.futureExpensesTab);
         tabSheet.add("Future Incomes", this.futureIncomesTab);
         tabSheet.add("Retirement Benefits", this.retirementBenefitsTab);
         tabSheet.setWidthFull();
         add(tabSheet);
 
-        this.binder.addValueChangeListener(event -> notifyChangeListeners());
+        this.inputsSignal = Signal.computed(() -> {
+            // Touch each source signal so the computed re-runs when any one
+            // of them changes. The list-tab signals are read for their values;
+            // the binder-tab field signals are touched purely as dependencies
+            // (the binder is the authoritative source via writeBeanAsDraft).
+            this.basicTab.fieldSignals().forEach(Signal::get);
+            this.investmentsTab.fieldSignals().forEach(Signal::get);
+            this.futureExpensesTab.futureExpensesSignal().get();
+            this.futureExpensesTab.recurringExpensesSignal().get();
+            this.futureIncomesTab.futureIncomesSignal().get();
+            this.futureIncomesTab.recurringIncomesSignal().get();
+            this.retirementBenefitsTab.retirementBenefitsSignal().get();
+            return buildInputs();
+        });
+    }
+
+    public Signal<RetirementInputs> inputsSignal() {
+        return this.inputsSignal;
     }
 
     public void setInputs(RetirementInputs inputs) {
-        this.suppressChangeEvents = true;
-        try {
-            this.binder.readBean(inputs);
-            this.futureExpensesTab.setFutureExpenses(inputs.getFutureExpenses());
-            this.futureExpensesTab.setRecurringExpenses(inputs.getRecurringExpenses());
-            this.retirementBenefitsTab.setRetirementBenefits(inputs.getRetirementBenefits());
-            this.futureIncomesTab.setFutureIncomes(inputs.getFutureIncomes());
-            this.futureIncomesTab.setRecurringIncomes(inputs.getRecurringIncomes());
-        } finally {
-            this.suppressChangeEvents = false;
-        }
+        // Local Signal.effect observers schedule their re-run, so the
+        // sequential field/list writes here naturally coalesce into one
+        // downstream effect invocation without needing explicit batching.
+        this.binder.readBean(inputs);
+        this.futureExpensesTab.setFutureExpenses(inputs.getFutureExpenses());
+        this.futureExpensesTab.setRecurringExpenses(inputs.getRecurringExpenses());
+        this.retirementBenefitsTab.setRetirementBenefits(inputs.getRetirementBenefits());
+        this.futureIncomesTab.setFutureIncomes(inputs.getFutureIncomes());
+        this.futureIncomesTab.setRecurringIncomes(inputs.getRecurringIncomes());
     }
 
     public RetirementInputs getInputs() {
-        final var target = new RetirementInputs();
-        this.binder.writeBeanAsDraft(target);
-        target.setFutureExpenses(this.futureExpensesTab.getFutureExpenses());
-        target.setRecurringExpenses(this.futureExpensesTab.getRecurringExpenses());
-        target.setRetirementBenefits(this.retirementBenefitsTab.getRetirementBenefits());
-        target.setFutureIncomes(this.futureIncomesTab.getFutureIncomes());
-        target.setRecurringIncomes(this.futureIncomesTab.getRecurringIncomes());
-        return target;
+        return buildInputs();
     }
 
     public boolean isValid() {
@@ -96,15 +104,14 @@ public class RetirementCalculatorForm extends VerticalLayout {
         return this.binder.validate();
     }
 
-    public Registration addInputChangeListener(Runnable listener) {
-        this.changeListeners.add(listener);
-        return () -> this.changeListeners.remove(listener);
-    }
-
-    private void notifyChangeListeners() {
-        if (this.suppressChangeEvents) {
-            return;
-        }
-        this.changeListeners.forEach(Runnable::run);
+    private RetirementInputs buildInputs() {
+        final var target = new RetirementInputs();
+        this.binder.writeBeanAsDraft(target);
+        target.setFutureExpenses(this.futureExpensesTab.getFutureExpenses());
+        target.setRecurringExpenses(this.futureExpensesTab.getRecurringExpenses());
+        target.setRetirementBenefits(this.retirementBenefitsTab.getRetirementBenefits());
+        target.setFutureIncomes(this.futureIncomesTab.getFutureIncomes());
+        target.setRecurringIncomes(this.futureIncomesTab.getRecurringIncomes());
+        return target;
     }
 }

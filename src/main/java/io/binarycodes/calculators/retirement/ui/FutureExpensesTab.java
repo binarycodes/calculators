@@ -13,6 +13,8 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.signals.Signal;
+import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.retirement.domain.Frequency;
@@ -39,8 +41,8 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  *       inflation rate.</li>
  * </ul>
  *
- * <p>Both cards hold their state separately; the parent form pulls both
- * lists into {@code RetirementInputs} when computing inputs.</p>
+ * <p>Each list is exposed as a {@link Signal} so the parent form can
+ * compose it into the overall inputs signal.</p>
  */
 class FutureExpensesTab extends VerticalLayout {
 
@@ -49,8 +51,8 @@ class FutureExpensesTab extends VerticalLayout {
     private final List<FutureExpenseRow> fixedRows = new ArrayList<>();
     private final VerticalLayout recurringRowsContainer = new VerticalLayout();
     private final List<RecurringExpenseRow> recurringRowsList = new ArrayList<>();
-    private final List<Runnable> changeListeners = new ArrayList<>();
-    private boolean suppressChangeEvents;
+    private final ValueSignal<List<FutureExpense>> fixedSignal = new ValueSignal<>(List.of());
+    private final ValueSignal<List<RecurringExpense>> recurringSignal = new ValueSignal<>(List.of());
 
     FutureExpensesTab(UserPreferences prefs) {
         this.prefs = prefs;
@@ -72,7 +74,7 @@ class FutureExpensesTab extends VerticalLayout {
         this.fixedRowsContainer.setWidthFull();
 
         final Button addButton = new Button("Add expense", VaadinIcon.PLUS.create(),
-                e -> addFixedRow(new FutureExpense()));
+                event -> addFixedRow(new FutureExpense()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         return wrapInCard("Fixed", intro, this.fixedRowsContainer, addButton);
@@ -92,7 +94,7 @@ class FutureExpensesTab extends VerticalLayout {
         this.recurringRowsContainer.setWidthFull();
 
         final Button addButton = new Button("Add recurring expense", VaadinIcon.PLUS.create(),
-                e -> addRecurringRow(new RecurringExpense()));
+                event -> addRecurringRow(new RecurringExpense()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         return wrapInCard("Recurring", intro, this.recurringRowsContainer, addButton);
@@ -110,11 +112,83 @@ class FutureExpensesTab extends VerticalLayout {
         return card;
     }
 
-    void addInputChangeListener(Runnable listener) {
-        this.changeListeners.add(listener);
+    Signal<List<FutureExpense>> futureExpensesSignal() {
+        return this.fixedSignal.asReadonly();
+    }
+
+    Signal<List<RecurringExpense>> recurringExpensesSignal() {
+        return this.recurringSignal.asReadonly();
     }
 
     List<FutureExpense> getFutureExpenses() {
+        return snapshotFixed();
+    }
+
+    void setFutureExpenses(List<FutureExpense> expenses) {
+        this.fixedRowsContainer.removeAll();
+        this.fixedRows.clear();
+        if (expenses != null) {
+            for (final FutureExpense expense : expenses) {
+                addFixedRow(expense);
+            }
+        }
+        publishFixedSnapshot();
+    }
+
+    List<RecurringExpense> getRecurringExpenses() {
+        return snapshotRecurring();
+    }
+
+    void setRecurringExpenses(List<RecurringExpense> expenses) {
+        this.recurringRowsContainer.removeAll();
+        this.recurringRowsList.clear();
+        if (expenses != null) {
+            for (final RecurringExpense expense : expenses) {
+                addRecurringRow(expense);
+            }
+        }
+        publishRecurringSnapshot();
+    }
+
+    private void addFixedRow(FutureExpense expense) {
+        final FutureExpenseRow row = new FutureExpenseRow(this.prefs, expense,
+                this::removeFixedRow, this::publishFixedSnapshot);
+        this.fixedRows.add(row);
+        this.fixedRowsContainer.add(row);
+        publishFixedSnapshot();
+    }
+
+    private void removeFixedRow(FutureExpenseRow row) {
+        if (this.fixedRows.remove(row)) {
+            this.fixedRowsContainer.remove(row);
+            publishFixedSnapshot();
+        }
+    }
+
+    private void addRecurringRow(RecurringExpense expense) {
+        final RecurringExpenseRow row = new RecurringExpenseRow(this.prefs, expense,
+                this::removeRecurringRow, this::publishRecurringSnapshot);
+        this.recurringRowsList.add(row);
+        this.recurringRowsContainer.add(row);
+        publishRecurringSnapshot();
+    }
+
+    private void removeRecurringRow(RecurringExpenseRow row) {
+        if (this.recurringRowsList.remove(row)) {
+            this.recurringRowsContainer.remove(row);
+            publishRecurringSnapshot();
+        }
+    }
+
+    private void publishFixedSnapshot() {
+        this.fixedSignal.set(snapshotFixed());
+    }
+
+    private void publishRecurringSnapshot() {
+        this.recurringSignal.set(snapshotRecurring());
+    }
+
+    private List<FutureExpense> snapshotFixed() {
         final List<FutureExpense> out = new ArrayList<>();
         for (final FutureExpenseRow row : this.fixedRows) {
             out.add(row.snapshot());
@@ -122,79 +196,12 @@ class FutureExpensesTab extends VerticalLayout {
         return out;
     }
 
-    void setFutureExpenses(List<FutureExpense> expenses) {
-        this.suppressChangeEvents = true;
-        try {
-            this.fixedRowsContainer.removeAll();
-            this.fixedRows.clear();
-            if (expenses != null) {
-                for (final FutureExpense expense : expenses) {
-                    addFixedRow(expense);
-                }
-            }
-        } finally {
-            this.suppressChangeEvents = false;
-        }
-    }
-
-    List<RecurringExpense> getRecurringExpenses() {
+    private List<RecurringExpense> snapshotRecurring() {
         final List<RecurringExpense> out = new ArrayList<>();
         for (final RecurringExpenseRow row : this.recurringRowsList) {
             out.add(row.snapshot());
         }
         return out;
-    }
-
-    void setRecurringExpenses(List<RecurringExpense> expenses) {
-        this.suppressChangeEvents = true;
-        try {
-            this.recurringRowsContainer.removeAll();
-            this.recurringRowsList.clear();
-            if (expenses != null) {
-                for (final RecurringExpense expense : expenses) {
-                    addRecurringRow(expense);
-                }
-            }
-        } finally {
-            this.suppressChangeEvents = false;
-        }
-    }
-
-    private void addFixedRow(FutureExpense expense) {
-        final FutureExpenseRow row = new FutureExpenseRow(this.prefs, expense,
-                this::removeFixedRow, this::notifyChangeListeners);
-        this.fixedRows.add(row);
-        this.fixedRowsContainer.add(row);
-        notifyChangeListeners();
-    }
-
-    private void removeFixedRow(FutureExpenseRow row) {
-        if (this.fixedRows.remove(row)) {
-            this.fixedRowsContainer.remove(row);
-            notifyChangeListeners();
-        }
-    }
-
-    private void addRecurringRow(RecurringExpense expense) {
-        final RecurringExpenseRow row = new RecurringExpenseRow(this.prefs, expense,
-                this::removeRecurringRow, this::notifyChangeListeners);
-        this.recurringRowsList.add(row);
-        this.recurringRowsContainer.add(row);
-        notifyChangeListeners();
-    }
-
-    private void removeRecurringRow(RecurringExpenseRow row) {
-        if (this.recurringRowsList.remove(row)) {
-            this.recurringRowsContainer.remove(row);
-            notifyChangeListeners();
-        }
-    }
-
-    private void notifyChangeListeners() {
-        if (this.suppressChangeEvents) {
-            return;
-        }
-        this.changeListeners.forEach(Runnable::run);
     }
 
     private static IntegerField yearField(String label) {
@@ -226,12 +233,12 @@ class FutureExpensesTab extends VerticalLayout {
             this.inflationField.setValue(initial.getInflationPct() == null
                     ? null : initial.getInflationPct().doubleValue());
 
-            this.yearField.addValueChangeListener(e -> onChanged.run());
-            this.descriptionField.addValueChangeListener(e -> onChanged.run());
-            this.amountField.addValueChangeListener(e -> onChanged.run());
-            this.inflationField.addValueChangeListener(e -> onChanged.run());
+            this.yearField.addValueChangeListener(event -> onChanged.run());
+            this.descriptionField.addValueChangeListener(event -> onChanged.run());
+            this.amountField.addValueChangeListener(event -> onChanged.run());
+            this.inflationField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
             removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
             removeButton.getElement().setAttribute("aria-label", "Remove expense");
 
@@ -281,14 +288,14 @@ class FutureExpensesTab extends VerticalLayout {
             this.inflationField.setValue(initial.getInflationPct() == null
                     ? null : initial.getInflationPct().doubleValue());
 
-            this.yearField.addValueChangeListener(e -> onChanged.run());
-            this.stopYearField.addValueChangeListener(e -> onChanged.run());
-            this.descriptionField.addValueChangeListener(e -> onChanged.run());
-            this.frequencyField.addValueChangeListener(e -> onChanged.run());
-            this.amountField.addValueChangeListener(e -> onChanged.run());
-            this.inflationField.addValueChangeListener(e -> onChanged.run());
+            this.yearField.addValueChangeListener(event -> onChanged.run());
+            this.stopYearField.addValueChangeListener(event -> onChanged.run());
+            this.descriptionField.addValueChangeListener(event -> onChanged.run());
+            this.frequencyField.addValueChangeListener(event -> onChanged.run());
+            this.amountField.addValueChangeListener(event -> onChanged.run());
+            this.inflationField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
             removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
             removeButton.getElement().setAttribute("aria-label", "Remove recurring expense");
 

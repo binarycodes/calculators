@@ -13,6 +13,7 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -75,7 +76,15 @@ public class RetirementView extends VerticalLayout {
         setSpacing(true);
 
         this.form = new RetirementCalculatorForm(preferences);
-        this.form.addInputChangeListener(this::onInputChanged);
+        // Skip the initial run — the effect fires once on registration with
+        // the form's empty starting state, before onAttach loads real inputs.
+        Signal.effect(this, context -> {
+            this.form.inputsSignal().get();
+            if (context.isInitialRun()) {
+                return;
+            }
+            onInputChanged();
+        });
         this.projectionGrid = new ProjectionGrid(preferences);
 
         add(new H2("Retirement Calculator"));

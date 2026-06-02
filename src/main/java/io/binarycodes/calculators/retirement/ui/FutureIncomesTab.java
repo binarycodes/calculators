@@ -13,6 +13,8 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.signals.Signal;
+import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.retirement.domain.Frequency;
@@ -45,8 +47,8 @@ class FutureIncomesTab extends VerticalLayout {
     private final List<FutureIncomeRow> fixedRows = new ArrayList<>();
     private final VerticalLayout recurringRowsContainer = new VerticalLayout();
     private final List<RecurringIncomeRow> recurringRowsList = new ArrayList<>();
-    private final List<Runnable> changeListeners = new ArrayList<>();
-    private boolean suppressChangeEvents;
+    private final ValueSignal<List<FutureIncome>> fixedSignal = new ValueSignal<>(List.of());
+    private final ValueSignal<List<RecurringIncome>> recurringSignal = new ValueSignal<>(List.of());
 
     FutureIncomesTab(UserPreferences prefs) {
         this.prefs = prefs;
@@ -68,7 +70,7 @@ class FutureIncomesTab extends VerticalLayout {
         this.fixedRowsContainer.setWidthFull();
 
         final Button addButton = new Button("Add income", VaadinIcon.PLUS.create(),
-                e -> addFixedRow(new FutureIncome()));
+                event -> addFixedRow(new FutureIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         return wrapInCard("Fixed", intro, this.fixedRowsContainer, addButton);
@@ -87,7 +89,7 @@ class FutureIncomesTab extends VerticalLayout {
         this.recurringRowsContainer.setWidthFull();
 
         final Button addButton = new Button("Add recurring income", VaadinIcon.PLUS.create(),
-                e -> addRecurringRow(new RecurringIncome()));
+                event -> addRecurringRow(new RecurringIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         return wrapInCard("Recurring", intro, this.recurringRowsContainer, addButton);
@@ -105,11 +107,83 @@ class FutureIncomesTab extends VerticalLayout {
         return card;
     }
 
-    void addInputChangeListener(Runnable listener) {
-        this.changeListeners.add(listener);
+    Signal<List<FutureIncome>> futureIncomesSignal() {
+        return this.fixedSignal.asReadonly();
+    }
+
+    Signal<List<RecurringIncome>> recurringIncomesSignal() {
+        return this.recurringSignal.asReadonly();
     }
 
     List<FutureIncome> getFutureIncomes() {
+        return snapshotFixed();
+    }
+
+    void setFutureIncomes(List<FutureIncome> incomes) {
+        this.fixedRowsContainer.removeAll();
+        this.fixedRows.clear();
+        if (incomes != null) {
+            for (final FutureIncome income : incomes) {
+                addFixedRow(income);
+            }
+        }
+        publishFixedSnapshot();
+    }
+
+    List<RecurringIncome> getRecurringIncomes() {
+        return snapshotRecurring();
+    }
+
+    void setRecurringIncomes(List<RecurringIncome> incomes) {
+        this.recurringRowsContainer.removeAll();
+        this.recurringRowsList.clear();
+        if (incomes != null) {
+            for (final RecurringIncome income : incomes) {
+                addRecurringRow(income);
+            }
+        }
+        publishRecurringSnapshot();
+    }
+
+    private void addFixedRow(FutureIncome income) {
+        final FutureIncomeRow row = new FutureIncomeRow(this.prefs, income,
+                this::removeFixedRow, this::publishFixedSnapshot);
+        this.fixedRows.add(row);
+        this.fixedRowsContainer.add(row);
+        publishFixedSnapshot();
+    }
+
+    private void removeFixedRow(FutureIncomeRow row) {
+        if (this.fixedRows.remove(row)) {
+            this.fixedRowsContainer.remove(row);
+            publishFixedSnapshot();
+        }
+    }
+
+    private void addRecurringRow(RecurringIncome income) {
+        final RecurringIncomeRow row = new RecurringIncomeRow(this.prefs, income,
+                this::removeRecurringRow, this::publishRecurringSnapshot);
+        this.recurringRowsList.add(row);
+        this.recurringRowsContainer.add(row);
+        publishRecurringSnapshot();
+    }
+
+    private void removeRecurringRow(RecurringIncomeRow row) {
+        if (this.recurringRowsList.remove(row)) {
+            this.recurringRowsContainer.remove(row);
+            publishRecurringSnapshot();
+        }
+    }
+
+    private void publishFixedSnapshot() {
+        this.fixedSignal.set(snapshotFixed());
+    }
+
+    private void publishRecurringSnapshot() {
+        this.recurringSignal.set(snapshotRecurring());
+    }
+
+    private List<FutureIncome> snapshotFixed() {
         final List<FutureIncome> out = new ArrayList<>();
         for (final FutureIncomeRow row : this.fixedRows) {
             out.add(row.snapshot());
@@ -117,79 +191,12 @@ class FutureIncomesTab extends VerticalLayout {
         return out;
     }
 
-    void setFutureIncomes(List<FutureIncome> incomes) {
-        this.suppressChangeEvents = true;
-        try {
-            this.fixedRowsContainer.removeAll();
-            this.fixedRows.clear();
-            if (incomes != null) {
-                for (final FutureIncome income : incomes) {
-                    addFixedRow(income);
-                }
-            }
-        } finally {
-            this.suppressChangeEvents = false;
-        }
-    }
-
-    List<RecurringIncome> getRecurringIncomes() {
+    private List<RecurringIncome> snapshotRecurring() {
         final List<RecurringIncome> out = new ArrayList<>();
         for (final RecurringIncomeRow row : this.recurringRowsList) {
             out.add(row.snapshot());
         }
         return out;
-    }
-
-    void setRecurringIncomes(List<RecurringIncome> incomes) {
-        this.suppressChangeEvents = true;
-        try {
-            this.recurringRowsContainer.removeAll();
-            this.recurringRowsList.clear();
-            if (incomes != null) {
-                for (final RecurringIncome income : incomes) {
-                    addRecurringRow(income);
-                }
-            }
-        } finally {
-            this.suppressChangeEvents = false;
-        }
-    }
-
-    private void addFixedRow(FutureIncome income) {
-        final FutureIncomeRow row = new FutureIncomeRow(this.prefs, income,
-                this::removeFixedRow, this::notifyChangeListeners);
-        this.fixedRows.add(row);
-        this.fixedRowsContainer.add(row);
-        notifyChangeListeners();
-    }
-
-    private void removeFixedRow(FutureIncomeRow row) {
-        if (this.fixedRows.remove(row)) {
-            this.fixedRowsContainer.remove(row);
-            notifyChangeListeners();
-        }
-    }
-
-    private void addRecurringRow(RecurringIncome income) {
-        final RecurringIncomeRow row = new RecurringIncomeRow(this.prefs, income,
-                this::removeRecurringRow, this::notifyChangeListeners);
-        this.recurringRowsList.add(row);
-        this.recurringRowsContainer.add(row);
-        notifyChangeListeners();
-    }
-
-    private void removeRecurringRow(RecurringIncomeRow row) {
-        if (this.recurringRowsList.remove(row)) {
-            this.recurringRowsContainer.remove(row);
-            notifyChangeListeners();
-        }
-    }
-
-    private void notifyChangeListeners() {
-        if (this.suppressChangeEvents) {
-            return;
-        }
-        this.changeListeners.forEach(Runnable::run);
     }
 
     private static IntegerField yearField(String label) {
@@ -221,12 +228,12 @@ class FutureIncomesTab extends VerticalLayout {
             this.taxField.setValue(initial.getTaxRatePct() == null
                     ? null : initial.getTaxRatePct().doubleValue());
 
-            this.yearField.addValueChangeListener(e -> onChanged.run());
-            this.descriptionField.addValueChangeListener(e -> onChanged.run());
-            this.amountField.addValueChangeListener(e -> onChanged.run());
-            this.taxField.addValueChangeListener(e -> onChanged.run());
+            this.yearField.addValueChangeListener(event -> onChanged.run());
+            this.descriptionField.addValueChangeListener(event -> onChanged.run());
+            this.amountField.addValueChangeListener(event -> onChanged.run());
+            this.taxField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
             removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
             removeButton.getElement().setAttribute("aria-label", "Remove income");
 
@@ -276,14 +283,14 @@ class FutureIncomesTab extends VerticalLayout {
             this.taxField.setValue(initial.getTaxRatePct() == null
                     ? null : initial.getTaxRatePct().doubleValue());
 
-            this.yearField.addValueChangeListener(e -> onChanged.run());
-            this.stopYearField.addValueChangeListener(e -> onChanged.run());
-            this.descriptionField.addValueChangeListener(e -> onChanged.run());
-            this.frequencyField.addValueChangeListener(e -> onChanged.run());
-            this.amountField.addValueChangeListener(e -> onChanged.run());
-            this.taxField.addValueChangeListener(e -> onChanged.run());
+            this.yearField.addValueChangeListener(event -> onChanged.run());
+            this.stopYearField.addValueChangeListener(event -> onChanged.run());
+            this.descriptionField.addValueChangeListener(event -> onChanged.run());
+            this.frequencyField.addValueChangeListener(event -> onChanged.run());
+            this.amountField.addValueChangeListener(event -> onChanged.run());
+            this.taxField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), e -> onRemove.accept(this));
+            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
             removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
             removeButton.getElement().setAttribute("aria-label", "Remove recurring income");
 

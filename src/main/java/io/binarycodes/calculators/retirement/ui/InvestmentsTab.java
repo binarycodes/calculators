@@ -4,11 +4,15 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
+import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static io.binarycodes.calculators.retirement.ui.FormFields.bindPercentage;
 import static io.binarycodes.calculators.retirement.ui.FormFields.buildNestedSectionCard;
@@ -37,6 +41,8 @@ class InvestmentsTab extends VerticalLayout {
     private final NumberField sipStepUpPostPct = percentageField("Step Up Percentage (Yearly)");
     private final NumberField taxRatePostPct = percentageField("Tax Rate");
 
+    private final List<Signal<?>> fieldSignals = new ArrayList<>();
+
     InvestmentsTab(Binder<RetirementInputs> binder, UserPreferences prefs) {
         this.monthlyInvestmentPre = new MoneyField("Amount", prefs);
         this.monthlyInvestmentPost = new MoneyField("Amount", prefs);
@@ -63,36 +69,42 @@ class InvestmentsTab extends VerticalLayout {
         configureBindings(binder);
     }
 
+    Stream<Signal<?>> fieldSignals() {
+        return this.fieldSignals.stream();
+    }
+
     private void configureBindings(Binder<RetirementInputs> binder) {
-        binder.forField(this.monthlyInvestmentPre)
+        this.fieldSignals.add(binder.forField(this.monthlyInvestmentPre)
                 .asRequired("Required")
                 .withValidator(new BigDecimalRangeValidator("Must be non-negative",
                         BigDecimal.ZERO, null))
-                .bind(RetirementInputs::getMonthlyInvPre, RetirementInputs::setMonthlyInvPre);
+                .bind(RetirementInputs::getMonthlyInvPre, RetirementInputs::setMonthlyInvPre)
+                .valueSignal());
 
-        binder.forField(this.monthlyInvestmentPost)
+        this.fieldSignals.add(binder.forField(this.monthlyInvestmentPost)
                 .asRequired("Required")
                 .withValidator(new BigDecimalRangeValidator("Must be non-negative",
                         BigDecimal.ZERO, null))
-                .bind(RetirementInputs::getMonthlyInvPost, RetirementInputs::setMonthlyInvPost);
+                .bind(RetirementInputs::getMonthlyInvPost, RetirementInputs::setMonthlyInvPost)
+                .valueSignal());
 
-        bindPercentage(binder, this.corpusReturnsPrePct,
-                RetirementInputs::getGrowthPrePct, RetirementInputs::setGrowthPrePct);
-        bindPercentage(binder, this.corpusReturnsPostPct,
-                RetirementInputs::getGrowthPostPct, RetirementInputs::setGrowthPostPct);
-        bindPercentage(binder, this.sipReturnsPrePct,
-                RetirementInputs::getSipGrowthPrePct, RetirementInputs::setSipGrowthPrePct);
-        bindPercentage(binder, this.sipReturnsPostPct,
-                RetirementInputs::getSipGrowthPostPct, RetirementInputs::setSipGrowthPostPct);
-        bindPercentage(binder, this.sipStepUpPrePct,
-                RetirementInputs::getSipStepUpPrePct, RetirementInputs::setSipStepUpPrePct);
-        bindPercentage(binder, this.sipStepUpPostPct,
-                RetirementInputs::getSipStepUpPostPct, RetirementInputs::setSipStepUpPostPct);
-        bindPercentage(binder, this.taxRatePrePct,
-                RetirementInputs::getTaxRatePrePct, RetirementInputs::setTaxRatePrePct);
-        bindPercentage(binder, this.taxRatePostPct,
-                RetirementInputs::getTaxRatePostPct, RetirementInputs::setTaxRatePostPct);
-        bindPercentage(binder, this.corpusTaxRatePct,
-                RetirementInputs::getCorpusTaxRatePct, RetirementInputs::setCorpusTaxRatePct);
+        this.fieldSignals.add(bindPercentage(binder, this.corpusReturnsPrePct,
+                RetirementInputs::getGrowthPrePct, RetirementInputs::setGrowthPrePct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.corpusReturnsPostPct,
+                RetirementInputs::getGrowthPostPct, RetirementInputs::setGrowthPostPct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.sipReturnsPrePct,
+                RetirementInputs::getSipGrowthPrePct, RetirementInputs::setSipGrowthPrePct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.sipReturnsPostPct,
+                RetirementInputs::getSipGrowthPostPct, RetirementInputs::setSipGrowthPostPct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.sipStepUpPrePct,
+                RetirementInputs::getSipStepUpPrePct, RetirementInputs::setSipStepUpPrePct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.sipStepUpPostPct,
+                RetirementInputs::getSipStepUpPostPct, RetirementInputs::setSipStepUpPostPct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.taxRatePrePct,
+                RetirementInputs::getTaxRatePrePct, RetirementInputs::setTaxRatePrePct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.taxRatePostPct,
+                RetirementInputs::getTaxRatePostPct, RetirementInputs::setTaxRatePostPct).valueSignal());
+        this.fieldSignals.add(bindPercentage(binder, this.corpusTaxRatePct,
+                RetirementInputs::getCorpusTaxRatePct, RetirementInputs::setCorpusTaxRatePct).valueSignal());
     }
 }
