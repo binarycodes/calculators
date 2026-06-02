@@ -25,5 +25,5 @@ target "app" {
     "${REGISTRY}/${NAMESPACE}/${TAG_NAME}:latest",
   ]
 
-  platforms = ["linux/amd64"]
+  platforms = ["linux/amd64", "linux/arm64"]
 }
