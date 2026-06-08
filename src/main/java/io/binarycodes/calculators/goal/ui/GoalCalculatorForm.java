@@ -70,7 +70,7 @@ public class GoalCalculatorForm extends VerticalLayout {
         configureBindings();
         renderHorizonFieldsFor(this.horizonMode.getValue());
 
-        add(buildGoalCard(), this.investmentsCard, buildHorizonCard());
+        add(buildGoalCard(), this.investmentsCard);
 
         this.inputsSignal = Signal.computed(() -> {
             this.goalAmountSignal.get();
@@ -126,24 +126,25 @@ public class GoalCalculatorForm extends VerticalLayout {
     }
 
     private Component buildGoalCard() {
-        final FormLayout layout = sectionForm();
-        layout.add(this.goalAmount);
-        return sectionCard("Goal", layout);
-    }
+        final FormLayout amountLayout = sectionForm();
+        amountLayout.add(this.goalAmount);
 
-    private Component buildHorizonCard() {
         this.horizonFields.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("36em", 2));
         this.horizonFields.setWidthFull();
 
-        final VerticalLayout wrapper = new VerticalLayout(this.horizonMode, this.horizonFields);
-        wrapper.setPadding(false);
-        wrapper.setSpacing(true);
+        final Span horizonLabel = new Span("Time horizon");
+        horizonLabel.addClassName("subsection-label");
+
+        final VerticalLayout content = new VerticalLayout(
+                amountLayout, horizonLabel, this.horizonMode, this.horizonFields);
+        content.setPadding(false);
+        content.setSpacing(true);
 
         final Card card = new Card();
-        card.setTitle("Time Horizon");
-        card.add(wrapper);
+        card.setTitle("Goal");
+        card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
         return card;
@@ -315,15 +316,6 @@ public class GoalCalculatorForm extends VerticalLayout {
                 new FormLayout.ResponsiveStep("36em", 2),
                 new FormLayout.ResponsiveStep("64em", 3));
         return layout;
-    }
-
-    private static Card sectionCard(String title, Component content) {
-        final Card card = new Card();
-        card.setTitle(title);
-        card.add(content);
-        card.setWidthFull();
-        card.addClassName("form-section");
-        return card;
     }
 
     private static IntegerField ageField(String label) {

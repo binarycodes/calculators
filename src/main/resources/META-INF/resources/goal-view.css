@@ -15,6 +15,12 @@
     align-self: flex-start;
 }
 
+.goal-view .subsection-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-top: 0.5rem;
+}
+
 .goal-view .investments-card-header {
     --vaadin-padding-m: 0;
 }
