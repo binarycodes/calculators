@@ -1,0 +1,42 @@
+/*
+ * Layout owned by the Goal Planner screen. Keeps spacing and rhythm aligned
+ * with the retirement view so both calculators feel like the same app.
+ */
+
+.goal-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.goal-view .action-row {
+    margin-top: 0.5rem;
+}
+
+.goal-view vaadin-radio-group.segmented-toggle {
+    align-self: flex-start;
+}
+
+.goal-view .investments-card-header {
+    --vaadin-padding-m: 0;
+}
+
+.goal-view .investments-card-title {
+    font-weight: 700;
+    font-size: var(--vaadin-card-title-font-size, 1rem);
+}
+
+.goal-view .allocation-total {
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.goal-view .allocation-total[status="success"] {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+}
+
+.goal-view .allocation-total[status="danger"] {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+}

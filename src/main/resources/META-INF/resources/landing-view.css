@@ -1,0 +1,57 @@
+/*
+ * Layout for the welcome / picker screen at "/". Each calculator is a tile
+ * rendered as a Vaadin Card wrapped in a RouterLink so the whole card is
+ * clickable. Visuals reuse the semantic colour tokens from colors.css.
+ */
+
+.landing-view {
+    max-width: 60rem;
+}
+
+.landing-view h1 {
+    margin-bottom: 0;
+}
+
+.landing-view a.landing-tile-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    flex: 1;
+}
+
+.landing-view .landing-tile {
+    --vaadin-card-padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.landing-view a.landing-tile-link:hover .landing-tile {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-chip);
+}
+
+.landing-view .landing-tile-icon {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-strong);
+    margin-bottom: 1rem;
+}
+
+.landing-view .landing-tile-title {
+    font-size: var(--vaadin-font-size-l, 1.125rem);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.landing-view .landing-tile-body {
+    color: var(--color-text-muted);
+    margin: 0.5rem 0 0;
+}

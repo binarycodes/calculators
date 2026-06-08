@@ -1,0 +1,86 @@
+{
+  "INR": {
+    "goalAmount": "20000000",
+    "horizonMode": "YEARS",
+    "yearsToGoal": "15",
+    "monthsToGoal": "0",
+    "currentAge": "35",
+    "goalAge": "50",
+    "targetYear": "2041",
+    "targetMonth": "12",
+    "investments": [
+      {
+        "label": "Equity",
+        "currentCorpus": "1000000",
+        "growthRate": "12",
+        "withdrawalTaxRate": "12.5",
+        "allocationPct": "70",
+        "stepUp": "5"
+      },
+      {
+        "label": "Debt",
+        "currentCorpus": "500000",
+        "growthRate": "7",
+        "withdrawalTaxRate": "30",
+        "allocationPct": "30",
+        "stepUp": "0"
+      }
+    ]
+  },
+  "EUR": {
+    "goalAmount": "500000",
+    "horizonMode": "YEARS",
+    "yearsToGoal": "20",
+    "monthsToGoal": "0",
+    "currentAge": "35",
+    "goalAge": "55",
+    "targetYear": "2046",
+    "targetMonth": "12",
+    "investments": [
+      {
+        "label": "Equity ETF",
+        "currentCorpus": "30000",
+        "growthRate": "7",
+        "withdrawalTaxRate": "30",
+        "allocationPct": "70",
+        "stepUp": "3"
+      },
+      {
+        "label": "Bonds",
+        "currentCorpus": "10000",
+        "growthRate": "3",
+        "withdrawalTaxRate": "30",
+        "allocationPct": "30",
+        "stepUp": "0"
+      }
+    ]
+  },
+  "USD": {
+    "goalAmount": "750000",
+    "horizonMode": "YEARS",
+    "yearsToGoal": "20",
+    "monthsToGoal": "0",
+    "currentAge": "35",
+    "goalAge": "55",
+    "targetYear": "2046",
+    "targetMonth": "12",
+    "investments": [
+      {
+        "label": "Index Fund",
+        "currentCorpus": "40000",
+        "growthRate": "8",
+        "withdrawalTaxRate": "30",
+        "allocationPct": "80",
+        "stepUp": "3"
+      },
+      {
+        "label": "Treasuries",
+        "currentCorpus": "10000",
+        "growthRate": "4",
+        "withdrawalTaxRate": "30",
+        "allocationPct": "20",
+        "stepUp": "0"
+      }
+    ]
+  }
+}

@@ -20,6 +20,7 @@ vaadin-radio-group.segmented-toggle {
 }
 
 vaadin-radio-group.segmented-toggle::part(group-field) {
+    flex-direction: row;
     gap: 0.25rem 0.25rem;
 }
 

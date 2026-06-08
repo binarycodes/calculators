@@ -12,12 +12,12 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.SummaryCard;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
@@ -36,7 +36,6 @@ import java.math.BigDecimal;
  * {@link RealCorpusChart}, and {@link ProjectionGrid}.
  */
 @Route("retirement")
-@RouteAlias("")
 @Menu(title = "Retirement", icon = "vaadin:piggy-bank", order = 1)
 @PageTitle("Retirement Calculator")
 public class RetirementView extends VerticalLayout {

@@ -1,8 +1,18 @@
-# Retirement Calculator — Requirements
+# Calculators — Requirements
 
-This document captures the current functionality of the calculator, focused on
-inputs, calculation semantics, and the data model that drives the projection.
-UI structure is described where it changes the meaning of an input.
+This document captures the functionality of every calculator in the app,
+focused on inputs, calculation semantics, and the data model that drives each
+projection. UI structure is described where it changes the meaning of an
+input. The app currently ships:
+
+- **Retirement Calculator** — full retirement projection across life expectancy.
+- **Goal Planner** — solves for the monthly SIP required to hit a post-tax goal.
+
+The landing route (`/`) shows a tile per calculator, populated automatically
+from the `@Menu`-annotated views (no manual registration). Each calculator
+owns a route segment (`/retirement`, `/goal`).
+
+# Retirement Calculator
 
 ## 1. Inputs
 
@@ -293,4 +303,108 @@ without recomputing the projection.
 | `MoneyFormatterTest`, `NumberToWordsTest` | Currency formatting (Indian vs Western groupings, words for amounts) |
 | `RetirementCalculatorFormBrowserlessTest` | Form smoke test through the binder; catches binding-level regressions in the SIP step-up fields |
 
-Total: 36 tests at the time of writing.
+# Goal Planner
+
+## 1. Inputs
+
+A single form across one card for the main inputs and a second card for the
+time horizon. A segmented radio toggle (`Years` / `Ages` / `Target Year`)
+selects which sub-field drives the deadline; non-selected sub-fields are still
+present on the bean so switching modes preserves prior entries. Persistence
+keys: `gp_inputs` (browser localStorage, per currency); defaults from
+`goal-defaults.json` on the classpath.
+
+**Goal card**
+
+| Field | Notes |
+| --- | --- |
+| Goal Amount (post-tax) | Money in today's currency, > 0. The amount the user wants *in hand* after taxes on gains. |
+| Step-Up (%) | Optional. Annual compounding bump on the SIP. Blank reads as zero. |
+
+**Investments card** — repeating rows; user can add or remove buckets.
+
+| Field | Notes |
+| --- | --- |
+| Label | Free text (e.g. "Equity", "Bonds"). |
+| Current | Money, ≥ 0. Current balance of this bucket (treated as 100% principal). |
+| Growth (%) | Annual return on this bucket. |
+| Tax (%) | Applied to this bucket's gains portion at exit. |
+| Allocation (%) | Share of every monthly SIP that flows into this bucket. All rows must sum to 100%; the form shows a live total tinted green/red. |
+
+**Time Horizon card**
+| Time-horizon mode | One of `YEARS`, `AGES`, `TARGET_YEAR`. Drives which sub-fields below resolve to *N* total months. |
+| ↳ Years + Months | Integer years `0–80` plus integer months `0–11`; their sum must be at least one month (when mode = `YEARS`). |
+| ↳ Current Age + Goal Age | Integers, `goalAge > currentAge` (when mode = `AGES`); year resolution only. |
+| ↳ Target Year + Target Month | Integer year + month dropdown; must resolve to a future month (when mode = `TARGET_YEAR`). |
+
+## 2. Calculation Model
+
+The required monthly SIP `M` is linear in the goal-vs-corpus gap, so the
+calculator solves it in closed form (no iterative root-find). The corpus
+compounds monthly; contributions land at the start of each month; step-up
+is applied annually (the year-2 contribution becomes `M · (1+s)`, year 3
+becomes `M · (1+s)^2`, and so on).
+
+With per-bucket monthly rate `g_m,i = (1 + g_i)^(1/12) − 1`, allocation
+fraction `a_i`, exit tax `t_i`, and total months `N_m`:
+
+```
+corpus_FV_i      = C_i · (1 + g_m,i)^N_m
+net_corpus_FV_i  = corpus_FV_i − (corpus_FV_i − C_i) · t_i
+
+α                = Σ_{m=0..N_m-1} (1 + s)^floor(m/12)                     (principal per unit M)
+β_i              = Σ_{m=0..N_m-1} (1 + s)^floor(m/12) · (1 + g_m,i)^(N_m − m)
+netPerM_i        = β_i · (1 − t_i) + α · t_i
+
+M = max(0, (Goal − Σ_i net_corpus_FV_i) / Σ_i (a_i · netPerM_i))
+```
+
+The contribution at each month is `M · (1+s)^floor(m/12) · a_i` into bucket
+*i*. Each bucket compounds at its own monthly rate; final balance and gains
+are summed across buckets and each bucket's gains taxed at its own rate.
+
+The projection emits one row per calendar year (`monthsInPeriod = 12`); a
+non-whole-year horizon adds a final row with `monthsInPeriod < 12` covering
+the leftover months.
+
+Edges:
+
+- **Goal already covered.** If `net_corpus_FV ≥ Goal`, `M` is set to zero and
+  the result flags `goalAlreadyCovered = true`. The UI shows a status banner
+  on the summary cards and suppresses the chart and projection grid.
+- **Validation.** `N ≥ 1`, `Goal > 0`, `C ≥ 0`. Percentages are clamped to
+  `0–100` at the form layer.
+
+## 3. Output
+
+### 3.1 Summary cards
+
+`Monthly Investment`, `First-Year Investment` (`= monthly × 12`),
+`Final Corpus (gross)`, `Tax at Exit` (`= gains × tax rate`). The "goal
+already covered" banner takes over the first two cards when `M = 0`.
+
+### 3.2 Growth chart
+
+Area-spline of corpus build-up across the *N* projected years, with two
+series: total balance and cumulative principal (so the gains stack is visible).
+
+### 3.3 Projection grid
+
+Per year: `Year | Age? | Yearly Investment | Balance | Principal | Gains`.
+The Age column is shown only when the `AGES` horizon mode supplied a current
+age; in the other modes the column is hidden.
+
+## 4. Persistence
+
+| Storage | Contents |
+| --- | --- |
+| `goal-defaults.json` (classpath) | Per-currency baseline inputs for every field, including each horizon sub-field. |
+| `gp_inputs` (localStorage) | Per-currency snapshot of the user's edited inputs. |
+
+## 5. Test coverage
+
+| Suite | Purpose |
+| --- | --- |
+| `GoalCalculatorTest` | Closed-form solve correctness, monotonicity in growth / step-up / horizon, projection-row reconciliation, validation rejections, edge cases (zero corpus, goal-already-covered, 100% tax). |
+| `GoalDefaultsJsonTest` | `goal-defaults.json` parses, every currency has every required field, projection round-trips. |
+| `GoalCalculatorFormBrowserlessTest` | Horizon toggle swaps the visible sub-field; binder round-trip preserves values. |

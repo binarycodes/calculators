@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.retirement.service;
 
+import io.binarycodes.calculators.base.math.Rates;
 import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
@@ -46,7 +47,6 @@ import java.util.Optional;
 public final class RetirementCalculator {
 
     private static final MathContext MC = MathContext.DECIMAL64;
-    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     private static final BigDecimal TWELVE = BigDecimal.valueOf(12);
 
     private RetirementCalculator() {
@@ -367,18 +367,10 @@ public final class RetirementCalculator {
     }
 
     private static BigDecimal pctToFraction(BigDecimal pct) {
-        return pct == null ? BigDecimal.ZERO : pct.divide(HUNDRED, MC);
+        return Rates.pctToFraction(pct);
     }
 
     private static BigDecimal pow1plus(BigDecimal rate, int n) {
-        if (n == 0) {
-            return BigDecimal.ONE;
-        }
-        final BigDecimal base = BigDecimal.ONE.add(rate, MC);
-        BigDecimal acc = BigDecimal.ONE;
-        for (int i = 0; i < n; i++) {
-            acc = acc.multiply(base, MC);
-        }
-        return acc;
+        return Rates.pow1plus(rate, n);
     }
 }

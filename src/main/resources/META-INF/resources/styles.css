@@ -10,6 +10,8 @@
 @import url('summary-card.css');
 @import url('segmented-toggle.css');
 @import url('retirement-view.css');
+@import url('goal-view.css');
+@import url('landing-view.css');
 
 html, body, *, *:before, *:after {
     box-sizing: border-box;

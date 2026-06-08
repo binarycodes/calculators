@@ -1,11 +1,13 @@
-package io.binarycodes.calculators.retirement.ui;
+package io.binarycodes.calculators.base.ui;
 
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
 import io.binarycodes.calculators.base.common.Status;
 
 /**
- * A compact "label + big value" tile used in the summary row.
+ * A compact "label + big value" tile used in summary rows across calculators.
+ * Setting a {@link Status} tints the card via the {@code status} attribute,
+ * which {@code summary-card.css} reads to pick a colour.
  */
 public class SummaryCard extends Card {
     private final Span label = new Span();
@@ -28,6 +30,8 @@ public class SummaryCard extends Card {
 
         if (status != null) {
             this.getElement().setAttribute("status", status.toString().toLowerCase());
+        } else {
+            this.getElement().removeAttribute("status");
         }
     }
 }
