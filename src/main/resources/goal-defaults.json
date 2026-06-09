@@ -1,6 +1,7 @@
 {
   "INR": {
     "goalAmount": "20000000",
+    "inflationRate": "6",
     "horizonMode": "YEARS",
     "yearsToGoal": "15",
     "monthsToGoal": "0",
@@ -29,6 +30,7 @@
   },
   "EUR": {
     "goalAmount": "500000",
+    "inflationRate": "2.5",
     "horizonMode": "YEARS",
     "yearsToGoal": "20",
     "monthsToGoal": "0",
@@ -57,6 +59,7 @@
   },
   "USD": {
     "goalAmount": "750000",
+    "inflationRate": "3",
     "horizonMode": "YEARS",
     "yearsToGoal": "20",
     "monthsToGoal": "0",

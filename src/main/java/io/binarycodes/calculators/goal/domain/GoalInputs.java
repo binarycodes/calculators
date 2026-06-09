@@ -31,6 +31,7 @@ import java.util.List;
 public class GoalInputs {
 
     private BigDecimal goalAmount;
+    private BigDecimal inflationRatePct;
 
     private List<Investment> investments = new ArrayList<>();
 

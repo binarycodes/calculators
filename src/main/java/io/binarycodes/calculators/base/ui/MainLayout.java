@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -30,13 +31,19 @@ public class MainLayout extends AppLayout {
         prefs.loadFromBrowser(null);
     }
 
-    private H1 buildBrand() {
+    private RouterLink buildBrand() {
         final H1 brand = new H1("Calculators");
         brand.getStyle()
                 .setFontSize("var(--vaadin-font-size-xl, 1.25rem)")
                 .setMargin("var(--vaadin-padding-m, 0.75rem)")
                 .setFontWeight("700");
-        return brand;
+
+        // The brand doubles as the link home, replacing the old "Home" menu entry.
+        final RouterLink home = new RouterLink();
+        home.setRoute(LandingView.class);
+        home.add(brand);
+        home.addClassName("brand-link");
+        return home;
     }
 
     private SideNav buildSideNav() {

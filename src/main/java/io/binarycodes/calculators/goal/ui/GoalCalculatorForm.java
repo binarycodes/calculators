@@ -8,12 +8,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.data.binder.Result;
 import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.data.converter.Converter;
 import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
+import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -44,6 +46,7 @@ public class GoalCalculatorForm extends VerticalLayout {
     private final Binder<GoalInputs> binder = new Binder<>(GoalInputs.class);
 
     private final MoneyField goalAmount;
+    private final NumberField inflationRate = percentageField("Inflation Rate");
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
 
     private final IntegerField yearsToGoal = yearsField("Years");
@@ -63,7 +66,7 @@ public class GoalCalculatorForm extends VerticalLayout {
         setSpacing(true);
         setWidthFull();
 
-        this.goalAmount = new MoneyField("Goal Amount (post-tax)", preferences);
+        this.goalAmount = new MoneyField("Amount (today)", preferences);
         this.investmentsCard = new InvestmentsCard(preferences);
 
         configureHorizonModeGroup();
@@ -74,6 +77,7 @@ public class GoalCalculatorForm extends VerticalLayout {
 
         this.inputsSignal = Signal.computed(() -> {
             this.goalAmountSignal.get();
+            this.inflationSignal.get();
             this.horizonModeSignal.get();
             this.yearsSignal.get();
             this.monthsSignal.get();
@@ -115,6 +119,15 @@ public class GoalCalculatorForm extends VerticalLayout {
         return this.investmentsCard;
     }
 
+    /**
+     * Helper text shown under the inflation rate field — used by the view to
+     * surface the inflated target ("Target at horizon: …") once a calculation
+     * has run, so the user can see what amount the SIP is actually solving for.
+     */
+    public void setInflationHelperText(String text) {
+        this.inflationRate.setHelperText(text);
+    }
+
     private GoalInputs buildInputs() {
         final var target = new GoalInputs();
         this.binder.writeBeanAsDraft(target);
@@ -127,7 +140,7 @@ public class GoalCalculatorForm extends VerticalLayout {
 
     private Component buildGoalCard() {
         final FormLayout amountLayout = sectionForm();
-        amountLayout.add(this.goalAmount);
+        amountLayout.add(this.goalAmount, withPercentageSuffix(this.inflationRate));
 
         this.horizonFields.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
@@ -172,6 +185,7 @@ public class GoalCalculatorForm extends VerticalLayout {
     }
 
     private Signal<?> goalAmountSignal;
+    private Signal<?> inflationSignal;
     private Signal<?> horizonModeSignal;
     private Signal<?> yearsSignal;
     private Signal<?> monthsSignal;
@@ -186,6 +200,12 @@ public class GoalCalculatorForm extends VerticalLayout {
                 .withValidator(new BigDecimalRangeValidator("Must be positive",
                         new BigDecimal("0.01"), null))
                 .bind(GoalInputs::getGoalAmount, GoalInputs::setGoalAmount)
+                .valueSignal();
+
+        this.inflationSignal = this.binder.forField(this.inflationRate)
+                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .withConverter(doubleToBigDecimalConverter())
+                .bind(GoalInputs::getInflationRatePct, GoalInputs::setInflationRatePct)
                 .valueSignal();
 
         this.horizonModeSignal = this.binder.forField(this.horizonMode)
@@ -367,6 +387,23 @@ public class GoalCalculatorForm extends VerticalLayout {
         field.setMax(Year.now().getValue() + 80);
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
+        return field;
+    }
+
+    private static NumberField percentageField(String label) {
+        final NumberField field = new NumberField(label);
+        field.setMin(0);
+        field.setMax(100);
+        field.setStep(0.1);
+        field.setStepButtonsVisible(false);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
+        return field;
+    }
+
+    private static NumberField withPercentageSuffix(NumberField field) {
+        if (field.getSuffixComponent() == null) {
+            field.setSuffixComponent(secondaryText("%"));
+        }
         return field;
     }
 

@@ -192,6 +192,8 @@ public class GoalView extends VerticalLayout {
         }
 
         final SupportedCurrency currency = this.preferences.currency();
+        this.form.setInflationHelperText(
+                "Target at horizon: " + MoneyFormatter.format(result.inflatedGoal(), currency));
 
         if (result.goalAlreadyCovered()) {
             this.monthlyInvestment.setValue("—", Status.SUCCESS);
@@ -219,6 +221,7 @@ public class GoalView extends VerticalLayout {
         this.yearlyInvestment.setValue("—", null);
         this.finalCorpus.setValue("—", null);
         this.taxAtExit.setValue(dangerMessage, Status.DANGER);
+        this.form.setInflationHelperText("");
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
     }

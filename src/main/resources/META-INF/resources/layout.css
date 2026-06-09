@@ -14,6 +14,17 @@
     gap: 1rem;
 }
 
+/* Brand doubles as the home link — strip default link styling. ---------- */
+a.brand-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-flex;
+}
+
+a.brand-link:hover {
+    color: var(--color-primary);
+}
+
 /* Page title spacing inside the view. */
 .retirement-view > h2 {
     margin: 0 0 0.5rem;

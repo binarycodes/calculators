@@ -246,6 +246,24 @@ class GoalCalculatorTest {
     }
 
     @Test
+    void inflation_grows_target_to_horizon_year() {
+        final GoalInputs inputs = base(20);
+        inputs.setInflationRatePct(BigDecimal.valueOf(6));
+        final GoalResult result = GoalCalculator.calculate(inputs);
+        // Goal of 10M today, inflated 20 years at 6% → ~32.07M nominal.
+        final BigDecimal expected = new BigDecimal("10000000")
+                .multiply(BigDecimal.valueOf(Math.pow(1.06, 20)), MC);
+        final BigDecimal difference = result.inflatedGoal()
+                .subtract(expected, MC).abs();
+        assertTrue(difference.compareTo(new BigDecimal("1")) < 0,
+                "inflated goal should grow today's amount by (1+i)^years; difference = " + difference);
+        // Net at exit must hit the inflated target, not the unadjusted one.
+        assertTrue(result.netAtExit().subtract(expected, MC).abs()
+                        .compareTo(new BigDecimal("1")) < 0,
+                "net-at-exit should reach the inflation-adjusted target");
+    }
+
+    @Test
     void short_horizon_emits_monthly_snapshots_for_chart() {
         final GoalInputs inputs = base(2);  // 24 months
         final GoalResult result = GoalCalculator.calculate(inputs);

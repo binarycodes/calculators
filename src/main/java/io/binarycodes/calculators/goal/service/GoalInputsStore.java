@@ -86,6 +86,7 @@ public class GoalInputsStore {
     private ObjectNode toJson(GoalInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("goalAmount", plain(inputs.getGoalAmount()));
+        node.put("inflationRate", plain(inputs.getInflationRatePct()));
         node.put("horizonMode", inputs.getHorizonMode() == null
                 ? TimeHorizonMode.YEARS.name()
                 : inputs.getHorizonMode().name());
@@ -116,6 +117,7 @@ public class GoalInputsStore {
     private static GoalInputs toInputs(JsonNode node) {
         final var inputs = new GoalInputs();
         inputs.setGoalAmount(bd(node, "goalAmount"));
+        inputs.setInflationRatePct(bd(node, "inflationRate"));
         inputs.setHorizonMode(readMode(node.get("horizonMode")));
         inputs.setYearsToGoal(intField(node, "yearsToGoal"));
         inputs.setMonthsToGoal(intField(node, "monthsToGoal"));

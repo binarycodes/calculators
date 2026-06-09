@@ -62,6 +62,7 @@ public class GoalDefaultsProvider {
     private static GoalInputs toInputs(JsonNode node) {
         final var inputs = new GoalInputs();
         inputs.setGoalAmount(bd(node, "goalAmount"));
+        inputs.setInflationRatePct(bd(node, "inflationRate"));
         inputs.setHorizonMode(readMode(node.get("horizonMode")));
         inputs.setYearsToGoal(intField(node, "yearsToGoal"));
         inputs.setMonthsToGoal(intField(node, "monthsToGoal"));
@@ -135,6 +136,7 @@ public class GoalDefaultsProvider {
         }
         return new GoalInputs(
                 source.getGoalAmount(),
+                source.getInflationRatePct(),
                 copiedInvestments,
                 source.getHorizonMode(),
                 source.getYearsToGoal(),
@@ -148,6 +150,7 @@ public class GoalDefaultsProvider {
     private static GoalInputs fallback() {
         final var inputs = new GoalInputs();
         inputs.setGoalAmount(BigDecimal.valueOf(10_000_000));
+        inputs.setInflationRatePct(BigDecimal.ZERO);
         inputs.setHorizonMode(TimeHorizonMode.YEARS);
         inputs.setYearsToGoal(15);
         inputs.setMonthsToGoal(0);

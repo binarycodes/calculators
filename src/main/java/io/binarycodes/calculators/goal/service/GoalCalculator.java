@@ -68,10 +68,16 @@ public final class GoalCalculator {
         if (totalMonths < 1) {
             throw new IllegalArgumentException("Time to goal must be at least one month.");
         }
-        final BigDecimal goalAmount = required(inputs.getGoalAmount(), "Goal amount");
-        if (goalAmount.signum() <= 0) {
+        final BigDecimal goalAmountToday = required(inputs.getGoalAmount(), "Goal amount");
+        if (goalAmountToday.signum() <= 0) {
             throw new IllegalArgumentException("Goal amount must be positive.");
         }
+        final BigDecimal inflation = Rates.pctToFraction(inputs.getInflationRatePct());
+        final BigDecimal inflationFactor = inflation.signum() == 0
+                ? BigDecimal.ONE
+                : BigDecimal.valueOf(
+                        Math.pow(1.0 + inflation.doubleValue(), totalMonths / 12.0));
+        final BigDecimal goalAmount = goalAmountToday.multiply(inflationFactor, MC);
         final List<Investment> investments = inputs.getInvestments();
         if (investments == null || investments.isEmpty()) {
             throw new IllegalArgumentException("Add at least one investment.");
@@ -127,6 +133,7 @@ public final class GoalCalculator {
             final BigDecimal taxAtExit = computeTaxAtExit(buckets);
             return new GoalResult(
                     BigDecimal.ZERO, BigDecimal.ZERO, totalMonths,
+                    goalAmount,
                     grossCorpusFvSum, sumPrincipal(buckets),
                     grossCorpusFvSum.subtract(sumPrincipal(buckets), MC),
                     taxAtExit, netCorpusFvSum,
@@ -148,6 +155,7 @@ public final class GoalCalculator {
 
         return new GoalResult(
                 monthly, firstYearInvestment, totalMonths,
+                goalAmount,
                 finalRow.balance(), finalRow.principal(), finalRow.gains(),
                 taxAtExit, netAtExit,
                 false,

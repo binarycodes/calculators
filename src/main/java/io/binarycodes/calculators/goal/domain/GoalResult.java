@@ -9,6 +9,8 @@ import java.util.List;
  * @param monthlyInvestment        monthly SIP required in the first year
  * @param firstYearInvestment      yearly investment in the first year ({@code monthlyInvestment × 12})
  * @param totalMonths              total horizon length in months
+ * @param inflatedGoal             goal amount inflated forward to the horizon year
+ *                                 (today's-money goal × {@code (1+inflation)^years})
  * @param finalBalance             gross corpus at the goal year before tax
  * @param finalPrincipal           cumulative principal at the goal year
  * @param finalGains               {@code finalBalance − finalPrincipal}
@@ -26,6 +28,7 @@ public record GoalResult(
         BigDecimal monthlyInvestment,
         BigDecimal firstYearInvestment,
         int totalMonths,
+        BigDecimal inflatedGoal,
         BigDecimal finalBalance,
         BigDecimal finalPrincipal,
         BigDecimal finalGains,

@@ -5,14 +5,14 @@ focused on inputs, calculation semantics, and the data model that drives each
 projection. UI structure is described where it changes the meaning of an
 input. The app currently ships:
 
-- **Retirement Calculator** — full retirement projection across life expectancy.
+- **Retirement Planner** — full retirement projection across life expectancy.
 - **Goal Planner** — solves for the monthly SIP required to hit a post-tax goal.
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
 owns a route segment (`/retirement`, `/goal`).
 
-# Retirement Calculator
+# Retirement Planner
 
 ## 1. Inputs
 

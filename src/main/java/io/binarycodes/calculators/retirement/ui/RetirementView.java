@@ -36,8 +36,8 @@ import java.math.BigDecimal;
  * {@link RealCorpusChart}, and {@link ProjectionGrid}.
  */
 @Route("retirement")
-@Menu(title = "Retirement", icon = "vaadin:piggy-bank", order = 1)
-@PageTitle("Retirement Calculator")
+@Menu(title = "Retirement Planner", icon = "vaadin:piggy-bank", order = 1)
+@PageTitle("Retirement Planner")
 public class RetirementView extends VerticalLayout {
 
     private static final BigDecimal HEALTHY_CORPUS_MULTIPLIER = BigDecimal.valueOf(5);
@@ -86,7 +86,7 @@ public class RetirementView extends VerticalLayout {
         });
         this.projectionGrid = new ProjectionGrid(preferences);
 
-        add(new H2("Retirement Calculator"));
+        add(new H2("Retirement Planner"));
         add(this.form);
         add(buildActionRow());
         add(buildSummaryRow());
