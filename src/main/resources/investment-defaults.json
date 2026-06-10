@@ -1,0 +1,53 @@
+{
+  "INR": {
+    "amount": "25000",
+    "frequency": "MONTHLY",
+    "growthRate": "12",
+    "taxRate": "12.5",
+    "inflationRate": "6",
+    "stepUp": "5",
+    "horizonMode": "YEARS",
+    "investYears": "15",
+    "investMonths": "0",
+    "currentAge": "35",
+    "goalAge": "50",
+    "targetYear": "2041",
+    "targetMonth": "12",
+    "holdYears": "5",
+    "holdMonths": "0"
+  },
+  "EUR": {
+    "amount": "500",
+    "frequency": "MONTHLY",
+    "growthRate": "7",
+    "taxRate": "30",
+    "inflationRate": "2.5",
+    "stepUp": "3",
+    "horizonMode": "YEARS",
+    "investYears": "20",
+    "investMonths": "0",
+    "currentAge": "35",
+    "goalAge": "55",
+    "targetYear": "2046",
+    "targetMonth": "12",
+    "holdYears": "5",
+    "holdMonths": "0"
+  },
+  "USD": {
+    "amount": "500",
+    "frequency": "MONTHLY",
+    "growthRate": "8",
+    "taxRate": "30",
+    "inflationRate": "3",
+    "stepUp": "3",
+    "horizonMode": "YEARS",
+    "investYears": "20",
+    "investMonths": "0",
+    "currentAge": "35",
+    "goalAge": "55",
+    "targetYear": "2046",
+    "targetMonth": "12",
+    "holdYears": "5",
+    "holdMonths": "0"
+  }
+}

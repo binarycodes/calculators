@@ -1,0 +1,23 @@
+/*
+ * Layout for the Investment Calculator screen. Reuses the shared .form-section,
+ * .action-row, .summary-row, .chart-card, and .grid-card rules; only the
+ * subsection labels and segmented toggle alignment are view-specific.
+ */
+
+.investment-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.investment-view .subsection-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-top: 0.5rem;
+}
+
+.investment-view .subsection-hint {
+    color: var(--vaadin-secondary-text-color, #71717a);
+}
+
+.investment-view vaadin-radio-group.segmented-toggle {
+    align-self: flex-start;
+}

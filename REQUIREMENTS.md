@@ -9,10 +9,12 @@ input. The app currently ships:
 - **Goal Planner** — solves for the monthly SIP required to hit a post-tax goal.
 - **Inflation Projection** — projects an amount forward or backward at a fixed
   inflation rate over a horizon.
+- **Investment** — grows regular contributions through an investment phase and a
+  subsequent hold phase; reports maturity, net-of-tax, and real value.
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
-owns a route segment (`/retirement`, `/goal`, `/inflation`).
+owns a route segment (`/retirement`, `/goal`, `/inflation`, `/investment`).
 
 The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
@@ -458,3 +460,56 @@ success-tinted.
 | --- | --- |
 | `InflationCalculatorTest` | Forward/backward correctness, inverse round-trip, zero-inflation no-op, fractional-year compounding, horizon-mode resolution, validation rejections. |
 | `InflationDefaultsJsonTest` | `inflation-defaults.json` parses, every currency has every required field, projection round-trips. |
+
+# Investment
+
+## 1. Inputs
+
+A single card.
+
+| Field | Notes |
+| --- | --- |
+| Amount | Money, > 0. Contributed each period during the investment phase. |
+| Contribution frequency | Monthly or Yearly (segmented toggle). Yearly contributions land at the start of each 12-month block. |
+| Growth Rate (%) | Annual return; compounded monthly. |
+| Tax Rate (%) | Applied to the gains portion once, at the end. |
+| Inflation Rate (%) | Deflates the net maturity value (and each year's balance) to today's money. |
+| Step-Up (%) | Optional annual ramp on the contribution. |
+| Investment time | Shared Years (+ months) / Ages / Target-Year selector — how long contributions continue. |
+| Hold time | Plain Years + Months duration after contributions stop. No starting corpus; contributions only. |
+
+## 2. Calculation Model
+
+Monthly compounding (`g_m = (1+g)^(1/12) − 1`). For each month:
+
+- **Investment phase** (`month < investmentMonths`): contribute
+  `amount · (1 + stepUp)^floor(month/12)` — every month if Monthly, or only at
+  each 12-month boundary if Yearly. Both `balance` and `principal` rise.
+- **Hold phase**: no contribution.
+- Either way, `balance += balance · g_m`.
+
+At the end: `gains = balance − principal`, `taxAtExit = gains · taxRate`,
+`netValue = balance − taxAtExit`, and `buyingPowerToday = netValue / (1+inflation)^totalYears`.
+Each projection year also carries its balance deflated to today (`realValue`).
+
+## 3. Output
+
+Four summary cards: Total Invested, Maturity Value (gross), Net After Tax,
+Buying Power Today. A stacked column chart (principal + gains) where principal
+flattens once contributions stop — making the invest/hold split visible. A
+year-by-year grid (Year | Phase | Contribution | Balance | Principal | Gains |
+Real Value) with a column chooser; the Phase badge marks Investing vs Holding.
+
+## 4. Persistence
+
+| Storage | Contents |
+| --- | --- |
+| `investment-defaults.json` (classpath) | Per-currency baseline inputs. |
+| `iv_inputs` (localStorage) | Per-currency snapshot of the user's edited inputs. |
+
+## 5. Test coverage
+
+| Suite | Purpose |
+| --- | --- |
+| `InvestmentCalculatorTest` | Invested-total math, monthly vs yearly cadence, hold-phase growth, gains/tax/net reconciliation, buying-power discounting, step-up, phase split across rows, horizon-mode resolution, validation. |
+| `InvestmentDefaultsJsonTest` | `investment-defaults.json` parses, every currency has every required field, projection round-trips. |

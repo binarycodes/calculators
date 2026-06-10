@@ -1,0 +1,18 @@
+/*
+ * Investment calculator — Corpus Build-Up chart. Same palette as the goal
+ * planner: principal = primary brand colour, gains = success accent.
+ */
+
+:host {
+    & .principal > path {
+        fill: var(--chart-primary-color);
+        fill-opacity: 1;
+        stroke: var(--chart-primary-color);
+    }
+
+    & .gains > path {
+        fill: var(--chart-success-color);
+        fill-opacity: 1;
+        stroke: var(--chart-success-color);
+    }
+}

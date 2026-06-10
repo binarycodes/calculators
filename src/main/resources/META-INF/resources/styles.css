@@ -12,6 +12,7 @@
 @import url('retirement-view.css');
 @import url('goal-view.css');
 @import url('inflation-view.css');
+@import url('investment-view.css');
 @import url('landing-view.css');
 
 html, body, *, *:before, *:after {

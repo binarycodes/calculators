@@ -35,7 +35,8 @@ public class LandingView extends VerticalLayout {
     private static final Map<String, String> BLURBS = Map.of(
             "retirement", "Project your retirement corpus through life expectancy with detailed cashflow modelling.",
             "goal", "Find the monthly investment needed to hit a post-tax goal by a given deadline.",
-            "inflation", "See what an amount is worth at the other end of a horizon — forward or backward."
+            "inflation", "See what an amount is worth at the other end of a horizon — forward or backward.",
+            "investment", "Grow regular contributions through an invest-and-hold horizon; see maturity and real value."
     );
 
     public LandingView() {
