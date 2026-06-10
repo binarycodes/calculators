@@ -133,6 +133,27 @@ code should follow it without being prompted.
 - **Each CSS file gets a one-paragraph header comment** describing what
   it owns. No section dividers inside files.
 
+## 7. Responsive layout
+
+**Every form and result layout must be responsive** — usable from a phone
+(~375px) up to a wide desktop, with no horizontal overflow. Concretely:
+
+- **Field grids use `FormLayout` with responsive steps**, collapsing to a
+  single column on narrow screens, e.g.
+  `new FormLayout.ResponsiveStep("0", 1)`, `("36em", 2)`, `("64em", 3)`.
+  Don't hand-place inputs in a fixed-width `HorizontalLayout`.
+- **Repeating record rows** (one entry per row — expenses, incomes,
+  investment buckets, …) add the shared **`form-row`** class. Its rule in
+  `layout.css` makes the row `flex-wrap` and gives each field a
+  `min-width`, so fields reflow onto multiple lines instead of overflowing.
+- **Summary-card rows use the shared `summary-row` class**, which wraps the
+  cards (4-across on desktop → 1-per-row on mobile).
+- **Page containers fill the available width** (`setWidthFull()`); avoid
+  fixed pixel widths on layouts. Let content and the grid/flex rules decide
+  wrapping.
+- **Verify at mobile and desktop widths** (the preview's `mobile`/`desktop`
+  presets) before declaring a UI change done.
+
 ## 7. Project layout
 
 - **Feature-based packaging** (per the Vaadin 25 primer):

@@ -13,6 +13,7 @@ import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 
 import java.math.BigDecimal;
@@ -122,12 +123,11 @@ class RetirementBenefitsTab extends VerticalLayout {
             this.amountField.addValueChangeListener(event -> onChanged.run());
             this.taxField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
-            removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
-            removeButton.getElement().setAttribute("aria-label", "Remove benefit");
+            final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
 
             setWidthFull();
             setAlignItems(Alignment.BASELINE);
+            addClassName("form-row");
             add(this.descriptionField, this.amountField, this.taxField, removeButton);
             expand(this.descriptionField);
         }

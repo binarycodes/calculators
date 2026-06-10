@@ -16,6 +16,7 @@ import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.goal.domain.Investment;
 
 import java.math.BigDecimal;
@@ -186,15 +187,12 @@ public class InvestmentsCard extends Card {
             this.stepUpField.addValueChangeListener(event -> onChanged.run());
             this.allocationField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(),
-                    event -> onRemove.accept(this));
-            removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY,
-                    ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
-            removeButton.getElement().setAttribute("aria-label", "Remove investment");
+            final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
 
             setWidthFull();
             setAlignItems(Alignment.BASELINE);
             addClassName("investment-row");
+            addClassName("form-row");
             add(this.labelField, this.corpusField, this.growthField,
                     this.taxField, this.stepUpField, this.allocationField, removeButton);
             expand(this.labelField, this.corpusField);

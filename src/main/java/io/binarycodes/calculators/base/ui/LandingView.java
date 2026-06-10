@@ -2,12 +2,12 @@ package io.binarycodes.calculators.base.ui;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.card.Card;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -48,18 +48,17 @@ public class LandingView extends VerticalLayout {
         add(new H1("Calculators"));
         add(new Paragraph("Pick a calculator to get started."));
 
-        final HorizontalLayout cards = new HorizontalLayout();
-        cards.setWidthFull();
-        cards.setSpacing(true);
+        // A responsive CSS grid — four tiles per row on desktop, collapsing to
+        // one per row on mobile (see landing-view.css).
+        final Div cards = new Div();
+        cards.addClassName("landing-grid");
 
         for (final MenuEntry entry : MenuConfiguration.getMenuEntries()) {
             // Skip the entry that points back to this landing page.
             if (entry.menuClass() == LandingView.class) {
                 continue;
             }
-            final Component tile = tile(entry);
-            cards.add(tile);
-            cards.setFlexGrow(1, tile);
+            cards.add(tile(entry));
         }
         add(cards);
     }

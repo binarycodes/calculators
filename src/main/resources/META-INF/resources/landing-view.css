@@ -4,19 +4,34 @@
  * clickable. Visuals reuse the semantic colour tokens from colors.css.
  */
 
-.landing-view {
-    max-width: 60rem;
-}
-
 .landing-view h1 {
     margin-bottom: 0;
+}
+
+/* Responsive tile grid: four per row on desktop, narrowing to one on mobile. */
+.landing-view .landing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    width: 100%;
+}
+
+@media (max-width: 64rem) {
+    .landing-view .landing-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 36rem) {
+    .landing-view .landing-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .landing-view a.landing-tile-link {
     text-decoration: none;
     color: inherit;
     display: block;
-    flex: 1;
 }
 
 .landing-view .landing-tile {

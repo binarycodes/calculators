@@ -17,6 +17,7 @@ import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringIncome;
@@ -233,12 +234,11 @@ class FutureIncomesTab extends VerticalLayout {
             this.amountField.addValueChangeListener(event -> onChanged.run());
             this.taxField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
-            removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
-            removeButton.getElement().setAttribute("aria-label", "Remove income");
+            final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
 
             setWidthFull();
             setAlignItems(Alignment.BASELINE);
+            addClassName("form-row");
             add(this.yearField, this.descriptionField, this.amountField, this.taxField, removeButton);
             expand(this.descriptionField);
         }
@@ -290,12 +290,11 @@ class FutureIncomesTab extends VerticalLayout {
             this.amountField.addValueChangeListener(event -> onChanged.run());
             this.taxField.addValueChangeListener(event -> onChanged.run());
 
-            final Button removeButton = new Button(VaadinIcon.TRASH.create(), event -> onRemove.accept(this));
-            removeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON);
-            removeButton.getElement().setAttribute("aria-label", "Remove recurring income");
+            final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
 
             setWidthFull();
             setAlignItems(Alignment.BASELINE);
+            addClassName("form-row");
             add(this.yearField, this.stopYearField, this.descriptionField, this.frequencyField,
                     this.amountField, this.taxField, removeButton);
             expand(this.descriptionField);

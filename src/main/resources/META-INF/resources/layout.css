@@ -40,10 +40,67 @@ a.brand-link:hover {
     gap: 0.75rem;
 }
 
-/* Summary cards row spreads out. ---------------------------------------- */
+/* Repeating input rows (one record per row: expenses, incomes, investment
+ * buckets, …). Two states, no awkward in-between: when the row fits it stays
+ * on a single line; below the breakpoint it collapses into a stacked card
+ * with one field per line. The fields share the line and shrink to fit
+ * (min-width: 0) rather than spilling onto a second line. ---------------- */
+.form-row {
+    flex-wrap: nowrap;
+}
+
+.form-row > vaadin-text-field,
+.form-row > vaadin-number-field,
+.form-row > vaadin-integer-field,
+.form-row > vaadin-custom-field,
+.form-row > vaadin-select {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* The "Remove" label is hidden while the row is on one line (icon-only look). */
+.form-row .remove-label {
+    display: none;
+}
+
+@media (max-width: 64rem) {
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        background: var(--color-surface);
+    }
+
+    .form-row > * {
+        width: 100%;
+    }
+
+    .form-row .remove-label {
+        display: inline;
+        margin-inline-start: 0.4rem;
+    }
+
+    .form-row .row-remove {
+        justify-content: center;
+    }
+}
+
+/* Summary cards row spreads out and wraps responsively: as many cards as
+ * fit on a row at a ~12rem basis, collapsing to one per row on mobile. ---- */
 .summary-row {
     gap: 1rem;
     margin-top: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.summary-row > .summary-card {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 12rem;
+    min-width: 12rem;
 }
 
 /* Charts card framing. -------------------------------------------------- */
