@@ -9,7 +9,7 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
-import io.binarycodes.calculators.goal.domain.TimeHorizonMode;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 
 import java.util.ArrayList;
 import java.util.List;

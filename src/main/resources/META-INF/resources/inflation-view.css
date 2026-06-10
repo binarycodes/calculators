@@ -1,0 +1,19 @@
+/*
+ * Layout for the Inflation Projection screen. Shares the rhythm of the other
+ * calculators; the single input card and the two-card result row reuse the
+ * common .form-section, .action-row, and .summary-row rules.
+ */
+
+.inflation-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.inflation-view .subsection-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-top: 0.5rem;
+}
+
+.inflation-view vaadin-radio-group.segmented-toggle {
+    align-self: flex-start;
+}

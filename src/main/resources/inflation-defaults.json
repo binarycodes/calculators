@@ -1,0 +1,38 @@
+{
+  "INR": {
+    "amount": "1000000",
+    "inflationRate": "6",
+    "amountIsToday": "true",
+    "horizonMode": "YEARS",
+    "yearsToGoal": "10",
+    "monthsToGoal": "0",
+    "currentAge": "35",
+    "goalAge": "45",
+    "targetYear": "2036",
+    "targetMonth": "12"
+  },
+  "EUR": {
+    "amount": "100000",
+    "inflationRate": "2.5",
+    "amountIsToday": "true",
+    "horizonMode": "YEARS",
+    "yearsToGoal": "10",
+    "monthsToGoal": "0",
+    "currentAge": "35",
+    "goalAge": "45",
+    "targetYear": "2036",
+    "targetMonth": "12"
+  },
+  "USD": {
+    "amount": "100000",
+    "inflationRate": "3",
+    "amountIsToday": "true",
+    "horizonMode": "YEARS",
+    "yearsToGoal": "10",
+    "monthsToGoal": "0",
+    "currentAge": "35",
+    "goalAge": "45",
+    "targetYear": "2036",
+    "targetMonth": "12"
+  }
+}

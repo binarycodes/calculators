@@ -6,7 +6,8 @@ import io.binarycodes.calculators.goal.domain.GoalProjectionRow;
 import io.binarycodes.calculators.goal.domain.GoalResult;
 import io.binarycodes.calculators.goal.domain.Investment;
 import io.binarycodes.calculators.goal.domain.MonthSnapshot;
-import io.binarycodes.calculators.goal.domain.TimeHorizonMode;
+import io.binarycodes.calculators.base.common.TimeHorizon;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -203,37 +204,11 @@ public final class GoalCalculator {
     }
 
     public static int resolveTotalMonths(GoalInputs inputs) {
-        final TimeHorizonMode mode = inputs.getHorizonMode() == null
-                ? TimeHorizonMode.YEARS
-                : inputs.getHorizonMode();
-        return switch (mode) {
-            case YEARS -> {
-                final int years = required(inputs.getYearsToGoal(), "Years to goal");
-                final int extraMonths = inputs.getMonthsToGoal() == null
-                        ? 0
-                        : inputs.getMonthsToGoal();
-                if (extraMonths < 0 || extraMonths > 11) {
-                    throw new IllegalArgumentException("Months must be between 0 and 11.");
-                }
-                yield years * 12 + extraMonths;
-            }
-            case AGES -> {
-                final int currentAge = required(inputs.getCurrentAge(), "Current age");
-                final int goalAge = required(inputs.getGoalAge(), "Goal age");
-                yield (goalAge - currentAge) * 12;
-            }
-            case TARGET_YEAR -> {
-                final int targetYear = required(inputs.getTargetYear(), "Target year");
-                final int targetMonth = inputs.getTargetMonth() == null
-                        ? LocalDate.now().getMonthValue()
-                        : inputs.getTargetMonth();
-                if (targetMonth < 1 || targetMonth > 12) {
-                    throw new IllegalArgumentException("Target month must be between 1 and 12.");
-                }
-                final LocalDate today = LocalDate.now();
-                yield (targetYear - today.getYear()) * 12 + (targetMonth - today.getMonthValue());
-            }
-        };
+        return TimeHorizon.resolveTotalMonths(
+                inputs.getHorizonMode(),
+                inputs.getYearsToGoal(), inputs.getMonthsToGoal(),
+                inputs.getCurrentAge(), inputs.getGoalAge(),
+                inputs.getTargetYear(), inputs.getTargetMonth());
     }
 
     private static Projection buildProjection(GoalInputs inputs,

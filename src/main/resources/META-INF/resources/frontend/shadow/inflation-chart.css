@@ -1,0 +1,17 @@
+/*
+ * Inflation Projection — Value Over Time chart. Single neutral series using the
+ * primary brand colour (no success/danger tinting; inflation is just a fact).
+ */
+
+:host {
+    & .highcharts-area {
+        fill: var(--chart-primary-color);
+        fill-opacity: 0.3;
+        stroke: none;
+    }
+
+    & .highcharts-graph {
+        stroke: var(--chart-primary-color);
+        stroke-width: 2px;
+    }
+}

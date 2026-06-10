@@ -7,10 +7,16 @@ input. The app currently ships:
 
 - **Retirement Planner** — full retirement projection across life expectancy.
 - **Goal Planner** — solves for the monthly SIP required to hit a post-tax goal.
+- **Inflation Projection** — projects an amount forward or backward at a fixed
+  inflation rate over a horizon.
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
-owns a route segment (`/retirement`, `/goal`).
+owns a route segment (`/retirement`, `/goal`, `/inflation`).
+
+The Years / Ages / Target-Year horizon selector is shared infrastructure:
+`base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
+used by both the Goal Planner and Inflation Projection.
 
 # Retirement Planner
 
@@ -408,3 +414,47 @@ age; in the other modes the column is hidden.
 | `GoalCalculatorTest` | Closed-form solve correctness, monotonicity in growth / step-up / horizon, projection-row reconciliation, validation rejections, edge cases (zero corpus, goal-already-covered, 100% tax). |
 | `GoalDefaultsJsonTest` | `goal-defaults.json` parses, every currency has every required field, projection round-trips. |
 | `GoalCalculatorFormBrowserlessTest` | Horizon toggle swaps the visible sub-field; binder round-trip preserves values. |
+
+# Inflation Projection
+
+## 1. Inputs
+
+A single card.
+
+| Field | Notes |
+| --- | --- |
+| Amount | Money, ≥ 0. Interpreted as today's money or a future value per the toggle below. |
+| Inflation Rate (%) | Annual rate, 0–100. |
+| Amount is in today's money | Checkbox. Checked ⇒ forward projection; unchecked ⇒ backward (discount to today). |
+| Time horizon | Shared Years (+ months) / Ages / Target Year (+ month) selector. |
+
+## 2. Calculation Model
+
+With fractional years `y = totalMonths / 12` and rate `i`:
+
+- **Forward** (amount is today's money): `result = amount · (1 + i)^y`.
+- **Backward** (amount is a future value): `result = amount / (1 + i)^y`.
+
+`(1 + i)^y` uses `Math.pow` so partial-year horizons compound proportionally.
+Zero inflation leaves the amount unchanged; forward and backward are exact
+inverses.
+
+## 3. Output
+
+Two summary cards. Forward: "Amount Today" → "Value at Horizon". Backward:
+"Amount at Horizon" → "Value in Today's Money". The projected card is
+success-tinted.
+
+## 4. Persistence
+
+| Storage | Contents |
+| --- | --- |
+| `inflation-defaults.json` (classpath) | Per-currency baseline inputs. |
+| `ip_inputs` (localStorage) | Per-currency snapshot of the user's edited inputs. |
+
+## 5. Test coverage
+
+| Suite | Purpose |
+| --- | --- |
+| `InflationCalculatorTest` | Forward/backward correctness, inverse round-trip, zero-inflation no-op, fractional-year compounding, horizon-mode resolution, validation rejections. |
+| `InflationDefaultsJsonTest` | `inflation-defaults.json` parses, every currency has every required field, projection round-trips. |

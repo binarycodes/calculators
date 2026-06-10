@@ -6,23 +6,21 @@ import io.binarycodes.calculators.base.common.Status;
 
 /**
  * A compact "label + big value" tile used in summary rows across calculators.
- * Setting a {@link Status} tints the card via the {@code status} attribute,
- * which {@code summary-card.css} reads to pick a colour.
+ * The label is the card title; {@link #setLabel} updates it live. Setting a
+ * {@link Status} tints the card via the {@code status} attribute, which
+ * {@code summary-card.css} reads to pick a colour.
  */
 public class SummaryCard extends Card {
-    private final Span label = new Span();
     private final Span value = new Span();
 
     public SummaryCard(String labelText) {
         addClassName("summary-card");
-        this.label.setText(labelText);
-
         setTitle(labelText);
         add(this.value);
     }
 
     public void setLabel(String text) {
-        this.label.setText(text);
+        setTitle(text);
     }
 
     public void setValue(String text, Status status) {

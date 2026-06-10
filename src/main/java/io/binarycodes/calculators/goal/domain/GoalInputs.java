@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.goal.domain;
 
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

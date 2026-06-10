@@ -1,7 +1,8 @@
-package io.binarycodes.calculators.goal.ui;
+package io.binarycodes.calculators.inflation.ui;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.card.Card;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -18,10 +19,10 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
-import io.binarycodes.calculators.goal.domain.GoalInputs;
-import io.binarycodes.calculators.base.common.TimeHorizonMode;
+import io.binarycodes.calculators.inflation.domain.InflationInputs;
 
 import java.math.BigDecimal;
 import java.time.Month;
@@ -29,55 +30,47 @@ import java.time.Year;
 import java.util.List;
 
 /**
- * The goal-planner input form. Composes three cards:
- *
- * <ul>
- *   <li><b>Goal</b> — target post-tax amount and the yearly step-up applied
- *       to the monthly contribution.</li>
- *   <li><b>{@link InvestmentsCard Investments}</b> — list of buckets with
- *       their own corpus, growth, tax, and allocation share. Validated to
- *       sum to 100%.</li>
- *   <li><b>Time Horizon</b> — segmented toggle between Years (+ months),
- *       Ages, and Target Year (+ month).</li>
- * </ul>
+ * Single-card input form for the inflation projection: amount + inflation rate,
+ * a "today's money" toggle that flips the projection direction, and the shared
+ * Years / Ages / Target-Year horizon selector.
  */
-public class GoalCalculatorForm extends VerticalLayout {
+public class InflationCalculatorForm extends VerticalLayout {
 
-    private final Binder<GoalInputs> binder = new Binder<>(GoalInputs.class);
+    private final Binder<InflationInputs> binder = new Binder<>(InflationInputs.class);
 
-    private final MoneyField goalAmount;
+    private final MoneyField amount;
     private final NumberField inflationRate = percentageField("Inflation Rate");
+    private final Checkbox amountIsToday = new Checkbox("Amount is in today's money");
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
 
-    private final IntegerField yearsToGoal = yearsField("Years");
-    private final IntegerField monthsToGoal = monthsField("Months");
+    private final IntegerField years = yearsField("Years");
+    private final IntegerField months = monthsField("Months");
     private final IntegerField currentAge = ageField("Current Age");
     private final IntegerField goalAge = ageField("Goal Age");
     private final IntegerField targetYear = targetYearField();
     private final Select<Month> targetMonth = monthSelect();
 
-    private final InvestmentsCard investmentsCard;
     private final FormLayout horizonFields = new FormLayout();
-    private final Signal<GoalInputs> inputsSignal;
+    private final Signal<InflationInputs> inputsSignal;
 
-    public GoalCalculatorForm(UserPreferences preferences) {
-        addClassName("goal-form");
+    public InflationCalculatorForm(UserPreferences preferences) {
+        addClassName("inflation-form");
         setPadding(false);
         setSpacing(true);
         setWidthFull();
 
-        this.goalAmount = new MoneyField("Amount (today)", preferences);
-        this.investmentsCard = new InvestmentsCard(preferences);
+        this.amount = new MoneyField("Amount", preferences);
 
         configureHorizonModeGroup();
         configureBindings();
         renderHorizonFieldsFor(this.horizonMode.getValue());
 
-        add(buildGoalCard(), this.investmentsCard);
+        add(buildCard());
 
         this.inputsSignal = Signal.computed(() -> {
-            this.goalAmountSignal.get();
+            this.amountSignal.get();
             this.inflationSignal.get();
+            this.amountIsTodaySignal.get();
             this.horizonModeSignal.get();
             this.yearsSignal.get();
             this.monthsSignal.get();
@@ -85,62 +78,46 @@ public class GoalCalculatorForm extends VerticalLayout {
             this.goalAgeSignal.get();
             this.targetYearSignal.get();
             this.targetMonthSignal.get();
-            this.investmentsCard.investmentsSignal().get();
             return buildInputs();
         });
     }
 
-    public Signal<GoalInputs> inputsSignal() {
+    public Signal<InflationInputs> inputsSignal() {
         return this.inputsSignal;
     }
 
-    public void setInputs(GoalInputs inputs) {
+    public void setInputs(InflationInputs inputs) {
         if (inputs.getHorizonMode() == null) {
             inputs.setHorizonMode(TimeHorizonMode.YEARS);
         }
         this.binder.readBean(inputs);
         renderHorizonFieldsFor(inputs.getHorizonMode());
-        this.investmentsCard.setInvestments(inputs.getInvestments());
     }
 
-    public GoalInputs getInputs() {
+    public InflationInputs getInputs() {
         return buildInputs();
     }
 
     public boolean isValid() {
-        return this.binder.isValid() && this.investmentsCard.isAllocationValid();
+        return this.binder.isValid();
     }
 
-    public BinderValidationStatus<GoalInputs> validate() {
+    public BinderValidationStatus<InflationInputs> validate() {
         return this.binder.validate();
     }
 
-    public InvestmentsCard investmentsCard() {
-        return this.investmentsCard;
-    }
-
-    /**
-     * Helper text shown under the inflation rate field — used by the view to
-     * surface the inflated target ("Target at horizon: …") once a calculation
-     * has run, so the user can see what amount the SIP is actually solving for.
-     */
-    public void setInflationHelperText(String text) {
-        this.inflationRate.setHelperText(text);
-    }
-
-    private GoalInputs buildInputs() {
-        final var target = new GoalInputs();
+    private InflationInputs buildInputs() {
+        final var target = new InflationInputs();
         this.binder.writeBeanAsDraft(target);
         if (target.getHorizonMode() == null) {
             target.setHorizonMode(TimeHorizonMode.YEARS);
         }
-        target.setInvestments(this.investmentsCard.getInvestments());
         return target;
     }
 
-    private Component buildGoalCard() {
-        final FormLayout amountLayout = sectionForm();
-        amountLayout.add(this.goalAmount, withPercentageSuffix(this.inflationRate));
+    private Component buildCard() {
+        final FormLayout topLayout = sectionForm();
+        topLayout.add(this.amount, withPercentageSuffix(this.inflationRate), this.amountIsToday);
 
         this.horizonFields.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
@@ -151,12 +128,12 @@ public class GoalCalculatorForm extends VerticalLayout {
         horizonLabel.addClassName("subsection-label");
 
         final VerticalLayout content = new VerticalLayout(
-                amountLayout, horizonLabel, this.horizonMode, this.horizonFields);
+                topLayout, horizonLabel, this.horizonMode, this.horizonFields);
         content.setPadding(false);
         content.setSpacing(true);
 
         final Card card = new Card();
-        card.setTitle("Goal");
+        card.setTitle("Inflation");
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
@@ -165,7 +142,7 @@ public class GoalCalculatorForm extends VerticalLayout {
 
     private void configureHorizonModeGroup() {
         this.horizonMode.setItems(TimeHorizonMode.values());
-        this.horizonMode.setItemLabelGenerator(GoalCalculatorForm::horizonModeLabel);
+        this.horizonMode.setItemLabelGenerator(InflationCalculatorForm::horizonModeLabel);
         this.horizonMode.setValue(TimeHorizonMode.YEARS);
         this.horizonMode.addClassName("segmented-toggle");
         this.horizonMode.addValueChangeListener(event -> {
@@ -178,14 +155,15 @@ public class GoalCalculatorForm extends VerticalLayout {
         this.horizonFields.removeAll();
         final TimeHorizonMode resolved = mode == null ? TimeHorizonMode.YEARS : mode;
         switch (resolved) {
-            case YEARS -> this.horizonFields.add(this.yearsToGoal, this.monthsToGoal);
+            case YEARS -> this.horizonFields.add(this.years, this.months);
             case AGES -> this.horizonFields.add(this.currentAge, this.goalAge);
             case TARGET_YEAR -> this.horizonFields.add(this.targetYear, this.targetMonth);
         }
     }
 
-    private Signal<?> goalAmountSignal;
+    private Signal<?> amountSignal;
     private Signal<?> inflationSignal;
+    private Signal<?> amountIsTodaySignal;
     private Signal<?> horizonModeSignal;
     private Signal<?> yearsSignal;
     private Signal<?> monthsSignal;
@@ -195,44 +173,48 @@ public class GoalCalculatorForm extends VerticalLayout {
     private Signal<?> targetMonthSignal;
 
     private void configureBindings() {
-        this.goalAmountSignal = this.binder.forField(this.goalAmount)
+        this.amountSignal = this.binder.forField(this.amount)
                 .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
-                        new BigDecimal("0.01"), null))
-                .bind(GoalInputs::getGoalAmount, GoalInputs::setGoalAmount)
+                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                        BigDecimal.ZERO, null))
+                .bind(InflationInputs::getAmount, InflationInputs::setAmount)
                 .valueSignal();
 
         this.inflationSignal = this.binder.forField(this.inflationRate)
+                .asRequired("Required")
                 .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
-                .bind(GoalInputs::getInflationRatePct, GoalInputs::setInflationRatePct)
+                .bind(InflationInputs::getInflationRatePct, InflationInputs::setInflationRatePct)
+                .valueSignal();
+
+        this.amountIsTodaySignal = this.binder.forField(this.amountIsToday)
+                .bind(InflationInputs::isAmountIsToday, InflationInputs::setAmountIsToday)
                 .valueSignal();
 
         this.horizonModeSignal = this.binder.forField(this.horizonMode)
-                .bind(GoalInputs::getHorizonMode, GoalInputs::setHorizonMode)
+                .bind(InflationInputs::getHorizonMode, InflationInputs::setHorizonMode)
                 .valueSignal();
 
-        this.yearsSignal = this.binder.forField(this.yearsToGoal)
+        this.yearsSignal = this.binder.forField(this.years)
                 .withValidator((value, context) -> {
                     if (this.horizonMode.getValue() == TimeHorizonMode.YEARS) {
-                        final int months = this.monthsToGoal.getValue() == null
-                                ? 0 : this.monthsToGoal.getValue();
+                        final int extraMonths = this.months.getValue() == null ? 0 : this.months.getValue();
                         if (value == null) {
                             return ValidationResult.error("Required");
                         }
-                        if (value < 0 || value > 80) {
-                            return ValidationResult.error("Must be between 0 and 80");
+                        if (value < 0 || value > 100) {
+                            return ValidationResult.error("Must be between 0 and 100");
                         }
-                        if (value == 0 && months == 0) {
+                        if (value == 0 && extraMonths == 0) {
                             return ValidationResult.error("Years + months must be at least one month");
                         }
                     }
                     return ValidationResult.ok();
                 })
-                .bind(GoalInputs::getYearsToGoal, GoalInputs::setYearsToGoal)
+                .bind(InflationInputs::getYearsToGoal, InflationInputs::setYearsToGoal)
                 .valueSignal();
 
-        this.monthsSignal = this.binder.forField(this.monthsToGoal)
+        this.monthsSignal = this.binder.forField(this.months)
                 .withValidator((value, context) -> {
                     if (this.horizonMode.getValue() == TimeHorizonMode.YEARS
                             && value != null && (value < 0 || value > 11)) {
@@ -240,7 +222,7 @@ public class GoalCalculatorForm extends VerticalLayout {
                     }
                     return ValidationResult.ok();
                 })
-                .bind(GoalInputs::getMonthsToGoal, GoalInputs::setMonthsToGoal)
+                .bind(InflationInputs::getMonthsToGoal, InflationInputs::setMonthsToGoal)
                 .valueSignal();
 
         this.currentAgeSignal = this.binder.forField(this.currentAge)
@@ -255,7 +237,7 @@ public class GoalCalculatorForm extends VerticalLayout {
                     }
                     return ValidationResult.ok();
                 })
-                .bind(GoalInputs::getCurrentAge, GoalInputs::setCurrentAge)
+                .bind(InflationInputs::getCurrentAge, InflationInputs::setCurrentAge)
                 .valueSignal();
 
         this.goalAgeSignal = this.binder.forField(this.goalAge)
@@ -269,13 +251,13 @@ public class GoalCalculatorForm extends VerticalLayout {
                     if (value < 1 || value > 120) {
                         return ValidationResult.error("Must be between 1 and 120");
                     }
-                    final Integer current = this.currentAge.getValue();
-                    if (current != null && value <= current) {
+                    final Integer from = this.currentAge.getValue();
+                    if (from != null && value <= from) {
                         return ValidationResult.error("Must be greater than current age");
                     }
                     return ValidationResult.ok();
                 })
-                .bind(GoalInputs::getGoalAge, GoalInputs::setGoalAge)
+                .bind(InflationInputs::getGoalAge, InflationInputs::setGoalAge)
                 .valueSignal();
 
         this.targetYearSignal = this.binder.forField(this.targetYear)
@@ -292,26 +274,25 @@ public class GoalCalculatorForm extends VerticalLayout {
                         return ValidationResult.error("Must be " + currentYear + " or later");
                     }
                     final Month picked = this.targetMonth.getValue();
-                    if (value.intValue() == currentYear
-                            && picked != null
+                    if (value.intValue() == currentYear && picked != null
                             && picked.getValue() <= currentMonth) {
                         return ValidationResult.error("Target must be in the future");
                     }
                     return ValidationResult.ok();
                 })
-                .bind(GoalInputs::getTargetYear, GoalInputs::setTargetYear)
+                .bind(InflationInputs::getTargetYear, InflationInputs::setTargetYear)
                 .valueSignal();
 
         this.targetMonthSignal = this.binder.forField(this.targetMonth)
                 .withConverter(
                         month -> month == null ? null : month.getValue(),
                         value -> value == null ? null : Month.of(value))
-                .bind(GoalInputs::getTargetMonth, GoalInputs::setTargetMonth)
+                .bind(InflationInputs::getTargetMonth, InflationInputs::setTargetMonth)
                 .valueSignal();
 
         this.horizonMode.addValueChangeListener(event -> this.binder.validate());
         this.currentAge.addValueChangeListener(event -> this.binder.validate());
-        this.monthsToGoal.addValueChangeListener(event -> this.binder.validate());
+        this.months.addValueChangeListener(event -> this.binder.validate());
         this.targetMonth.addValueChangeListener(event -> this.binder.validate());
     }
 
@@ -351,7 +332,7 @@ public class GoalCalculatorForm extends VerticalLayout {
     private static IntegerField yearsField(String label) {
         final IntegerField field = new IntegerField(label);
         field.setMin(0);
-        field.setMax(80);
+        field.setMax(100);
         field.setStepButtonsVisible(false);
         field.setSuffixComponent(secondaryText("yrs"));
         field.setValueChangeMode(ValueChangeMode.LAZY);
@@ -384,7 +365,7 @@ public class GoalCalculatorForm extends VerticalLayout {
     private static IntegerField targetYearField() {
         final IntegerField field = new IntegerField("Target Year");
         field.setMin(Year.now().getValue());
-        field.setMax(Year.now().getValue() + 80);
+        field.setMax(Year.now().getValue() + 100);
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;

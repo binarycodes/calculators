@@ -3,7 +3,7 @@ package io.binarycodes.calculators.goal.service;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
-import io.binarycodes.calculators.goal.domain.TimeHorizonMode;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;

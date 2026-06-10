@@ -1,40 +1,35 @@
-package io.binarycodes.calculators.goal.service;
+package io.binarycodes.calculators.inflation.service;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
-import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.goal.domain.GoalInputs;
-import io.binarycodes.calculators.goal.domain.Investment;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
+import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.inflation.domain.InflationInputs;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Per-session, per-currency cache of goal-planner inputs, mirrored to browser
- * localStorage under {@value #STORAGE_KEY}. The serialised shape matches
- * {@code goal-defaults.json} so users with one already saved can roll over.
+ * Per-session, per-currency cache of inflation-projection inputs, mirrored to
+ * browser localStorage under {@value #STORAGE_KEY}.
  */
 @Component
 @VaadinSessionScope
-public class GoalInputsStore {
+public class InflationInputsStore {
 
-    static final String STORAGE_KEY = "gp_inputs";
+    static final String STORAGE_KEY = "ip_inputs";
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
-    private final Map<SupportedCurrency, GoalInputs> cache = new EnumMap<>(SupportedCurrency.class);
+    private final Map<SupportedCurrency, InflationInputs> cache = new EnumMap<>(SupportedCurrency.class);
 
-    public void load(Consumer<Map<SupportedCurrency, GoalInputs>> onLoaded) {
+    public void load(Consumer<Map<SupportedCurrency, InflationInputs>> onLoaded) {
         final UI ui = UI.getCurrent();
         if (ui == null) {
             onLoaded.accept(Map.copyOf(this.cache));
@@ -56,19 +51,13 @@ public class GoalInputsStore {
         });
     }
 
-    public GoalInputs get(SupportedCurrency currency) {
+    public InflationInputs get(SupportedCurrency currency) {
         return this.cache.get(currency);
     }
 
-    public void save(SupportedCurrency currency, GoalInputs inputs) {
+    public void save(SupportedCurrency currency, InflationInputs inputs) {
         this.cache.put(currency, inputs);
         persist();
-    }
-
-    public void clear(SupportedCurrency currency) {
-        if (this.cache.remove(currency) != null) {
-            persist();
-        }
     }
 
     private void persist() {
@@ -83,10 +72,11 @@ public class GoalInputsStore {
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
-    private ObjectNode toJson(GoalInputs inputs) {
+    private ObjectNode toJson(InflationInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
-        node.put("goalAmount", plain(inputs.getGoalAmount()));
+        node.put("amount", plain(inputs.getAmount()));
         node.put("inflationRate", plain(inputs.getInflationRatePct()));
+        node.put("amountIsToday", Boolean.toString(inputs.isAmountIsToday()));
         node.put("horizonMode", inputs.getHorizonMode() == null
                 ? TimeHorizonMode.YEARS.name()
                 : inputs.getHorizonMode().name());
@@ -96,28 +86,14 @@ public class GoalInputsStore {
         node.put("goalAge", intStr(inputs.getGoalAge()));
         node.put("targetYear", intStr(inputs.getTargetYear()));
         node.put("targetMonth", intStr(inputs.getTargetMonth()));
-
-        final ArrayNode investmentsArray = this.objectMapper.createArrayNode();
-        if (inputs.getInvestments() != null) {
-            for (final Investment investment : inputs.getInvestments()) {
-                final ObjectNode entry = this.objectMapper.createObjectNode();
-                entry.put("label", investment.getLabel());
-                entry.put("currentCorpus", plain(investment.getCurrentCorpus()));
-                entry.put("growthRate", plain(investment.getGrowthRatePct()));
-                entry.put("withdrawalTaxRate", plain(investment.getWithdrawalTaxRatePct()));
-                entry.put("allocationPct", plain(investment.getAllocationPct()));
-                entry.put("stepUp", plain(investment.getStepUpPct()));
-                investmentsArray.add(entry);
-            }
-        }
-        node.set("investments", investmentsArray);
         return node;
     }
 
-    private static GoalInputs toInputs(JsonNode node) {
-        final var inputs = new GoalInputs();
-        inputs.setGoalAmount(bd(node, "goalAmount"));
+    private static InflationInputs toInputs(JsonNode node) {
+        final var inputs = new InflationInputs();
+        inputs.setAmount(bd(node, "amount"));
         inputs.setInflationRatePct(bd(node, "inflationRate"));
+        inputs.setAmountIsToday(boolField(node, "amountIsToday"));
         inputs.setHorizonMode(readMode(node.get("horizonMode")));
         inputs.setYearsToGoal(intField(node, "yearsToGoal"));
         inputs.setMonthsToGoal(intField(node, "monthsToGoal"));
@@ -125,28 +101,7 @@ public class GoalInputsStore {
         inputs.setGoalAge(intField(node, "goalAge"));
         inputs.setTargetYear(intField(node, "targetYear"));
         inputs.setTargetMonth(intField(node, "targetMonth"));
-        inputs.setInvestments(readInvestments(node.get("investments")));
         return inputs;
-    }
-
-    private static List<Investment> readInvestments(JsonNode arrayNode) {
-        final List<Investment> out = new ArrayList<>();
-        if (arrayNode == null || !arrayNode.isArray()) {
-            return out;
-        }
-        for (final JsonNode entry : arrayNode) {
-            final var investment = new Investment();
-            if (entry.has("label") && !entry.get("label").isNull()) {
-                investment.setLabel(entry.get("label").asText());
-            }
-            investment.setCurrentCorpus(bd(entry, "currentCorpus"));
-            investment.setGrowthRatePct(bd(entry, "growthRate"));
-            investment.setWithdrawalTaxRatePct(bd(entry, "withdrawalTaxRate"));
-            investment.setAllocationPct(bd(entry, "allocationPct"));
-            investment.setStepUpPct(bd(entry, "stepUp"));
-            out.add(investment);
-        }
-        return out;
     }
 
     private static TimeHorizonMode readMode(JsonNode node) {
@@ -166,6 +121,11 @@ public class GoalInputsStore {
             return null;
         }
         return Integer.valueOf(value.asText());
+    }
+
+    private static boolean boolField(JsonNode node, String field) {
+        final JsonNode value = node.get(field);
+        return value != null && !value.isNull() && Boolean.parseBoolean(value.asText());
     }
 
     private static BigDecimal bd(JsonNode node, String field) {
