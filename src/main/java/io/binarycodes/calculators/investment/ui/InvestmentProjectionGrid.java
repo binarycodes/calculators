@@ -13,6 +13,7 @@ import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.MoneyCells;
 import io.binarycodes.calculators.investment.domain.InvestmentYear;
 
 import java.math.BigDecimal;
@@ -38,7 +39,10 @@ public class InvestmentProjectionGrid extends Grid<InvestmentYear> {
 
         track("Year", addColumn(InvestmentYear::year).setHeader("Year").setAutoWidth(true));
         track("Phase", addComponentColumn(InvestmentProjectionGrid::phaseBadge).setHeader("Phase"));
-        track("Contribution", addMoneyColumn("Contribution", InvestmentYear::contribution));
+        track("Contribution", addColumn(MoneyCells.monthlyAndYearly(
+                        InvestmentYear::contribution, this.preferences::currency))
+                .setHeader("Contribution")
+                .setTextAlign(ColumnTextAlign.END));
         track("Balance", addMoneyColumn("Balance", InvestmentYear::balance));
         track("Principal", addMoneyColumn("Principal", InvestmentYear::principal));
         track("Gains", addMoneyColumn("Gains", InvestmentYear::gains));

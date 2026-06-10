@@ -11,6 +11,7 @@ import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.MoneyCells;
 import io.binarycodes.calculators.goal.domain.GoalProjectionRow;
 
 import java.math.BigDecimal;
@@ -44,7 +45,10 @@ public class GoalProjectionGrid extends Grid<GoalProjectionRow> {
                 .setHeader("Age")
                 .setAutoWidth(true);
         track("Age", this.ageColumn);
-        track("Yearly Investment", addMoneyColumn("Yearly Investment", GoalProjectionRow::yearlyContribution));
+        track("Investment", addColumn(MoneyCells.monthlyAndYearly(
+                        GoalProjectionRow::yearlyContribution, this.preferences::currency))
+                .setHeader("Investment")
+                .setTextAlign(ColumnTextAlign.END));
         track("Balance",   addMoneyColumn("Balance",   GoalProjectionRow::balance));
         track("Principal", addMoneyColumn("Principal", GoalProjectionRow::principal));
         track("Gains",     addMoneyColumn("Gains",     GoalProjectionRow::gains));
