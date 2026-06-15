@@ -19,6 +19,7 @@ import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
@@ -41,7 +42,7 @@ import java.util.List;
  *       Ages, and Target Year (+ month).</li>
  * </ul>
  */
-public class GoalCalculatorForm extends VerticalLayout {
+public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm<GoalInputs> {
 
     private final Binder<GoalInputs> binder = new Binder<>(GoalInputs.class);
 

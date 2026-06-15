@@ -3,6 +3,7 @@ package io.binarycodes.calculators.retirement.service;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
@@ -33,7 +34,7 @@ import java.util.function.Consumer;
  */
 @Component
 @VaadinSessionScope
-public class RetirementInputsStore {
+public class RetirementInputsStore implements InputsStore<RetirementInputs> {
 
     static final String STORAGE_KEY = "rc_inputs";
     private final ObjectMapper om = JsonMapper.builder().build();
@@ -56,7 +57,7 @@ public class RetirementInputsStore {
                     for (final SupportedCurrency c : SupportedCurrency.values()) {
                         final JsonNode node = root.get(c.name());
                         if (node != null) {
-                            this.cache.put(c, toInputs(node));
+                            this.cache.put(c, fromJsonNode(node));
                         }
                     }
                 } catch (final Exception ignore) { /* corrupt blob → fall back */ }
@@ -93,12 +94,13 @@ public class RetirementInputsStore {
         }
         final ObjectNode root = this.om.createObjectNode();
         for (final var e : this.cache.entrySet()) {
-            root.set(e.getKey().name(), toJson(e.getValue()));
+            root.set(e.getKey().name(), toJsonNode(e.getValue()));
         }
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
-    private ObjectNode toJson(RetirementInputs in) {
+    /** Serialise one currency's inputs to JSON (shared by persistence and share links). */
+    public ObjectNode toJsonNode(RetirementInputs in) {
         final ObjectNode n = this.om.createObjectNode();
         n.put("currentAge", in.getCurrentAge() == null ? null : Integer.toString(in.getCurrentAge()));
         n.put("retireAge",  in.getRetireAge()  == null ? null : Integer.toString(in.getRetireAge()));
@@ -212,7 +214,8 @@ public class RetirementInputsStore {
         return v == null ? null : v.toPlainString();
     }
 
-    private RetirementInputs toInputs(JsonNode n) {
+    /** Reconstruct inputs from JSON produced by {@link #toJsonNode}. */
+    public RetirementInputs fromJsonNode(JsonNode n) {
         final var inputs = new RetirementInputs();
         inputs.setCurrentAge(n.get("currentAge").asInt());
         inputs.setRetireAge(n.get("retireAge").asInt());

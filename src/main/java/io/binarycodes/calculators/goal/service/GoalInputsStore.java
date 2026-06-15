@@ -3,6 +3,7 @@ package io.binarycodes.calculators.goal.service;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
@@ -28,7 +29,7 @@ import java.util.function.Consumer;
  */
 @Component
 @VaadinSessionScope
-public class GoalInputsStore {
+public class GoalInputsStore implements InputsStore<GoalInputs> {
 
     static final String STORAGE_KEY = "gp_inputs";
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
@@ -47,7 +48,7 @@ public class GoalInputsStore {
                     for (final SupportedCurrency currency : SupportedCurrency.values()) {
                         final JsonNode node = root.get(currency.name());
                         if (node != null) {
-                            this.cache.put(currency, toInputs(node));
+                            this.cache.put(currency, fromJsonNode(node));
                         }
                     }
                 } catch (final Exception ignored) { /* corrupt blob → fall back */ }
@@ -78,12 +79,13 @@ public class GoalInputsStore {
         }
         final ObjectNode root = this.objectMapper.createObjectNode();
         for (final var entry : this.cache.entrySet()) {
-            root.set(entry.getKey().name(), toJson(entry.getValue()));
+            root.set(entry.getKey().name(), toJsonNode(entry.getValue()));
         }
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
-    private ObjectNode toJson(GoalInputs inputs) {
+    /** Serialise one currency's inputs to JSON (shared by persistence and share links). */
+    public ObjectNode toJsonNode(GoalInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("goalAmount", plain(inputs.getGoalAmount()));
         node.put("inflationRate", plain(inputs.getInflationRatePct()));
@@ -114,7 +116,8 @@ public class GoalInputsStore {
         return node;
     }
 
-    private static GoalInputs toInputs(JsonNode node) {
+    /** Reconstruct inputs from JSON produced by {@link #toJsonNode}. */
+    public GoalInputs fromJsonNode(JsonNode node) {
         final var inputs = new GoalInputs();
         inputs.setGoalAmount(bd(node, "goalAmount"));
         inputs.setInflationRatePct(bd(node, "inflationRate"));

@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.inflation.service;
 
+import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
@@ -22,7 +23,7 @@ import java.util.Map;
  * {@link InflationInputs} per currency.
  */
 @Service
-public class InflationDefaultsProvider {
+public class InflationDefaultsProvider implements CalculatorDefaults<InflationInputs> {
 
     private final Resource defaultsResource;
     private final Map<SupportedCurrency, InflationInputs> defaults = new EnumMap<>(SupportedCurrency.class);

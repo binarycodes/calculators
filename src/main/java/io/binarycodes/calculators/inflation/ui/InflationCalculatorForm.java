@@ -21,6 +21,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
 
@@ -34,7 +35,7 @@ import java.util.List;
  * a "today's money" toggle that flips the projection direction, and the shared
  * Years / Ages / Target-Year horizon selector.
  */
-public class InflationCalculatorForm extends VerticalLayout {
+public class InflationCalculatorForm extends VerticalLayout implements CalculatorForm<InflationInputs> {
 
     private final Binder<InflationInputs> binder = new Binder<>(InflationInputs.class);
 

@@ -20,6 +20,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.investment.domain.ContributionFrequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
@@ -40,7 +41,7 @@ import java.util.function.BooleanSupplier;
  * step-up), the shared Years/Ages/Target-Year selector for the investment
  * phase, and a plain Years+Months hold duration.
  */
-public class InvestmentCalculatorForm extends VerticalLayout {
+public class InvestmentCalculatorForm extends VerticalLayout implements CalculatorForm<InvestmentInputs> {
 
     private final Binder<InvestmentInputs> binder = new Binder<>(InvestmentInputs.class);
 

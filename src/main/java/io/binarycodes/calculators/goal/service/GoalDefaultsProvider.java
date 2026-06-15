@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.goal.service;
 
+import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
@@ -26,7 +27,7 @@ import java.util.Map;
  * an {@code investments} array — at least one bucket per currency.
  */
 @Service
-public class GoalDefaultsProvider {
+public class GoalDefaultsProvider implements CalculatorDefaults<GoalInputs> {
 
     private final Resource defaultsResource;
     private final Map<SupportedCurrency, GoalInputs> defaults = new EnumMap<>(SupportedCurrency.class);

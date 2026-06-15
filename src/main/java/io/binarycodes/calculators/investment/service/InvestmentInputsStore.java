@@ -3,6 +3,7 @@ package io.binarycodes.calculators.investment.service;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.investment.domain.ContributionFrequency;
@@ -24,7 +25,7 @@ import java.util.function.Consumer;
  */
 @Component
 @VaadinSessionScope
-public class InvestmentInputsStore {
+public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
 
     static final String STORAGE_KEY = "iv_inputs";
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
@@ -43,7 +44,7 @@ public class InvestmentInputsStore {
                     for (final SupportedCurrency currency : SupportedCurrency.values()) {
                         final JsonNode node = root.get(currency.name());
                         if (node != null) {
-                            this.cache.put(currency, toInputs(node));
+                            this.cache.put(currency, fromJsonNode(node));
                         }
                     }
                 } catch (final Exception ignored) { /* corrupt blob → fall back */ }
@@ -68,12 +69,13 @@ public class InvestmentInputsStore {
         }
         final ObjectNode root = this.objectMapper.createObjectNode();
         for (final var entry : this.cache.entrySet()) {
-            root.set(entry.getKey().name(), toJson(entry.getValue()));
+            root.set(entry.getKey().name(), toJsonNode(entry.getValue()));
         }
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
-    private ObjectNode toJson(InvestmentInputs inputs) {
+    /** Serialise one currency's inputs to JSON (shared by persistence and share links). */
+    public ObjectNode toJsonNode(InvestmentInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("amount", plain(inputs.getAmount()));
         node.put("frequency", inputs.getFrequency() == null
@@ -97,7 +99,8 @@ public class InvestmentInputsStore {
         return node;
     }
 
-    private static InvestmentInputs toInputs(JsonNode node) {
+    /** Reconstruct inputs from JSON produced by {@link #toJsonNode}. */
+    public InvestmentInputs fromJsonNode(JsonNode node) {
         final var inputs = new InvestmentInputs();
         inputs.setAmount(bd(node, "amount"));
         inputs.setFrequency(readFrequency(node.get("frequency")));

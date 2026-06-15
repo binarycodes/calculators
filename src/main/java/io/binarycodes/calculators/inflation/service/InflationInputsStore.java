@@ -3,6 +3,7 @@ package io.binarycodes.calculators.inflation.service;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
@@ -23,7 +24,7 @@ import java.util.function.Consumer;
  */
 @Component
 @VaadinSessionScope
-public class InflationInputsStore {
+public class InflationInputsStore implements InputsStore<InflationInputs> {
 
     static final String STORAGE_KEY = "ip_inputs";
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
@@ -42,7 +43,7 @@ public class InflationInputsStore {
                     for (final SupportedCurrency currency : SupportedCurrency.values()) {
                         final JsonNode node = root.get(currency.name());
                         if (node != null) {
-                            this.cache.put(currency, toInputs(node));
+                            this.cache.put(currency, fromJsonNode(node));
                         }
                     }
                 } catch (final Exception ignored) { /* corrupt blob → fall back */ }
@@ -67,12 +68,13 @@ public class InflationInputsStore {
         }
         final ObjectNode root = this.objectMapper.createObjectNode();
         for (final var entry : this.cache.entrySet()) {
-            root.set(entry.getKey().name(), toJson(entry.getValue()));
+            root.set(entry.getKey().name(), toJsonNode(entry.getValue()));
         }
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
-    private ObjectNode toJson(InflationInputs inputs) {
+    /** Serialise one currency's inputs to JSON (shared by persistence and share links). */
+    public ObjectNode toJsonNode(InflationInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("amount", plain(inputs.getAmount()));
         node.put("inflationRate", plain(inputs.getInflationRatePct()));
@@ -89,7 +91,8 @@ public class InflationInputsStore {
         return node;
     }
 
-    private static InflationInputs toInputs(JsonNode node) {
+    /** Reconstruct inputs from JSON produced by {@link #toJsonNode}. */
+    public InflationInputs fromJsonNode(JsonNode node) {
         final var inputs = new InflationInputs();
         inputs.setAmount(bd(node, "amount"));
         inputs.setInflationRatePct(bd(node, "inflationRate"));

@@ -20,6 +20,21 @@ The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
 used by both the Goal Planner and Inflation Projection.
 
+## Shareable links
+
+Every calculator has a **Copy link** action in its button row that encodes the
+current inputs plus the active currency into one opaque query token and copies
+an absolute URL (`…/retirement?s=<token>`) to the clipboard. The token is
+base64url of a small JSON envelope `{"v":1,"currency":…,"inputs":{…}}`, built by
+`base.common.ScenarioCodec` from each store's `toJsonNode`. Opening a `?s=` URL
+sets the session currency, loads the decoded inputs (overriding the
+persisted/default values), saves them as the per-currency snapshot, recomputes,
+and strips the `s` parameter from the address bar. The token is treated as
+untrusted: oversized tokens, malformed/garbage payloads, an unknown schema
+version or currency, and numerically absurd values are rejected, and an invalid
+link falls back to the normal persisted/default load with an "Invalid share
+link" notice.
+
 # Retirement Planner
 
 ## 1. Inputs

@@ -6,6 +6,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 /**
@@ -29,7 +30,7 @@ import io.binarycodes.calculators.retirement.domain.RetirementInputs;
  *       notified whenever any input changes.</li>
  * </ul>
  */
-public class RetirementCalculatorForm extends VerticalLayout {
+public class RetirementCalculatorForm extends VerticalLayout implements CalculatorForm<RetirementInputs> {
 
     private final Binder<RetirementInputs> binder = new Binder<>(RetirementInputs.class);
     private final BasicTab basicTab;

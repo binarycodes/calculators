@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.investment.service;
 
+import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.investment.domain.ContributionFrequency;
@@ -23,7 +24,7 @@ import java.util.Map;
  * {@link InvestmentInputs} per currency.
  */
 @Service
-public class InvestmentDefaultsProvider {
+public class InvestmentDefaultsProvider implements CalculatorDefaults<InvestmentInputs> {
 
     private final Resource defaultsResource;
     private final Map<SupportedCurrency, InvestmentInputs> defaults = new EnumMap<>(SupportedCurrency.class);

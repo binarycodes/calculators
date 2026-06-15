@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.retirement.service;
 
+import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
@@ -30,7 +31,7 @@ import java.util.Map;
  * — string-encoded numbers, keyed by currency code.
  */
 @Service
-public class DefaultsProvider {
+public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
 
     private final Resource defaultsResource;
     private final Map<SupportedCurrency, RetirementInputs> defaults = new EnumMap<>(SupportedCurrency.class);

@@ -1,10 +1,7 @@
 package io.binarycodes.calculators.retirement.ui;
 
-
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -12,11 +9,11 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -28,25 +25,25 @@ import io.binarycodes.calculators.retirement.service.RetirementInputsStore;
 import java.math.BigDecimal;
 
 /**
- * The retirement calculator screen. Composes the input form, summary cards,
- * charts, and projection grid; owns no input fields, chart configuration, or
- * grid columns directly — those live in {@link RetirementCalculatorForm},
- * {@link CorpusChart}, {@link ExpensesChart}, {@link InvestmentsChart},
- * {@link ReturnOnInvestmentsChart}, {@link WithdrawalVsReturnsChart},
- * {@link RealCorpusChart}, and {@link ProjectionGrid}.
+ * The retirement calculator screen. {@link BaseCalculatorView} owns the header,
+ * form, action row, and the persistence + share-link lifecycle; this class adds
+ * the summary cards, charts, and projection grid and renders them in
+ * {@link #updateResults()}.
+ *
+ * @see CorpusChart
+ * @see ExpensesChart
+ * @see InvestmentsChart
+ * @see ReturnOnInvestmentsChart
+ * @see WithdrawalVsReturnsChart
+ * @see RealCorpusChart
+ * @see ProjectionGrid
  */
 @Route("retirement")
 @Menu(title = "Retirement Planner", icon = "vaadin:piggy-bank", order = 1)
 @PageTitle("Retirement Planner")
-public class RetirementView extends VerticalLayout {
+public class RetirementView extends BaseCalculatorView<RetirementInputs, RetirementCalculatorForm> {
 
     private static final BigDecimal HEALTHY_CORPUS_MULTIPLIER = BigDecimal.valueOf(5);
-
-    private final UserPreferences preferences;
-    private final DefaultsProvider defaultsProvider;
-    private final RetirementInputsStore inputsStore;
-
-    private final RetirementCalculatorForm form;
 
     private final SummaryCard corpusAtRetirement   = new SummaryCard("Corpus at Retirement");
     private final SummaryCard expensesAtRetirement = new SummaryCard("Annual Expenses at Retirement");
@@ -65,60 +62,46 @@ public class RetirementView extends VerticalLayout {
     public RetirementView(UserPreferences preferences,
                           DefaultsProvider defaultsProvider,
                           RetirementInputsStore inputsStore) {
-        this.preferences = preferences;
-        this.defaultsProvider = defaultsProvider;
-        this.inputsStore = inputsStore;
-
-        addClassName("retirement-view");
-        setWidthFull();
-        setPadding(true);
-        setSpacing(true);
-
-        this.form = new RetirementCalculatorForm(preferences);
-        // Skip the initial run — the effect fires once on registration with
-        // the form's empty starting state, before onAttach loads real inputs.
-        Signal.effect(this, context -> {
-            this.form.inputsSignal().get();
-            if (context.isInitialRun()) {
-                return;
-            }
-            onInputChanged();
-        });
+        super(preferences, inputsStore, defaultsProvider,
+                new RetirementCalculatorForm(preferences), "retirement", "Retirement Planner");
         this.projectionGrid = new ProjectionGrid(preferences);
 
-        add(new H2("Retirement Planner"));
-        add(this.form);
-        add(buildActionRow());
         add(buildSummaryRow());
         add(buildChartsCard());
         add(buildProjectionGridCard());
-
-        preferences.addChangeListener(ignored -> onPreferencesChanged());
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        // Browser localStorage is read asynchronously from the client, so the
-        // initial population has to wait until both prefs and inputs have loaded.
-        this.preferences.loadFromBrowser(() ->
-                this.inputsStore.load(unused -> {
-                    populateFormFromPersistedOrDefault(this.preferences.currency());
-                    recalculate();
-                })
-        );
-    }
+    protected void updateResults() {
+        if (!this.form.isValid()) {
+            this.form.validate();
+            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
+            return;
+        }
 
-    private HorizontalLayout buildActionRow() {
-        final Button calculateButton = new Button("Calculate", event -> recalculate());
-        calculateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        final RetirementInputs inputs = this.form.getInputs();
 
-        final Button resetButton = new Button("Reset", event -> resetToDefaults());
+        final RetirementResult result;
+        try {
+            result = RetirementCalculator.calculate(inputs);
+        } catch (final IllegalArgumentException invalid) {
+            showInvalidFormPlaceholders(invalid.getMessage());
+            return;
+        }
 
-        final HorizontalLayout actionRow = new HorizontalLayout(calculateButton, resetButton);
-        actionRow.addClassName("action-row");
-        actionRow.setSpacing(true);
-        return actionRow;
+        final SupportedCurrency currency = this.preferences.currency();
+        updateRetirementYearSummaries(result, currency);
+        updateLastsUntilSummary(result, inputs.getLifeExp());
+        updateFinalCorpusSummary(result, currency);
+
+        this.projectionGrid.update(result.rows());
+
+        this.corpusChart.update(inputs, result, currency);
+        this.expensesChart.update(result, currency);
+        this.investmentsChart.update(result, currency);
+        this.returnOnInvestmentsChart.update(inputs, result, currency);
+        this.withdrawalVsReturnsChart.update(result, currency);
+        this.realCorpusChart.update(inputs, result, currency);
     }
 
     private HorizontalLayout buildSummaryRow() {
@@ -173,8 +156,8 @@ public class RetirementView extends VerticalLayout {
         final H2 title = new H2("Year-on-Year Projection");
         final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createColumnChooser());
         header.setWidthFull();
-        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         final VerticalLayout gridCard = new VerticalLayout(header, this.projectionGrid);
         gridCard.addClassName("grid-card");
@@ -182,64 +165,6 @@ public class RetirementView extends VerticalLayout {
         gridCard.setSpacing(true);
         gridCard.setWidthFull();
         return gridCard;
-    }
-
-    private void onInputChanged() {
-        this.inputsStore.save(this.preferences.currency(), this.form.getInputs());
-        recalculate();
-    }
-
-    private void onPreferencesChanged() {
-        populateFormFromPersistedOrDefault(this.preferences.currency());
-        recalculate();
-    }
-
-    private void populateFormFromPersistedOrDefault(SupportedCurrency currency) {
-        RetirementInputs inputs = this.inputsStore.get(currency);
-        if (inputs == null) {
-            inputs = this.defaultsProvider.forCurrency(currency);
-        }
-        this.form.setInputs(inputs);
-    }
-
-    private void resetToDefaults() {
-        final SupportedCurrency currency = this.preferences.currency();
-        final RetirementInputs defaultInputs = this.defaultsProvider.forCurrency(currency);
-        this.inputsStore.save(currency, defaultInputs);
-        this.form.setInputs(defaultInputs);
-        recalculate();
-    }
-
-    private void recalculate() {
-        if (!this.form.isValid()) {
-            this.form.validate();
-            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
-            return;
-        }
-
-        final RetirementInputs inputs = this.form.getInputs();
-
-        final RetirementResult result;
-        try {
-            result = RetirementCalculator.calculate(inputs);
-        } catch (final IllegalArgumentException invalid) {
-            showInvalidFormPlaceholders(invalid.getMessage());
-            return;
-        }
-
-        final SupportedCurrency currency = this.preferences.currency();
-        updateRetirementYearSummaries(result, currency);
-        updateLastsUntilSummary(result, inputs.getLifeExp());
-        updateFinalCorpusSummary(result, currency);
-
-        this.projectionGrid.update(result.rows());
-
-        this.corpusChart.update(inputs, result, currency);
-        this.expensesChart.update(result, currency);
-        this.investmentsChart.update(result, currency);
-        this.returnOnInvestmentsChart.update(inputs, result, currency);
-        this.withdrawalVsReturnsChart.update(result, currency);
-        this.realCorpusChart.update(inputs, result, currency);
     }
 
     private void showInvalidFormPlaceholders(String dangerMessage) {
