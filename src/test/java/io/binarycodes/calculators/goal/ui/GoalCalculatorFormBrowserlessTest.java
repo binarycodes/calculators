@@ -6,17 +6,16 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
-import io.binarycodes.calculators.base.common.TimeHorizonMode;
-
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,9 +55,9 @@ class GoalCalculatorFormBrowserlessTest extends BrowserlessTest {
         group.setValue(TimeHorizonMode.AGES);
         roundTrip();
         assertEquals(2, find(IntegerField.class, form)
-                .withCaption("Current Age").all().size() +
-                find(IntegerField.class, form)
-                        .withCaption("Goal Age").all().size(),
+                        .withCaption("Current Age").all().size() +
+                        find(IntegerField.class, form)
+                                .withCaption("Goal Age").all().size(),
                 "AGES mode shows Current Age and Goal Age fields");
 
         group.setValue(TimeHorizonMode.TARGET_YEAR);
@@ -93,9 +92,9 @@ class GoalCalculatorFormBrowserlessTest extends BrowserlessTest {
         assertEquals(Integer.valueOf(6), roundTripped.getMonthsToGoal());
         assertEquals(1, roundTripped.getInvestments().size());
         assertEquals(0, new BigDecimal("100").compareTo(
-                roundTripped.getInvestments().get(0).getAllocationPct()));
+                roundTripped.getInvestments().getFirst().getAllocationPct()));
         assertEquals(0, new BigDecimal("5").compareTo(
-                roundTripped.getInvestments().get(0).getStepUpPct()),
+                        roundTripped.getInvestments().getFirst().getStepUpPct()),
                 "per-row step-up must round-trip");
     }
 }

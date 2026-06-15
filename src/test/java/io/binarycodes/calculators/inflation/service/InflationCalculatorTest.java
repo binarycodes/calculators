@@ -68,9 +68,9 @@ class InflationCalculatorTest {
         final var points = forward.progression();
         assertEquals(11, points.size(), "10 whole years → 11 yearly points (year 0..10)");
         // First point is today's value (the entered amount in forward mode).
-        assertEquals(0, points.get(0).value().compareTo(forward.inputAmount()));
+        assertEquals(0, points.getFirst().value().compareTo(forward.inputAmount()));
         // Last point matches the inflated result within rounding.
-        assertTrue(points.get(points.size() - 1).value()
+        assertTrue(points.getLast().value()
                 .subtract(forward.resultAmount(), MC).abs()
                 .compareTo(new BigDecimal("0.01")) < 0);
     }
@@ -79,7 +79,7 @@ class InflationCalculatorTest {
     void progression_anchors_at_today_value_in_backward_mode() {
         final InflationResult back = InflationCalculator.calculate(base(10, false));
         // First point equals today's value (the discounted result in backward mode).
-        assertEquals(0, back.progression().get(0).value().compareTo(back.resultAmount()));
+        assertEquals(0, back.progression().getFirst().value().compareTo(back.resultAmount()));
     }
 
     @Test
