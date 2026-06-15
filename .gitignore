@@ -10,3 +10,5 @@
 
 types.d.ts
 *.lock
+
+.DS_Store
