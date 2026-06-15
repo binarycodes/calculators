@@ -4,10 +4,10 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.common.InputsStore;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
-import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -84,7 +84,9 @@ public class GoalInputsStore implements InputsStore<GoalInputs> {
         WebStorage.setItem(STORAGE_KEY, root.toString());
     }
 
-    /** Serialise one currency's inputs to JSON (shared by persistence and share links). */
+    /**
+     * Serialise one currency's inputs to JSON (shared by persistence and share links).
+     */
     public ObjectNode toJsonNode(GoalInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("goalAmount", plain(inputs.getGoalAmount()));
@@ -116,7 +118,9 @@ public class GoalInputsStore implements InputsStore<GoalInputs> {
         return node;
     }
 
-    /** Reconstruct inputs from JSON produced by {@link #toJsonNode}. */
+    /**
+     * Reconstruct inputs from JSON produced by {@link #toJsonNode}.
+     */
     public GoalInputs fromJsonNode(JsonNode node) {
         final var inputs = new GoalInputs();
         inputs.setGoalAmount(bd(node, "goalAmount"));
@@ -140,7 +144,7 @@ public class GoalInputsStore implements InputsStore<GoalInputs> {
         for (final JsonNode entry : arrayNode) {
             final var investment = new Investment();
             if (entry.has("label") && !entry.get("label").isNull()) {
-                investment.setLabel(entry.get("label").asText());
+                investment.setLabel(entry.get("label").asString());
             }
             investment.setCurrentCorpus(bd(entry, "currentCorpus"));
             investment.setGrowthRatePct(bd(entry, "growthRate"));
@@ -157,7 +161,7 @@ public class GoalInputsStore implements InputsStore<GoalInputs> {
             return TimeHorizonMode.YEARS;
         }
         try {
-            return TimeHorizonMode.valueOf(node.asText().toUpperCase());
+            return TimeHorizonMode.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return TimeHorizonMode.YEARS;
         }
@@ -165,10 +169,10 @@ public class GoalInputsStore implements InputsStore<GoalInputs> {
 
     private static Integer intField(JsonNode node, String field) {
         final JsonNode value = node.get(field);
-        if (value == null || value.isNull() || value.asText().isBlank()) {
+        if (value == null || value.isNull() || value.asString().isBlank()) {
             return null;
         }
-        return Integer.valueOf(value.asText());
+        return Integer.valueOf(value.asString());
     }
 
     private static BigDecimal bd(JsonNode node, String field) {
@@ -176,7 +180,7 @@ public class GoalInputsStore implements InputsStore<GoalInputs> {
         if (value == null || value.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(value.asText());
+        return new BigDecimal(value.asString());
     }
 
     private static String plain(BigDecimal value) {

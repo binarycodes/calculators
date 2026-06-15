@@ -52,17 +52,17 @@ class InvestmentDefaultsJsonTest {
             final JsonNode node = root.get(currency.name());
             for (final String field : INTEGER_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> Integer.parseInt(value.asText()),
+                assertDoesNotThrow(() -> Integer.parseInt(value.asString()),
                         currency + "." + field + " must parse as int");
             }
             for (final String field : MONEY_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> new BigDecimal(value.asText()),
+                assertDoesNotThrow(() -> new BigDecimal(value.asString()),
                         currency + "." + field + " must parse as decimal");
             }
             for (final String field : PERCENTAGE_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> new BigDecimal(value.asText()),
+                assertDoesNotThrow(() -> new BigDecimal(value.asString()),
                         currency + "." + field + " must parse as decimal");
             }
             assertNotNull(node.get("frequency"), currency + ": frequency must be present");
@@ -94,7 +94,7 @@ class InvestmentDefaultsJsonTest {
         final JsonNode value = node.get(field);
         assertNotNull(value, "investment-defaults.json[" + currency + "]." + field + " is missing");
         assertFalse(value.isNull(), "investment-defaults.json[" + currency + "]." + field + " is null");
-        assertFalse(value.asText().isBlank(),
+        assertFalse(value.asString().isBlank(),
                 "investment-defaults.json[" + currency + "]." + field + " is blank");
         return value;
     }

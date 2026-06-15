@@ -1,10 +1,10 @@
 package io.binarycodes.calculators.goal.service;
 
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
+import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
-import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -83,7 +83,7 @@ public class GoalDefaultsProvider implements CalculatorDefaults<GoalInputs> {
         for (final JsonNode entry : arrayNode) {
             final var investment = new Investment();
             if (entry.has("label") && !entry.get("label").isNull()) {
-                investment.setLabel(entry.get("label").asText());
+                investment.setLabel(entry.get("label").asString());
             }
             investment.setCurrentCorpus(bd(entry, "currentCorpus"));
             investment.setGrowthRatePct(bd(entry, "growthRate"));
@@ -100,7 +100,7 @@ public class GoalDefaultsProvider implements CalculatorDefaults<GoalInputs> {
             return TimeHorizonMode.YEARS;
         }
         try {
-            return TimeHorizonMode.valueOf(node.asText().toUpperCase());
+            return TimeHorizonMode.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return TimeHorizonMode.YEARS;
         }
@@ -111,7 +111,7 @@ public class GoalDefaultsProvider implements CalculatorDefaults<GoalInputs> {
         if (value == null || value.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(value.asText());
+        return new BigDecimal(value.asString());
     }
 
     private static Integer intField(JsonNode node, String field) {
@@ -119,7 +119,7 @@ public class GoalDefaultsProvider implements CalculatorDefaults<GoalInputs> {
         if (value == null || value.isNull()) {
             return null;
         }
-        return Integer.valueOf(value.asText());
+        return Integer.valueOf(value.asString());
     }
 
     private static GoalInputs copy(GoalInputs source) {

@@ -30,11 +30,17 @@ public final class ScenarioCodec {
 
     private static final int VERSION = 1;
 
-    /** Reject longer query tokens before doing any work. */
+    /**
+     * Reject longer query tokens before doing any work.
+     */
     private static final int MAX_TOKEN_CHARS = 8192;
-    /** Reject larger decoded payloads — also bounds how many list entries fit. */
+    /**
+     * Reject larger decoded payloads — also bounds how many list entries fit.
+     */
     private static final int MAX_DECODED_BYTES = 32 * 1024;
-    /** No real money/percentage input needs more digits or scale than this. */
+    /**
+     * No real money/percentage input needs more digits or scale than this.
+     */
     private static final int MAX_DECIMAL_PRECISION = 100;
     private static final int MAX_DECIMAL_SCALE = 100;
 
@@ -99,7 +105,7 @@ public final class ScenarioCodec {
             throw new IllegalArgumentException("Share token has no currency");
         }
         try {
-            return SupportedCurrency.valueOf(node.asText());
+            return SupportedCurrency.valueOf(node.asString());
         } catch (final IllegalArgumentException unknown) {
             throw new IllegalArgumentException("Unknown currency in share token", unknown);
         }
@@ -123,7 +129,7 @@ public final class ScenarioCodec {
         }
         final BigDecimal value;
         try {
-            value = new BigDecimal(node.asText());
+            value = new BigDecimal(node.asString());
         } catch (final NumberFormatException notANumber) {
             return; // a plain string such as a description — nothing to bound
         }
@@ -132,7 +138,9 @@ public final class ScenarioCodec {
         }
     }
 
-    /** A decoded share token: the currency it was built under and its raw inputs JSON. */
+    /**
+     * A decoded share token: the currency it was built under and its raw inputs JSON.
+     */
     public record Decoded(SupportedCurrency currency, JsonNode inputs) {
     }
 }

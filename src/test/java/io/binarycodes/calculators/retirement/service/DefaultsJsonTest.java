@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,18 +57,18 @@ class DefaultsJsonTest {
             final JsonNode node = root.get(currency.name());
             for (final String field : INTEGER_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> Integer.parseInt(value.asText()),
-                        currency + "." + field + " must parse as int (got '" + value.asText() + "')");
+                assertDoesNotThrow(() -> Integer.parseInt(value.asString()),
+                        currency + "." + field + " must parse as int (got '" + value.asString() + "')");
             }
             for (final String field : MONEY_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> new BigDecimal(value.asText()),
-                        currency + "." + field + " must parse as decimal (got '" + value.asText() + "')");
+                assertDoesNotThrow(() -> new BigDecimal(value.asString()),
+                        currency + "." + field + " must parse as decimal (got '" + value.asString() + "')");
             }
             for (final String field : PERCENTAGE_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> new BigDecimal(value.asText()),
-                        currency + "." + field + " must parse as decimal (got '" + value.asText() + "')");
+                assertDoesNotThrow(() -> new BigDecimal(value.asString()),
+                        currency + "." + field + " must parse as decimal (got '" + value.asString() + "')");
             }
         }
     }
@@ -118,8 +117,7 @@ class DefaultsJsonTest {
         final JsonNode value = node.get(field);
         assertNotNull(value, "defaults.json[" + currency + "]." + field + " is missing");
         assertFalse(value.isNull(), "defaults.json[" + currency + "]." + field + " is null");
-        assertEquals(false, value.asText().isBlank(),
-                "defaults.json[" + currency + "]." + field + " is blank");
+        assertFalse(value.asString().isBlank(), "defaults.json[" + currency + "]." + field + " is blank");
         return value;
     }
 }

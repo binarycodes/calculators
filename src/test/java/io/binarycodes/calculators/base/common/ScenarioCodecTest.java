@@ -32,9 +32,9 @@ class ScenarioCodecTest {
         final ScenarioCodec.Decoded decoded = ScenarioCodec.decode(token);
 
         assertEquals(SupportedCurrency.EUR, decoded.currency());
-        assertEquals("300000", decoded.inputs().get("amount").asText());
-        assertEquals("12.5", decoded.inputs().get("growthRate").asText());
-        assertEquals("Retirement bucket", decoded.inputs().get("label").asText());
+        assertEquals("300000", decoded.inputs().get("amount").asString());
+        assertEquals("12.5", decoded.inputs().get("growthRate").asString());
+        assertEquals("Retirement bucket", decoded.inputs().get("label").asString());
     }
 
     @Test

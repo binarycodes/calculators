@@ -53,18 +53,18 @@ class GoalDefaultsJsonTest {
             final JsonNode node = root.get(currency.name());
             for (final String field : INTEGER_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> Integer.parseInt(value.asText()),
-                        currency + "." + field + " must parse as int (got '" + value.asText() + "')");
+                assertDoesNotThrow(() -> Integer.parseInt(value.asString()),
+                        currency + "." + field + " must parse as int (got '" + value.asString() + "')");
             }
             for (final String field : MONEY_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> new BigDecimal(value.asText()),
-                        currency + "." + field + " must parse as decimal (got '" + value.asText() + "')");
+                assertDoesNotThrow(() -> new BigDecimal(value.asString()),
+                        currency + "." + field + " must parse as decimal (got '" + value.asString() + "')");
             }
             for (final String field : PERCENTAGE_FIELDS) {
                 final JsonNode value = requireField(currency, node, field);
-                assertDoesNotThrow(() -> new BigDecimal(value.asText()),
-                        currency + "." + field + " must parse as decimal (got '" + value.asText() + "')");
+                assertDoesNotThrow(() -> new BigDecimal(value.asString()),
+                        currency + "." + field + " must parse as decimal (got '" + value.asString() + "')");
             }
         }
     }
@@ -116,7 +116,7 @@ class GoalDefaultsJsonTest {
         final JsonNode value = node.get(field);
         assertNotNull(value, "goal-defaults.json[" + currency + "]." + field + " is missing");
         assertFalse(value.isNull(), "goal-defaults.json[" + currency + "]." + field + " is null");
-        assertFalse(value.asText().isBlank(),
+        assertFalse(value.asString().isBlank(),
                 "goal-defaults.json[" + currency + "]." + field + " is blank");
         return value;
     }
