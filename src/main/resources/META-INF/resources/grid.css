@@ -12,8 +12,13 @@
  * All colors come from colors.css.
  */
 
+/*
+ * Uniform row height across every grid. The two-line monthly / yearly money
+ * cell would otherwise make its rows taller than single-value rows.
+ */
 vaadin-grid::part(cell) {
     font-variant-numeric: tabular-nums;
+    min-height: 3rem;
 }
 
 vaadin-grid::part(header-cell) {
