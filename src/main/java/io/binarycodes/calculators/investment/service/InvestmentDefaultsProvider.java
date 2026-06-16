@@ -81,7 +81,7 @@ public class InvestmentDefaultsProvider implements CalculatorDefaults<Investment
             return ContributionFrequency.MONTHLY;
         }
         try {
-            return ContributionFrequency.valueOf(node.asText().toUpperCase());
+            return ContributionFrequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return ContributionFrequency.MONTHLY;
         }
@@ -92,7 +92,7 @@ public class InvestmentDefaultsProvider implements CalculatorDefaults<Investment
             return TimeHorizonMode.YEARS;
         }
         try {
-            return TimeHorizonMode.valueOf(node.asText().toUpperCase());
+            return TimeHorizonMode.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return TimeHorizonMode.YEARS;
         }
@@ -103,7 +103,7 @@ public class InvestmentDefaultsProvider implements CalculatorDefaults<Investment
         if (value == null || value.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(value.asText());
+        return new BigDecimal(value.asString());
     }
 
     private static Integer intField(JsonNode node, String field) {
@@ -111,7 +111,7 @@ public class InvestmentDefaultsProvider implements CalculatorDefaults<Investment
         if (value == null || value.isNull()) {
             return null;
         }
-        return Integer.valueOf(value.asText());
+        return Integer.valueOf(value.asString());
     }
 
     private static InvestmentInputs copy(InvestmentInputs source) {

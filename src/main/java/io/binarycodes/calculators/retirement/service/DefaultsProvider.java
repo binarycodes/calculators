@@ -105,7 +105,7 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
                 expense.setStopYear(entry.get("stopYear").asInt());
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                expense.setDescription(entry.get("description").asText());
+                expense.setDescription(entry.get("description").asString());
             }
             expense.setFrequency(readFrequency(entry.get("frequency")));
             expense.setAmount(bd(entry, "amount"));
@@ -129,7 +129,7 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
                 income.setStopYear(entry.get("stopYear").asInt());
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                income.setDescription(entry.get("description").asText());
+                income.setDescription(entry.get("description").asString());
             }
             income.setFrequency(readFrequency(entry.get("frequency")));
             income.setAmount(bd(entry, "amount"));
@@ -144,7 +144,7 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
             return Frequency.MONTHLY;
         }
         try {
-            return Frequency.valueOf(node.asText().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return Frequency.MONTHLY;
         }
@@ -161,7 +161,7 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
                 income.setYear(entry.get("year").asInt());
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                income.setDescription(entry.get("description").asText());
+                income.setDescription(entry.get("description").asString());
             }
             income.setAmount(bd(entry, "amount"));
             income.setTaxRatePct(bd(entry, "taxRate"));
@@ -178,7 +178,7 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
         for (final JsonNode entry : arrayNode) {
             final var benefit = new RetirementBenefit();
             if (entry.has("description") && !entry.get("description").isNull()) {
-                benefit.setDescription(entry.get("description").asText());
+                benefit.setDescription(entry.get("description").asString());
             }
             benefit.setAmount(bd(entry, "amount"));
             benefit.setTaxRatePct(bd(entry, "taxRate"));
@@ -198,7 +198,7 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
                 expense.setYear(entry.get("year").asInt());
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                expense.setDescription(entry.get("description").asText());
+                expense.setDescription(entry.get("description").asString());
             }
             expense.setAmount(bd(entry, "amount"));
             expense.setInflationPct(bd(entry, "inflation"));
@@ -212,15 +212,15 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
         if (v == null || v.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(v.asText());
+        return new BigDecimal(v.asString());
     }
 
     private static BigDecimal bdOrNull(JsonNode n, String field) {
         final JsonNode v = n.get(field);
-        if (v == null || v.isNull() || v.asText().isBlank()) {
+        if (v == null || v.isNull() || v.asString().isBlank()) {
             return null;
         }
-        return new BigDecimal(v.asText());
+        return new BigDecimal(v.asString());
     }
 
     private static RetirementInputs fallback() {

@@ -292,13 +292,6 @@ public final class GoalCalculator {
         return null;
     }
 
-    private static int required(Integer value, String name) {
-        if (value == null) {
-            throw new IllegalArgumentException(name + " is required.");
-        }
-        return value;
-    }
-
     private static BigDecimal required(BigDecimal value, String name) {
         if (value == null) {
             throw new IllegalArgumentException(name + " is required.");

@@ -250,13 +250,13 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         for (final JsonNode entry : arrayNode) {
             final var expense = new RecurringExpense();
             if (entry.has("year") && !entry.get("year").isNull()) {
-                expense.setYear(Integer.valueOf(entry.get("year").asText()));
+                expense.setYear(Integer.valueOf(entry.get("year").asString()));
             }
             if (entry.has("stopYear") && !entry.get("stopYear").isNull()) {
-                expense.setStopYear(Integer.valueOf(entry.get("stopYear").asText()));
+                expense.setStopYear(Integer.valueOf(entry.get("stopYear").asString()));
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                expense.setDescription(entry.get("description").asText());
+                expense.setDescription(entry.get("description").asString());
             }
             expense.setFrequency(readFrequency(entry.get("frequency")));
             expense.setAmount(bd(entry, "amount"));
@@ -274,13 +274,13 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         for (final JsonNode entry : arrayNode) {
             final var income = new RecurringIncome();
             if (entry.has("year") && !entry.get("year").isNull()) {
-                income.setYear(Integer.valueOf(entry.get("year").asText()));
+                income.setYear(Integer.valueOf(entry.get("year").asString()));
             }
             if (entry.has("stopYear") && !entry.get("stopYear").isNull()) {
-                income.setStopYear(Integer.valueOf(entry.get("stopYear").asText()));
+                income.setStopYear(Integer.valueOf(entry.get("stopYear").asString()));
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                income.setDescription(entry.get("description").asText());
+                income.setDescription(entry.get("description").asString());
             }
             income.setFrequency(readFrequency(entry.get("frequency")));
             income.setAmount(bd(entry, "amount"));
@@ -295,7 +295,7 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
             return Frequency.MONTHLY;
         }
         try {
-            return Frequency.valueOf(node.asText().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return Frequency.MONTHLY;
         }
@@ -309,10 +309,10 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         for (final JsonNode entry : arrayNode) {
             final var income = new FutureIncome();
             if (entry.has("year") && !entry.get("year").isNull()) {
-                income.setYear(Integer.valueOf(entry.get("year").asText()));
+                income.setYear(Integer.valueOf(entry.get("year").asString()));
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                income.setDescription(entry.get("description").asText());
+                income.setDescription(entry.get("description").asString());
             }
             income.setAmount(bd(entry, "amount"));
             income.setTaxRatePct(bd(entry, "taxRate"));
@@ -329,7 +329,7 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         for (final JsonNode entry : arrayNode) {
             final var benefit = new RetirementBenefit();
             if (entry.has("description") && !entry.get("description").isNull()) {
-                benefit.setDescription(entry.get("description").asText());
+                benefit.setDescription(entry.get("description").asString());
             }
             benefit.setAmount(bd(entry, "amount"));
             benefit.setTaxRatePct(bd(entry, "taxRate"));
@@ -346,10 +346,10 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         for (final JsonNode entry : arrayNode) {
             final var expense = new FutureExpense();
             if (entry.has("year") && !entry.get("year").isNull()) {
-                expense.setYear(Integer.valueOf(entry.get("year").asText()));
+                expense.setYear(Integer.valueOf(entry.get("year").asString()));
             }
             if (entry.has("description") && !entry.get("description").isNull()) {
-                expense.setDescription(entry.get("description").asText());
+                expense.setDescription(entry.get("description").asString());
             }
             expense.setAmount(bd(entry, "amount"));
             expense.setInflationPct(bd(entry, "inflation"));
@@ -363,14 +363,14 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         if (v == null || v.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(v.asText());
+        return new BigDecimal(v.asString());
     }
 
     private static BigDecimal bdOrNull(JsonNode n, String field) {
         final JsonNode v = n.get(field);
-        if (v == null || v.isNull() || v.asText().isBlank()) {
+        if (v == null || v.isNull() || v.asString().isBlank()) {
             return null;
         }
-        return new BigDecimal(v.asText());
+        return new BigDecimal(v.asString());
     }
 }

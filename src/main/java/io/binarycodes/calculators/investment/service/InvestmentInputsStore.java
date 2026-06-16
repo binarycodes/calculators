@@ -125,7 +125,7 @@ public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
             return ContributionFrequency.MONTHLY;
         }
         try {
-            return ContributionFrequency.valueOf(node.asText().toUpperCase());
+            return ContributionFrequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return ContributionFrequency.MONTHLY;
         }
@@ -136,7 +136,7 @@ public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
             return TimeHorizonMode.YEARS;
         }
         try {
-            return TimeHorizonMode.valueOf(node.asText().toUpperCase());
+            return TimeHorizonMode.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return TimeHorizonMode.YEARS;
         }
@@ -144,10 +144,10 @@ public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
 
     private static Integer intField(JsonNode node, String field) {
         final JsonNode value = node.get(field);
-        if (value == null || value.isNull() || value.asText().isBlank()) {
+        if (value == null || value.isNull() || value.asString().isBlank()) {
             return null;
         }
-        return Integer.valueOf(value.asText());
+        return Integer.valueOf(value.asString());
     }
 
     private static BigDecimal bd(JsonNode node, String field) {
@@ -155,7 +155,7 @@ public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
         if (value == null || value.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(value.asText());
+        return new BigDecimal(value.asString());
     }
 
     private static String plain(BigDecimal value) {

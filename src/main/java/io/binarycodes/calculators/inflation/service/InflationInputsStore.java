@@ -112,7 +112,7 @@ public class InflationInputsStore implements InputsStore<InflationInputs> {
             return TimeHorizonMode.YEARS;
         }
         try {
-            return TimeHorizonMode.valueOf(node.asText().toUpperCase());
+            return TimeHorizonMode.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
             return TimeHorizonMode.YEARS;
         }
@@ -120,15 +120,15 @@ public class InflationInputsStore implements InputsStore<InflationInputs> {
 
     private static Integer intField(JsonNode node, String field) {
         final JsonNode value = node.get(field);
-        if (value == null || value.isNull() || value.asText().isBlank()) {
+        if (value == null || value.isNull() || value.asString().isBlank()) {
             return null;
         }
-        return Integer.valueOf(value.asText());
+        return Integer.valueOf(value.asString());
     }
 
     private static boolean boolField(JsonNode node, String field) {
         final JsonNode value = node.get(field);
-        return value != null && !value.isNull() && Boolean.parseBoolean(value.asText());
+        return value != null && !value.isNull() && Boolean.parseBoolean(value.asString());
     }
 
     private static BigDecimal bd(JsonNode node, String field) {
@@ -136,7 +136,7 @@ public class InflationInputsStore implements InputsStore<InflationInputs> {
         if (value == null || value.isNull()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(value.asText());
+        return new BigDecimal(value.asString());
     }
 
     private static String plain(BigDecimal value) {
