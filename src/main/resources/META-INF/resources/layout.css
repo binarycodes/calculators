@@ -9,6 +9,11 @@
  * Colors come from colors.css.
  */
 
+
+ vaadin-app-layout[drawer-opened]::part(navbar-top) {
+    padding-inline-start: 0;
+ }
+
 /* Header bar: keep the three control groups roomy. ---------------------- */
 .preferences-bar {
     gap: 1rem;
