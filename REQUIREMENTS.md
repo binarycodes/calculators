@@ -580,8 +580,11 @@ inflation rate.
 
 Six summary cards: Monthly EMI, Total Interest, Total Payment, Interest Saved ·
 Reduce Tenure (with months saved), Interest Saved · Reduce EMI, and Interest in
-today's money. A line chart of the outstanding balance — baseline vs
-with-prepayment when prepayments are active. A year-by-year amortization grid
+today's money. Two charts in a tab sheet: an **Outstanding Balance** line chart
+— baseline vs with-prepayment when prepayments are active — and a **Principal vs
+Interest** stacked-column chart of where each year's outgo goes (principal,
+interest, and prepayment when active), tracking the reduce-tenure schedule. A
+year-by-year amortization grid
 (Year | EMI Paid | Principal | Interest | Prepayment | Balance) with a column
 chooser, plus a Reduce Tenure / Reduce EMI toggle beside the heading (shown only
 when prepayments are active) that switches the grid between the two schedules.

@@ -34,7 +34,8 @@ public class LoanBalanceChart extends Chart {
         setHeight("340px");
 
         final Configuration configuration = getConfiguration();
-        configuration.setTitle("Outstanding Balance");
+        // Title omitted — the enclosing tab is labelled "Outstanding Balance".
+        configuration.setTitle("");
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();

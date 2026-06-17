@@ -5,6 +5,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -44,6 +45,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
     private final SummaryCard realInterestCard = new SummaryCard("Interest (today's money)");
 
     private final LoanBalanceChart balanceChart = new LoanBalanceChart();
+    private final LoanPaymentSplitChart paymentSplitChart = new LoanPaymentSplitChart();
     private final LoanProjectionGrid projectionGrid;
     private final RadioButtonGroup<ScheduleScenario> scheduleToggle = new RadioButtonGroup<>();
 
@@ -121,6 +123,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         this.chartCard.setVisible(true);
         this.projectionCard.setVisible(true);
         this.balanceChart.update(result, inputs.getLoanAmount(), currency);
+        this.paymentSplitChart.update(result, currency);
 
         // Only reduce-tenure and reduce-EMI diverge under prepayments; without
         // them both schedules collapse onto the baseline, so the toggle is moot.
@@ -152,7 +155,12 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
     }
 
     private VerticalLayout buildChartCard() {
-        final VerticalLayout card = new VerticalLayout(this.balanceChart);
+        final TabSheet charts = new TabSheet();
+        charts.setWidthFull();
+        charts.add("Outstanding Balance", this.balanceChart);
+        charts.add("Principal vs Interest", this.paymentSplitChart);
+
+        final VerticalLayout card = new VerticalLayout(charts);
         card.addClassName("chart-card");
         card.setPadding(false);
         card.setSpacing(false);

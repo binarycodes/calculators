@@ -1,0 +1,25 @@
+/*
+ * Loan calculator — Principal vs Interest chart. Highcharts applies its default
+ * palette through low-specificity :where(.highcharts-color-N) rules; a series
+ * class alone (.interest, .principal) does not outrank them, so we scope to this
+ * chart's host class and recolour by palette index. Targeting the colour index
+ * also recolours the matching legend swatch, keeping bars and legend in sync.
+ *
+ * Series order in LoanPaymentSplitChart fixes the mapping:
+ *   0 = principal (primary), 1 = interest (danger), 2 = prepayment (success).
+ */
+
+:host(.loan-payment-split) .highcharts-color-0 {
+    fill: var(--chart-primary-color);
+    stroke: var(--chart-primary-color);
+}
+
+:host(.loan-payment-split) .highcharts-color-1 {
+    fill: var(--chart-danger-color);
+    stroke: var(--chart-danger-color);
+}
+
+:host(.loan-payment-split) .highcharts-color-2 {
+    fill: var(--chart-success-color);
+    stroke: var(--chart-success-color);
+}

@@ -113,6 +113,45 @@ class LoanCalculatorTest {
     }
 
     @Test
+    void combined_levers_compound_their_savings() {
+        final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
+        inputs.setExtraPerPeriod(new BigDecimal("100000"));
+        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        inputs.setExtraEmisPerYear(1);
+        inputs.setEmiStepUpPct(new BigDecimal("10"));
+        final LoanResult result = LoanCalculator.calculate(inputs);
+
+        assertTrue(result.hasPrepayments());
+        assertTrue(result.reducedMonths() < result.baseMonths());
+        assertTrue(result.interestSavedTenure().signum() > 0);
+
+        final LoanInputs extraOnly = loan("2500000", "8.5", 20, 0);
+        extraOnly.setExtraPerPeriod(new BigDecimal("100000"));
+        extraOnly.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        final LoanResult extraOnlyResult = LoanCalculator.calculate(extraOnly);
+        assertTrue(result.reducedMonths() < extraOnlyResult.reducedMonths(),
+                "all levers together finish earlier than the recurring extra alone");
+        assertTrue(result.interestSavedTenure().compareTo(extraOnlyResult.interestSavedTenure()) > 0,
+                "all levers together save more interest");
+    }
+
+    @Test
+    void reduce_emi_schedule_clears_to_zero_balance() {
+        final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
+        inputs.setExtraPerPeriod(new BigDecimal("100000"));
+        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        final LoanResult result = LoanCalculator.calculate(inputs);
+
+        final LoanYear last = result.reduceEmiRows().get(result.reduceEmiRows().size() - 1);
+        assertEquals(0, last.endBalance().compareTo(BigDecimal.ZERO));
+        // Re-amortizing only lowers the EMI; the recurring prepayments still reduce
+        // principal, so the schedule never runs past the original tenure.
+        final int reduceEmiMonths = result.reduceEmiRows().stream()
+                .mapToInt(LoanYear::monthsInPeriod).sum();
+        assertTrue(reduceEmiMonths <= result.baseMonths());
+    }
+
+    @Test
     void real_interest_is_below_nominal_under_inflation() {
         final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
         inputs.setInflationRatePct(new BigDecimal("6"));
