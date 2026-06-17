@@ -11,10 +11,13 @@ input. The app currently ships:
   inflation rate over a horizon.
 - **Investment** — grows regular contributions through an investment phase and a
   subsequent hold phase; reports maturity, net-of-tax, and real value.
+- **Loan / EMI** — reducing-balance EMI for a loan, plus a prepayment analysis
+  that shows the impact of paying extra (reduce tenure vs reduce EMI).
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
-owns a route segment (`/retirement`, `/goal`, `/inflation`, `/investment`).
+owns a route segment (`/retirement`, `/goal`, `/inflation`, `/investment`,
+`/loan`).
 
 The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
@@ -22,7 +25,7 @@ used by both the Goal Planner and Inflation Projection.
 
 ## Shareable links
 
-Every calculator has a **Copy link** action in its button row that encodes the
+Every calculator has a **Share** button beside its title that encodes the
 current inputs plus the active currency into one opaque query token and copies
 an absolute URL (`…/retirement?s=<token>`) to the clipboard. The token is
 base64url of a small JSON envelope `{"v":1,"currency":…,"inputs":{…}}`, built by
@@ -528,3 +531,71 @@ Real Value) with a column chooser; the Phase badge marks Investing vs Holding.
 | --- | --- |
 | `InvestmentCalculatorTest` | Invested-total math, monthly vs yearly cadence, hold-phase growth, gains/tax/net reconciliation, buying-power discounting, step-up, phase split across rows, horizon-mode resolution, validation. |
 | `InvestmentDefaultsJsonTest` | `investment-defaults.json` parses, every currency has every required field, projection round-trips. |
+
+# Loan / EMI
+
+## 1. Inputs
+
+Two cards. The prepayment levers all default to zero, so the calculator opens as
+a plain EMI calculator.
+
+| Field | Notes |
+| --- | --- |
+| Loan Amount | Money, > 0. |
+| Interest Rate (%) | Annual, reducing balance. |
+| Tenure | Years + Months (at least one month total). |
+| Inflation Rate (%) | Used only to express the cost in today's money. |
+| Extra Payment + frequency | Recurring prepayment paid Monthly / Quarterly / Yearly on top of the EMI. |
+| Extra EMIs / year | Additional full EMIs paid once a year (e.g. 1 → effectively 13 EMIs/year). |
+| EMI Step-Up (%) | Annual increase of the EMI itself — a "pay more" lever, so it only shortens the tenure. |
+
+## 2. Calculation Model
+
+Reducing balance with the **nominal** monthly rate `r = annual / 12` (the bank
+convention, not effective compounding). EMI `= P·r·(1+r)ⁿ / ((1+r)ⁿ − 1)`; a
+**zero rate** gives `EMI = P / n`. Each month: `interest = balance · r`,
+`principal = EMI − interest`, then any prepayment is applied to the balance.
+
+EMIs are rounded to the minor currency unit, so the **final scheduled
+installment settles the remaining balance** (no spill into an extra stub month);
+totals are summed from the actual schedule. A loan is rejected if the EMI cannot
+cover the monthly interest.
+
+Three scenarios are computed:
+
+- **Baseline** — no prepayments; runs the full tenure.
+- **Reduce tenure** — recurring extra + extra-EMIs + step-up are paid on top of a
+  fixed EMI, so the loan finishes early. Drives the grid and the chart's
+  with-prepayment curve. Headline: interest saved + months saved.
+- **Reduce EMI** — recurring extra + extra-EMIs prepay the principal and the loan
+  is re-amortized to a lower EMI over the *original* tenure (step-up excluded).
+  Headline: interest saved. (The EMI ratchets down a little after every
+  prepayment rather than at a single point, so the headline reports the saving,
+  not a single lowered installment; the descent is visible in the grid.)
+
+`realTotalInterest` discounts each month's interest to today's money at the
+inflation rate.
+
+## 3. Output
+
+Six summary cards: Monthly EMI, Total Interest, Total Payment, Interest Saved ·
+Reduce Tenure (with months saved), Interest Saved · Reduce EMI, and Interest in
+today's money. A line chart of the outstanding balance — baseline vs
+with-prepayment when prepayments are active. A year-by-year amortization grid
+(Year | EMI Paid | Principal | Interest | Prepayment | Balance) with a column
+chooser, plus a Reduce Tenure / Reduce EMI toggle beside the heading (shown only
+when prepayments are active) that switches the grid between the two schedules.
+
+## 4. Persistence
+
+| Storage | Contents |
+| --- | --- |
+| `loan-defaults.json` (classpath) | Per-currency baseline inputs (prepayments zero). |
+| `ln_inputs` (localStorage) | Per-currency snapshot of the user's edited inputs. |
+
+## 5. Test coverage
+
+| Suite | Purpose |
+| --- | --- |
+| `LoanCalculatorTest` | EMI formula vs known value, zero-interest split, schedule clears to zero, no-prepayment collapses scenarios, recurring/extra-EMI/step-up prepayments save interest & shorten tenure, reduce-EMI lowers the installment, real interest under inflation, validation rejections. |
+| `LoanDefaultsJsonTest` | `loan-defaults.json` parses, every currency has every required field, schedule round-trips. |

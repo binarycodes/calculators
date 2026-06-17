@@ -1,0 +1,17 @@
+/*
+ * Loan calculator — Outstanding Balance chart. The with-prepayment curve uses
+ * the primary brand colour; the baseline reference uses the muted secondary.
+ */
+
+:host {
+    & .with-prepay > .highcharts-graph {
+        stroke: var(--chart-primary-color);
+        stroke-width: 3px;
+    }
+
+    & .baseline > .highcharts-graph {
+        stroke: var(--chart-secondary-color);
+        stroke-width: 2px;
+        stroke-dasharray: 6 4;
+    }
+}

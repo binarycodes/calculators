@@ -1,0 +1,35 @@
+{
+  "INR": {
+    "loanAmount": "5000000",
+    "annualRate": "8.5",
+    "tenureYears": "20",
+    "tenureMonths": "0",
+    "inflationRate": "6",
+    "extraPerPeriod": "0",
+    "extraFrequency": "YEARLY",
+    "extraEmisPerYear": "0",
+    "emiStepUp": "0"
+  },
+  "EUR": {
+    "loanAmount": "250000",
+    "annualRate": "4",
+    "tenureYears": "25",
+    "tenureMonths": "0",
+    "inflationRate": "2.5",
+    "extraPerPeriod": "0",
+    "extraFrequency": "YEARLY",
+    "extraEmisPerYear": "0",
+    "emiStepUp": "0"
+  },
+  "USD": {
+    "loanAmount": "300000",
+    "annualRate": "6.5",
+    "tenureYears": "30",
+    "tenureMonths": "0",
+    "inflationRate": "3",
+    "extraPerPeriod": "0",
+    "extraFrequency": "YEARLY",
+    "extraEmisPerYear": "0",
+    "emiStepUp": "0"
+  }
+}

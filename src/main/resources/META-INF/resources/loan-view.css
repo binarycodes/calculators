@@ -1,0 +1,40 @@
+/*
+ * Loan / EMI screen. Reuses the shared .form-section, .action-row,
+ * .summary-row, .chart-card, and .grid-card rules; only the prepayment lever
+ * captions and the segmented-toggle alignment are view-specific.
+ */
+
+.loan-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.loan-view .subsection-label {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.loan-view .subsection-hint {
+    color: var(--vaadin-secondary-text-color, #71717a);
+    font-size: 0.85rem;
+}
+
+.loan-view vaadin-radio-group.segmented-toggle {
+    align-self: flex-start;
+}
+
+/* Each prepayment lever: a small gap between its fields and its caption. */
+.loan-view .prepay-lever {
+    gap: 0.35rem;
+}
+
+/* The prepayment tabs live inside the Prepayments card — drop the tabsheet's
+ * own border and side padding so the heading, caption, and tabs read as one
+ * card rather than a box within a box. */
+.loan-view .prepay-tabs {
+    border: none;
+}
+
+.loan-view .prepay-tabs::part(content) {
+    padding-inline: 0;
+}
+

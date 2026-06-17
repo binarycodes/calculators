@@ -2,7 +2,7 @@
  * App entry stylesheet — only imports. Each file owns one logical concern.
  * colors.css must come first so its tokens are defined before any consumer.
  * (Touch this file's mtime when editing an @imported partial below, otherwise
- * the browser serves a 304 and keeps the cached partial. Touched.)
+ * the browser serves a 304 and keeps the cached partial. Touched once more.)
  */
 
 @import url('colors.css');
@@ -15,6 +15,7 @@
 @import url('goal-view.css');
 @import url('inflation-view.css');
 @import url('investment-view.css');
+@import url('loan-view.css');
 @import url('landing-view.css');
 
 html, body, *, *:before, *:after {
