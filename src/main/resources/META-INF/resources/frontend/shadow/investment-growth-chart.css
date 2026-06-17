@@ -1,18 +1,22 @@
 /*
  * Investment calculator — Corpus Build-Up chart. Same palette as the goal
  * planner: principal = primary brand colour, gains = success accent.
+ *
+ * A series class alone (.principal) only reaches the column paths, leaving the
+ * legend swatch on Highcharts' default palette. Scoping to this chart's host
+ * class and recolouring by palette index also recolours the legend swatch, so
+ * bars and legend stay in sync. Series order fixes the mapping:
+ *   0 = principal (primary), 1 = gains (success).
  */
 
-:host {
-    & .principal > path {
-        fill: var(--chart-primary-color);
-        fill-opacity: 1;
-        stroke: var(--chart-primary-color);
-    }
+:host(.investment-growth-chart) .highcharts-color-0 {
+    fill: var(--chart-primary-color);
+    fill-opacity: 1;
+    stroke: var(--chart-primary-color);
+}
 
-    & .gains > path {
-        fill: var(--chart-success-color);
-        fill-opacity: 1;
-        stroke: var(--chart-success-color);
-    }
+:host(.investment-growth-chart) .highcharts-color-1 {
+    fill: var(--chart-success-color);
+    fill-opacity: 1;
+    stroke: var(--chart-success-color);
 }

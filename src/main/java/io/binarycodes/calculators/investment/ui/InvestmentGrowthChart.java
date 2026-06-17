@@ -24,11 +24,10 @@ import io.binarycodes.calculators.investment.domain.InvestmentYear;
 @CssImport(value = "./shadow/investment-growth-chart.css", themeFor = "vaadin-chart")
 public class InvestmentGrowthChart extends Chart {
 
-    private static final String PRINCIPAL_CLASSNAME = "principal";
-    private static final String GAINS_CLASSNAME = "gains";
-
     public InvestmentGrowthChart() {
         super(ChartType.COLUMN);
+        // Scopes the palette override in investment-growth-chart.css to this chart.
+        addClassName("investment-growth-chart");
         setWidthFull();
         setHeight("340px");
 
@@ -43,8 +42,9 @@ public class InvestmentGrowthChart extends Chart {
     }
 
     public void update(InvestmentResult result, SupportedCurrency currency) {
-        final DataSeries principalSeries = stackedSeries("Principal", PRINCIPAL_CLASSNAME);
-        final DataSeries gainsSeries = stackedSeries("Gains", GAINS_CLASSNAME);
+        // Series order fixes the palette index the CSS recolours: 0 = principal, 1 = gains.
+        final DataSeries principalSeries = stackedSeries("Principal");
+        final DataSeries gainsSeries = stackedSeries("Gains");
         for (final InvestmentYear row : result.rows()) {
             principalSeries.add(new DataSeriesItem(row.year(), row.principal().doubleValue()));
             gainsSeries.add(new DataSeriesItem(row.year(), row.gains().doubleValue()));
@@ -59,11 +59,10 @@ public class InvestmentGrowthChart extends Chart {
         drawChart(true);
     }
 
-    private static DataSeries stackedSeries(String name, String className) {
+    private static DataSeries stackedSeries(String name) {
         final DataSeries series = new DataSeries(name);
         final PlotOptionsColumn options = new PlotOptionsColumn();
         options.setStacking(Stacking.NORMAL);
-        options.setClassName(className);
         series.setPlotOptions(options);
         return series;
     }

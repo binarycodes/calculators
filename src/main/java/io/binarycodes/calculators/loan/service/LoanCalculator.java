@@ -121,7 +121,10 @@ public final class LoanCalculator {
             }
 
             final BigDecimal interest = balance.multiply(monthlyRate, MC);
-            final BigDecimal prepayThisMonth = prepay.forMonth(month, baseEmi);
+            // Extra full EMIs are valued at the installment actually in force this
+            // month — the re-amortized (lower) EMI under reduce-EMI, the stepped-up
+            // one under reduce-tenure — not the original EMI.
+            final BigDecimal prepayThisMonth = prepay.forMonth(month, emi);
 
             // The nominal final month settles whatever is left, so EMI rounding
             // never spills the loan into an extra stub month — lenders do the same.
@@ -266,13 +269,13 @@ public final class LoanCalculator {
             return extraPerPeriod.signum() > 0 || extraEmisPerYear > 0 || stepUp.signum() > 0;
         }
 
-        BigDecimal forMonth(int month, BigDecimal baseEmi) {
+        BigDecimal forMonth(int month, BigDecimal currentEmi) {
             BigDecimal extra = BigDecimal.ZERO;
             if (extraPerPeriod.signum() > 0 && isPeriodEnd(month)) {
                 extra = extra.add(extraPerPeriod, MC);
             }
             if (extraEmisPerYear > 0 && month % 12 == 0) {
-                extra = extra.add(baseEmi.multiply(BigDecimal.valueOf(extraEmisPerYear), MC), MC);
+                extra = extra.add(currentEmi.multiply(BigDecimal.valueOf(extraEmisPerYear), MC), MC);
             }
             return extra;
         }

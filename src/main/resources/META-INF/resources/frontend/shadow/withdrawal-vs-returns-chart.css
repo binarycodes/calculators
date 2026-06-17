@@ -1,13 +1,22 @@
-:host {
-    & .returns > path {
-        fill: var(--chart-success-color);
-        fill-opacity: 1;
-        stroke: var(--chart-success-color);
-    }
+/*
+ * Retirement — Withdrawal vs Returns chart. Returns = success accent,
+ * withdrawal = danger accent.
+ *
+ * A series class alone (.returns) only reaches the column paths, leaving the
+ * legend swatch on Highcharts' default palette. Scoping to this chart's host
+ * class and recolouring by palette index also recolours the legend swatch, so
+ * bars and legend stay in sync. Series order fixes the mapping:
+ *   0 = returns (success), 1 = withdrawal (danger).
+ */
 
-    & .withdrawal > path {
-        fill: var(--chart-danger-color);
-        fill-opacity: 1;
-        stroke: var(--chart-danger-color);
-    }
+:host(.withdrawal-vs-returns-chart) .highcharts-color-0 {
+    fill: var(--chart-success-color);
+    fill-opacity: 1;
+    stroke: var(--chart-success-color);
+}
+
+:host(.withdrawal-vs-returns-chart) .highcharts-color-1 {
+    fill: var(--chart-danger-color);
+    fill-opacity: 1;
+    stroke: var(--chart-danger-color);
 }

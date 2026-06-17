@@ -139,13 +139,13 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
                 + "way to pay more, and they combine.");
         intro.addClassName("subsection-hint");
 
+        // Amount and frequency share one responsive row (two columns above 36em,
+        // stacked below it), so the field labels line up.
         final FormLayout amountFields = twoColForm();
-        amountFields.add(this.extraPerPeriod);
-        final Span frequencyLabel = new Span("Frequency");
-        frequencyLabel.addClassName("subsection-label");
+        amountFields.add(this.extraPerPeriod, this.extraFrequency);
         final Component extraPayment = lever(
                 "A fixed amount paid on top of the EMI, at the chosen frequency.",
-                amountFields, frequencyLabel, this.extraFrequency);
+                amountFields);
 
         final FormLayout emiFields = twoColForm();
         emiFields.add(this.extraEmisPerYear);
@@ -190,6 +190,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private void configureFrequencyGroup() {
+        this.extraFrequency.setLabel("Frequency");
         this.extraFrequency.setItems(PrepaymentFrequency.values());
         this.extraFrequency.setItemLabelGenerator(LoanCalculatorForm::frequencyLabel);
         this.extraFrequency.setValue(PrepaymentFrequency.YEARLY);

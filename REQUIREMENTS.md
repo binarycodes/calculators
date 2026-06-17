@@ -546,7 +546,7 @@ a plain EMI calculator.
 | Tenure | Years + Months (at least one month total). |
 | Inflation Rate (%) | Used only to express the cost in today's money. |
 | Extra Payment + frequency | Recurring prepayment paid Monthly / Quarterly / Yearly on top of the EMI. |
-| Extra EMIs / year | Additional full EMIs paid once a year (e.g. 1 → effectively 13 EMIs/year). |
+| Extra EMIs / year | Additional full EMIs paid once a year (e.g. 1 → effectively 13 EMIs/year), each valued at the installment then in force (the re-amortized EMI under reduce-EMI). |
 | EMI Step-Up (%) | Annual increase of the EMI itself — a "pay more" lever, so it only shortens the tenure. |
 
 ## 2. Calculation Model
@@ -571,7 +571,9 @@ Three scenarios are computed:
   is re-amortized to a lower EMI over the *original* tenure (step-up excluded).
   Headline: interest saved. (The EMI ratchets down a little after every
   prepayment rather than at a single point, so the headline reports the saving,
-  not a single lowered installment; the descent is visible in the grid.)
+  not a single lowered installment; the descent is visible in the grid.) An
+  extra-EMI prepayment is valued at the re-amortized EMI of that year, so it
+  shrinks alongside the installment rather than staying pinned to the original.
 
 `realTotalInterest` discounts each month's interest to today's money at the
 inflation rate.

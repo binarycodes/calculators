@@ -22,11 +22,11 @@ import java.util.List;
  */
 @CssImport(value = "./shadow/withdrawal-vs-returns-chart.css", themeFor = "vaadin-chart")
 public class WithdrawalVsReturnsChart extends Chart {
-    private static final String RETURNS_CLASSNAME = "returns";
-    private static final String WITHDRAWAL_CLASSNAME = "withdrawal";
 
     public WithdrawalVsReturnsChart() {
         super(ChartType.COLUMN);
+        // Scopes the palette override in withdrawal-vs-returns-chart.css to this chart.
+        addClassName("withdrawal-vs-returns-chart");
         setWidthFull();
         setHeight("340px");
 
@@ -55,17 +55,12 @@ public class WithdrawalVsReturnsChart extends Chart {
             categories[index] = Integer.toString(row.age());
         }
 
-        final PlotOptionsColumn returnsOptions = new PlotOptionsColumn();
-        returnsOptions.setClassName(RETURNS_CLASSNAME);
-
-        final PlotOptionsColumn withdrawalOptions = new PlotOptionsColumn();
-        withdrawalOptions.setClassName(WITHDRAWAL_CLASSNAME);
-
+        // Series order fixes the palette index the CSS recolours: 0 = returns, 1 = withdrawal.
         final ListSeries returnsSeries = new ListSeries("Returns", returnsValues);
-        returnsSeries.setPlotOptions(returnsOptions);
+        returnsSeries.setPlotOptions(new PlotOptionsColumn());
 
         final ListSeries withdrawalSeries = new ListSeries("Withdrawal", withdrawalValues);
-        withdrawalSeries.setPlotOptions(withdrawalOptions);
+        withdrawalSeries.setPlotOptions(new PlotOptionsColumn());
 
         final Configuration cfg = getConfiguration();
         cfg.setSeries(returnsSeries, withdrawalSeries);

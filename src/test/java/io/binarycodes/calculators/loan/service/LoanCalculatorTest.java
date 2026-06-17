@@ -101,6 +101,25 @@ class LoanCalculatorTest {
     }
 
     @Test
+    void extra_emi_tracks_the_reamortized_installment_under_reduce_emi() {
+        final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
+        inputs.setExtraEmisPerYear(1); // pay one extra EMI a year
+        final LoanResult result = LoanCalculator.calculate(inputs);
+
+        // Reduce-tenure keeps the EMI fixed, so the extra EMI is the same every year.
+        assertEquals(0, result.rows().get(0).prepayment().compareTo(result.emi()));
+        assertEquals(0, result.rows().get(1).prepayment().compareTo(result.emi()));
+
+        // Reduce-EMI re-amortizes the installment downward each year, so the extra
+        // EMI must shrink with it — the first year is the original EMI, later years
+        // are strictly below it (not pinned to the original).
+        assertEquals(0, result.reduceEmiRows().get(0).prepayment().compareTo(result.emi()));
+        assertTrue(result.reduceEmiRows().get(1).prepayment()
+                        .compareTo(result.reduceEmiRows().get(0).prepayment()) < 0,
+                "extra EMI should follow the re-amortized (lower) installment");
+    }
+
+    @Test
     void emi_step_up_shortens_tenure_but_not_reduce_emi() {
         final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
         inputs.setEmiStepUpPct(new BigDecimal("10")); // raise EMI 10% a year

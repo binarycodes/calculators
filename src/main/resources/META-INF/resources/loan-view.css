@@ -18,8 +18,21 @@
     font-size: 0.85rem;
 }
 
+/* In the prepayment row the toggle is a form-layout cell pinned to the column
+ * width, so the shared grey background would stretch the full column with the
+ * buttons bunched at the left. Move the segmented background onto the inner
+ * group-field part and let it hug its buttons instead. */
 .loan-view vaadin-radio-group.segmented-toggle {
     align-self: flex-start;
+    background-color: transparent;
+    padding: 0;
+}
+
+.loan-view vaadin-radio-group.segmented-toggle::part(group-field) {
+    width: fit-content;
+    background-color: var(--color-surface-overlay);
+    padding: 0.25rem;
+    border-radius: 10px;
 }
 
 /* Each prepayment lever: a small gap between its fields and its caption. */
