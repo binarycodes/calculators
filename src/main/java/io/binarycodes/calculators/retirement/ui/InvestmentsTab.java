@@ -7,6 +7,7 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 import java.math.BigDecimal;
@@ -25,7 +26,7 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  * contributions (with growth, step-up, and per-phase tax rate on
  * investment gains).
  */
-class InvestmentsTab extends VerticalLayout {
+class InvestmentsTab extends VerticalLayout implements TabIndicator.Source {
 
     private final NumberField corpusReturnsPrePct = percentageField("Before Retirement");
     private final NumberField corpusReturnsPostPct = percentageField("After Retirement");

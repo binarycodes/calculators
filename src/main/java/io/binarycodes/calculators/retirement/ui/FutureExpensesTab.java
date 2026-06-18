@@ -12,12 +12,14 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.RecurringExpense;
@@ -45,7 +47,7 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  * <p>Each list is exposed as a {@link Signal} so the parent form can
  * compose it into the overall inputs signal.</p>
  */
-class FutureExpensesTab extends VerticalLayout {
+class FutureExpensesTab extends VerticalLayout implements TabIndicator.Source {
 
     private final UserPreferences prefs;
     private final VerticalLayout fixedRowsContainer = new VerticalLayout();
@@ -119,6 +121,12 @@ class FutureExpensesTab extends VerticalLayout {
 
     Signal<List<RecurringExpense>> recurringExpensesSignal() {
         return this.recurringSignal.asReadonly();
+    }
+
+    /** Every added row must carry its required fields — an empty row is invalid. */
+    boolean isValid() {
+        return this.fixedRows.stream().allMatch(FutureExpenseRow::isValid)
+                && this.recurringRowsList.stream().allMatch(RecurringExpenseRow::isValid);
     }
 
     List<FutureExpense> getFutureExpenses() {
@@ -219,6 +227,7 @@ class FutureExpensesTab extends VerticalLayout {
         private final TextField descriptionField = new TextField("Description");
         private final MoneyField amountField;
         private final NumberField inflationField = withPercentageSuffix(percentageField("Inflation"));
+        private final Binder<FutureExpense> binder = new Binder<>(FutureExpense.class);
 
         FutureExpenseRow(UserPreferences prefs, FutureExpense initial,
                          java.util.function.Consumer<FutureExpenseRow> onRemove,
@@ -246,6 +255,21 @@ class FutureExpensesTab extends VerticalLayout {
             addClassName("form-row");
             add(this.yearField, this.descriptionField, this.amountField, this.inflationField, removeButton);
             expand(this.descriptionField);
+
+            // A future expense needs a target year and an amount; validating now
+            // flags a freshly added blank row immediately.
+            this.binder.forField(this.yearField).asRequired("Enter a year")
+                    .bind(FutureExpense::getYear, FutureExpense::setYear);
+            this.binder.forField(this.amountField).asRequired("Enter an amount")
+                    .bind(FutureExpense::getAmount, FutureExpense::setAmount);
+            this.binder.validate();
+            // Re-publish on validity changes so the tab indicator refreshes once
+            // validation has settled, not a beat before it.
+            this.binder.addStatusChangeListener(event -> onChanged.run());
+        }
+
+        boolean isValid() {
+            return !this.yearField.isEmpty() && !this.amountField.isEmpty();
         }
 
         FutureExpense snapshot() {
@@ -266,6 +290,7 @@ class FutureExpensesTab extends VerticalLayout {
         private final Select<Frequency> frequencyField = new Select<>();
         private final MoneyField amountField;
         private final NumberField inflationField = optionalInflationField();
+        private final Binder<RecurringExpense> binder = new Binder<>(RecurringExpense.class);
 
         RecurringExpenseRow(UserPreferences prefs, RecurringExpense initial,
                             java.util.function.Consumer<RecurringExpenseRow> onRemove,
@@ -303,6 +328,21 @@ class FutureExpensesTab extends VerticalLayout {
             add(this.yearField, this.stopYearField, this.descriptionField, this.frequencyField,
                     this.amountField, this.inflationField, removeButton);
             expand(this.descriptionField);
+
+            // A recurring expense needs a start year and an amount; validating now
+            // flags a freshly added blank row immediately.
+            this.binder.forField(this.yearField).asRequired("Enter a start year")
+                    .bind(RecurringExpense::getYear, RecurringExpense::setYear);
+            this.binder.forField(this.amountField).asRequired("Enter an amount")
+                    .bind(RecurringExpense::getAmount, RecurringExpense::setAmount);
+            this.binder.validate();
+            // Re-publish on validity changes so the tab indicator refreshes once
+            // validation has settled, not a beat before it.
+            this.binder.addStatusChangeListener(event -> onChanged.run());
+        }
+
+        boolean isValid() {
+            return !this.yearField.isEmpty() && !this.amountField.isEmpty();
         }
 
         RecurringExpense snapshot() {

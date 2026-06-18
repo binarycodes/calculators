@@ -12,12 +12,14 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringIncome;
@@ -41,7 +43,7 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  *       is per period (Monthly or Yearly) and is not inflated.</li>
  * </ul>
  */
-class FutureIncomesTab extends VerticalLayout {
+class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
 
     private final UserPreferences prefs;
     private final VerticalLayout fixedRowsContainer = new VerticalLayout();
@@ -114,6 +116,12 @@ class FutureIncomesTab extends VerticalLayout {
 
     Signal<List<RecurringIncome>> recurringIncomesSignal() {
         return this.recurringSignal.asReadonly();
+    }
+
+    /** Every added row must carry its required fields — an empty row is invalid. */
+    boolean isValid() {
+        return this.fixedRows.stream().allMatch(FutureIncomeRow::isValid)
+                && this.recurringRowsList.stream().allMatch(RecurringIncomeRow::isValid);
     }
 
     List<FutureIncome> getFutureIncomes() {
@@ -214,6 +222,7 @@ class FutureIncomesTab extends VerticalLayout {
         private final TextField descriptionField = new TextField("Description");
         private final MoneyField amountField;
         private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+        private final Binder<FutureIncome> binder = new Binder<>(FutureIncome.class);
 
         FutureIncomeRow(UserPreferences prefs, FutureIncome initial,
                         java.util.function.Consumer<FutureIncomeRow> onRemove,
@@ -241,6 +250,21 @@ class FutureIncomesTab extends VerticalLayout {
             addClassName("form-row");
             add(this.yearField, this.descriptionField, this.amountField, this.taxField, removeButton);
             expand(this.descriptionField);
+
+            // A future income needs a target year and an amount; validating now
+            // flags a freshly added blank row immediately.
+            this.binder.forField(this.yearField).asRequired("Enter a year")
+                    .bind(FutureIncome::getYear, FutureIncome::setYear);
+            this.binder.forField(this.amountField).asRequired("Enter an amount")
+                    .bind(FutureIncome::getAmount, FutureIncome::setAmount);
+            this.binder.validate();
+            // Re-publish on validity changes so the tab indicator refreshes once
+            // validation has settled, not a beat before it.
+            this.binder.addStatusChangeListener(event -> onChanged.run());
+        }
+
+        boolean isValid() {
+            return !this.yearField.isEmpty() && !this.amountField.isEmpty();
         }
 
         FutureIncome snapshot() {
@@ -261,6 +285,7 @@ class FutureIncomesTab extends VerticalLayout {
         private final Select<Frequency> frequencyField = new Select<>();
         private final MoneyField amountField;
         private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+        private final Binder<RecurringIncome> binder = new Binder<>(RecurringIncome.class);
 
         RecurringIncomeRow(UserPreferences prefs, RecurringIncome initial,
                            java.util.function.Consumer<RecurringIncomeRow> onRemove,
@@ -298,6 +323,21 @@ class FutureIncomesTab extends VerticalLayout {
             add(this.yearField, this.stopYearField, this.descriptionField, this.frequencyField,
                     this.amountField, this.taxField, removeButton);
             expand(this.descriptionField);
+
+            // A recurring income needs a start year and an amount; validating now
+            // flags a freshly added blank row immediately.
+            this.binder.forField(this.yearField).asRequired("Enter a start year")
+                    .bind(RecurringIncome::getYear, RecurringIncome::setYear);
+            this.binder.forField(this.amountField).asRequired("Enter an amount")
+                    .bind(RecurringIncome::getAmount, RecurringIncome::setAmount);
+            this.binder.validate();
+            // Re-publish on validity changes so the tab indicator refreshes once
+            // validation has settled, not a beat before it.
+            this.binder.addStatusChangeListener(event -> onChanged.run());
+        }
+
+        boolean isValid() {
+            return !this.yearField.isEmpty() && !this.amountField.isEmpty();
         }
 
         RecurringIncome snapshot() {

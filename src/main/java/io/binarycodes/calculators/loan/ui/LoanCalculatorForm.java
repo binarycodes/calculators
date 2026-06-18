@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
@@ -21,6 +22,7 @@ import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
 import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
 
@@ -45,6 +47,10 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     private final RadioButtonGroup<PrepaymentFrequency> extraFrequency = new RadioButtonGroup<>();
     private final IntegerField extraEmisPerYear = countField("Extra EMIs / year");
     private final NumberField emiStepUp = percentageField("EMI Step-Up (Yearly)");
+
+    private final Span extraPaymentDot = TabIndicator.dot("A recurring extra payment is set");
+    private final Span extraEmisDot = TabIndicator.dot("Extra EMIs per year are set");
+    private final Span stepUpDot = TabIndicator.dot("An annual EMI step-up is set");
 
     private final Signal<LoanInputs> inputsSignal;
 
@@ -83,6 +89,24 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
             this.emiStepUpSignal.get();
             return buildInputs();
         });
+
+        // Mark each prepayment tab the user has set; flag it red if its field is
+        // invalid. The signal effect catches value changes; the binder status
+        // listener catches validity changes that carry no value change.
+        Signal.effect(this, context -> {
+            this.inputsSignal.get();
+            refreshIndicators();
+        });
+        this.binder.addStatusChangeListener(event -> refreshIndicators());
+    }
+
+    private void refreshIndicators() {
+        TabIndicator.apply(this.extraPaymentDot,
+                TabIndicator.isSet(this.extraPerPeriod), this.extraPerPeriod.isInvalid());
+        TabIndicator.apply(this.extraEmisDot,
+                TabIndicator.isSet(this.extraEmisPerYear), this.extraEmisPerYear.isInvalid());
+        TabIndicator.apply(this.stepUpDot,
+                TabIndicator.isSet(this.emiStepUp), this.emiStepUp.isInvalid());
     }
 
     public Signal<LoanInputs> inputsSignal() {
@@ -162,9 +186,9 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         final TabSheet tabs = new TabSheet();
         tabs.addClassName("prepay-tabs");
         tabs.setWidthFull();
-        tabs.add("Extra payment", extraPayment);
-        tabs.add("Extra EMIs / year", extraEmis);
-        tabs.add("Step-up EMI", stepUp);
+        tabs.add(new Tab(new Span("Extra payment"), this.extraPaymentDot), extraPayment);
+        tabs.add(new Tab(new Span("Extra EMIs / year"), this.extraEmisDot), extraEmis);
+        tabs.add(new Tab(new Span("Step-up EMI"), this.stepUpDot), stepUp);
 
         return card("Prepayments", intro, tabs);
     }

@@ -1,0 +1,23 @@
+/*
+ * Small dot appended to a TabSheet tab marking that the tab holds user-entered
+ * (optional) data, so it is visible at a glance which tabs carry input without
+ * opening each one.
+ */
+.tab-indicator {
+    display: inline-block;
+    width: 0.25rem;
+    height: 0.25rem;
+    /* Pull the dot tight against its own label: a vaadin-tab puts an 8px flex
+     * gap between its children, which would otherwise leave the dot floating
+     * mid-way to the next tab and reading as the neighbour's marker. */
+    margin-inline-start: -0.125rem;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    flex: none;
+    align-self: center;
+}
+
+/* The tab has an invalid field — flag it in the danger colour. */
+.tab-indicator.tab-indicator-error {
+    background-color: var(--color-danger-text);
+}

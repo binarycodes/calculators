@@ -1,12 +1,15 @@
 package io.binarycodes.calculators.retirement.ui;
 
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 /**
@@ -38,6 +41,11 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
     private final FutureExpensesTab futureExpensesTab;
     private final RetirementBenefitsTab retirementBenefitsTab;
     private final FutureIncomesTab futureIncomesTab;
+    private final Span basicDot = TabIndicator.dot("This tab is filled in");
+    private final Span investmentsDot = TabIndicator.dot("This tab is filled in");
+    private final Span futureExpensesDot = TabIndicator.dot("You have future expenses listed");
+    private final Span futureIncomesDot = TabIndicator.dot("You have future incomes listed");
+    private final Span retirementBenefitsDot = TabIndicator.dot("You have retirement benefits listed");
     private final Signal<RetirementInputs> inputsSignal;
 
     public RetirementCalculatorForm(UserPreferences prefs) {
@@ -53,11 +61,12 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
         this.futureIncomesTab = new FutureIncomesTab(prefs);
 
         final var tabSheet = new TabSheet();
-        tabSheet.add("Basic", this.basicTab);
-        tabSheet.add("Investments", this.investmentsTab);
-        tabSheet.add("Future Expenses", this.futureExpensesTab);
-        tabSheet.add("Future Incomes", this.futureIncomesTab);
-        tabSheet.add("Retirement Benefits", this.retirementBenefitsTab);
+        tabSheet.add(new Tab(new Span("Basic"), this.basicDot), this.basicTab);
+        tabSheet.add(new Tab(new Span("Investments"), this.investmentsDot), this.investmentsTab);
+        tabSheet.add(new Tab(new Span("Future Expenses"), this.futureExpensesDot), this.futureExpensesTab);
+        tabSheet.add(new Tab(new Span("Future Incomes"), this.futureIncomesDot), this.futureIncomesTab);
+        tabSheet.add(new Tab(new Span("Retirement Benefits"), this.retirementBenefitsDot),
+                this.retirementBenefitsTab);
         tabSheet.setWidthFull();
         add(tabSheet);
 
@@ -75,6 +84,24 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
             this.retirementBenefitsTab.retirementBenefitsSignal().get();
             return buildInputs();
         });
+
+        // Mark each tab that holds a value; flag it red when one of its fields is
+        // invalid. The signal effect catches value/list changes; the binder status
+        // listener catches validity changes (e.g. cross-field) that carry no value
+        // change of their own.
+        Signal.effect(this, context -> {
+            this.inputsSignal.get();
+            refreshIndicators();
+        });
+        this.binder.addStatusChangeListener(event -> refreshIndicators());
+    }
+
+    private void refreshIndicators() {
+        TabIndicator.apply(this.basicDot, this.basicTab);
+        TabIndicator.apply(this.investmentsDot, this.investmentsTab);
+        TabIndicator.apply(this.futureExpensesDot, this.futureExpensesTab);
+        TabIndicator.apply(this.futureIncomesDot, this.futureIncomesTab);
+        TabIndicator.apply(this.retirementBenefitsDot, this.retirementBenefitsTab);
     }
 
     public Signal<RetirementInputs> inputsSignal() {
@@ -98,10 +125,15 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
     }
 
     public boolean isValid() {
-        return this.binder.isValid();
+        return this.binder.isValid()
+                && this.futureExpensesTab.isValid()
+                && this.futureIncomesTab.isValid()
+                && this.retirementBenefitsTab.isValid();
     }
 
     public BinderValidationStatus<RetirementInputs> validate() {
+        // Row-level required fields validate themselves on creation and on change,
+        // so they already show their errors; only the bean binder needs forcing.
         return this.binder.validate();
     }
 

@@ -9,6 +9,7 @@ import com.vaadin.flow.data.validator.IntegerRangeValidator;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 import java.math.BigDecimal;
@@ -27,7 +28,7 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  * cross-age validators (each age must exceed the previous one) since all
  * three age fields live here.
  */
-class BasicTab extends VerticalLayout {
+class BasicTab extends VerticalLayout implements TabIndicator.Source {
 
     private final IntegerField currentAge = ageField("Current Age");
     private final IntegerField retireAge = ageField("Retirement Age");

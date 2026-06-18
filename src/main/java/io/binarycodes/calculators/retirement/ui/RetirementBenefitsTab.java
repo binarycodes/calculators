@@ -8,12 +8,14 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
+import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 
 import java.math.BigDecimal;
@@ -29,7 +31,7 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  * year, description, gross amount, and a per-item tax rate; the net amount
  * after tax is added to the corpus in the target year.
  */
-class RetirementBenefitsTab extends VerticalLayout {
+class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Source {
 
     private final UserPreferences prefs;
     private final VerticalLayout rowsContainer = new VerticalLayout();
@@ -57,6 +59,11 @@ class RetirementBenefitsTab extends VerticalLayout {
 
     Signal<List<RetirementBenefit>> retirementBenefitsSignal() {
         return this.benefitsSignal.asReadonly();
+    }
+
+    /** Every added row must carry its required fields — an empty row is invalid. */
+    boolean isValid() {
+        return this.rows.stream().allMatch(RetirementBenefitRow::isValid);
     }
 
     List<RetirementBenefit> getRetirementBenefits() {
@@ -105,6 +112,7 @@ class RetirementBenefitsTab extends VerticalLayout {
         private final TextField descriptionField = new TextField("Description");
         private final MoneyField amountField;
         private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+        private final Binder<RetirementBenefit> binder = new Binder<>(RetirementBenefit.class);
 
         RetirementBenefitRow(UserPreferences prefs, RetirementBenefit initial,
                              java.util.function.Consumer<RetirementBenefitRow> onRemove,
@@ -130,6 +138,19 @@ class RetirementBenefitsTab extends VerticalLayout {
             addClassName("form-row");
             add(this.descriptionField, this.amountField, this.taxField, removeButton);
             expand(this.descriptionField);
+
+            // A benefit with no amount is meaningless, so it is required; validating
+            // now flags a freshly added blank row immediately.
+            this.binder.forField(this.amountField).asRequired("Enter an amount")
+                    .bind(RetirementBenefit::getAmount, RetirementBenefit::setAmount);
+            this.binder.validate();
+            // Re-publish on validity changes so the tab indicator refreshes once
+            // validation has settled, not a beat before it.
+            this.binder.addStatusChangeListener(event -> onChanged.run());
+        }
+
+        boolean isValid() {
+            return !this.amountField.isEmpty();
         }
 
         RetirementBenefit snapshot() {
