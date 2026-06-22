@@ -17,6 +17,7 @@
 @import url('inflation-view.css');
 @import url('investment-view.css');
 @import url('loan-view.css');
+@import url('buyrent-view.css');
 @import url('landing-view.css');
 
 html, body, *, *:before, *:after {

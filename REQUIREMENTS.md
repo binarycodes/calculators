@@ -13,11 +13,13 @@ input. The app currently ships:
   subsequent hold phase; reports maturity, net-of-tax, and real value.
 - **Loan / EMI** — reducing-balance EMI for a loan, plus a prepayment analysis
   that shows the impact of paying extra (reduce tenure vs reduce EMI).
+- **Buy vs Rent** — compares buying a home against renting and investing the
+  difference; projects net worth for both paths and reports the break-even year.
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
 owns a route segment (`/retirement`, `/goal`, `/inflation`, `/investment`,
-`/loan`).
+`/loan`, `/buyrent`).
 
 The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
@@ -626,3 +628,87 @@ when prepayments are active) that switches the grid between the two schedules.
 | --- | --- |
 | `LoanCalculatorTest` | EMI formula vs known value, zero-interest split, schedule clears to zero, no-prepayment collapses scenarios, recurring/extra-EMI/step-up prepayments save interest & shorten tenure, reduce-EMI lowers the installment, real interest under inflation, validation rejections. |
 | `LoanDefaultsJsonTest` | `loan-defaults.json` parses, every currency has every required field, schedule round-trips. |
+
+---
+
+# Buy vs Rent Calculator (`/buyrent`)
+
+Compares the financial outcome of buying a home versus renting over a
+user-defined horizon. Both paths are projected month-by-month; net worth is
+snapshotted at each year boundary.
+
+## 1. Inputs
+
+| Field | Section | Constraint | Meaning |
+| --- | --- | --- | --- |
+| Home Price | Home Purchase | > 0, Required | Purchase price of the property. |
+| Down Payment | Home Purchase | 0–99 %, Required | Percentage of home price paid upfront. |
+| Loan Term | Home Purchase | 1–40 yrs, Required | Mortgage duration in years. |
+| Mortgage Rate | Home Purchase | 0–30 %, Required | Annual interest rate on the loan. |
+| Property Tax Rate | Costs & Appreciation | 0–5 % | Annual property tax as % of current home value. |
+| Maintenance Rate | Costs & Appreciation | 0–5 % | Annual maintenance cost as % of current home value. |
+| Home Appreciation | Costs & Appreciation | 0–20 % | Annual rate at which the home gains value. |
+| Buying Costs | Costs & Appreciation | 0–15 % | Upfront transaction costs (stamp duty, registration) as % of home price. |
+| Selling Costs | Costs & Appreciation | 0–10 % | Sale-time costs (agent fees) as % of sale price. |
+| Monthly Rent | Renting | > 0, Required | Starting monthly rent. |
+| Annual Rent Increase | Renting | 0–20 % | Yearly compounding increase to rent. |
+| Investment Return | Analysis | 0–30 %, Required | Annual return on the rent-path portfolio. |
+| Inflation Rate | Analysis | 0–20 % | Used to express the net-worth difference in today's money. |
+| Analysis Horizon | Analysis | 1–50 yrs, Required | How many years to project. |
+
+## 2. Financial Model
+
+### Buy path
+- Down payment + buying costs are paid upfront.
+- Monthly EMI is computed using standard reducing-balance amortisation for the
+  full loan term; once the loan is paid off there is no more EMI.
+- Property tax + maintenance accrue monthly as a fraction of the current home
+  value (which appreciates at the stated rate).
+- Net worth at year Y = home value × (1 − selling cost %) − outstanding mortgage balance.
+
+### Rent path
+- The down payment + buying costs (capital not spent on the purchase) are
+  invested immediately at the investment return rate.
+- Each month the **surplus** (buy monthly cost − rent this month) is added to
+  the portfolio; if rent exceeds buy costs the deficit is withdrawn.
+- Rent grows each year at the rent-increase rate.
+- Net worth at year Y = investment portfolio balance.
+
+### Break-even
+The first year where buy net worth ≥ rent net worth. Reported as "Not in
+horizon" if buy never catches up within the analysis period.
+
+## 3. Outputs
+
+### Summary row (5 cards)
+| Card | Value |
+| --- | --- |
+| Monthly Cost: Buy | EMI + first-month property tax + maintenance |
+| Monthly Cost: Rent | First month's rent |
+| Break-Even | First year buy is ahead, or "Not in horizon" |
+| Net Worth: Buy | Equity at end of horizon |
+| Net Worth: Rent | Portfolio at end of horizon |
+
+The winning path at the horizon is highlighted in success green.
+
+### Comparison chart
+Line chart showing buy equity (blue) and rent portfolio (green) from year 1 to
+the analysis horizon. Where they cross is the break-even year.
+
+### Year-by-year projection grid
+| Column | Description |
+| --- | --- |
+| Year | Year number |
+| Home Value | Appreciated home price |
+| Mortgage Balance | Outstanding loan (0 after payoff) |
+| Buy Net Worth | Equity after sell costs |
+| Rent Portfolio | Accumulated investment |
+| Difference (Buy − Rent) | Positive = buy ahead |
+
+The break-even row is highlighted with a success background.
+
+## 4. Persistence & sharing
+| Key | Content |
+| --- | --- |
+| `buyrent-defaults.json` (classpath) | Per-currency baseline inputs. |
+| `bvr_inputs` (localStorage) | Per-currency snapshot of the user's edited inputs. |

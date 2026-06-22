@@ -1,0 +1,21 @@
+/*
+ * Buy vs Rent screen. Reuses the shared .form-section, .action-row,
+ * .summary-row, .chart-card, and .grid-card rules. Only view-specific
+ * tweaks live here.
+ */
+
+.buyrent-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.buyrent-view .subsection-hint {
+    color: var(--vaadin-secondary-text-color, #71717a);
+    font-size: 0.85rem;
+}
+
+/* Highlight the break-even row in the projection grid. */
+.buyrent-view::part(break-even) {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+    font-weight: 600;
+}

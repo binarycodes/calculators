@@ -1,0 +1,50 @@
+{
+  "INR": {
+    "homePrice": "5000000",
+    "downPaymentPct": "20",
+    "loanTermYears": "20",
+    "mortgageRatePct": "8.5",
+    "propertyTaxRatePct": "0.5",
+    "maintenancePct": "1.5",
+    "appreciationPct": "6",
+    "buyingCostPct": "7",
+    "sellingCostPct": "2",
+    "monthlyRent": "25000",
+    "rentIncreasePct": "5",
+    "investmentReturnPct": "10",
+    "inflationRatePct": "6",
+    "analysisYears": "20"
+  },
+  "EUR": {
+    "homePrice": "250000",
+    "downPaymentPct": "20",
+    "loanTermYears": "25",
+    "mortgageRatePct": "3.5",
+    "propertyTaxRatePct": "0.5",
+    "maintenancePct": "1.0",
+    "appreciationPct": "3",
+    "buyingCostPct": "4",
+    "sellingCostPct": "3",
+    "monthlyRent": "1200",
+    "rentIncreasePct": "2",
+    "investmentReturnPct": "7",
+    "inflationRatePct": "3",
+    "analysisYears": "25"
+  },
+  "USD": {
+    "homePrice": "400000",
+    "downPaymentPct": "20",
+    "loanTermYears": "30",
+    "mortgageRatePct": "7.0",
+    "propertyTaxRatePct": "1.2",
+    "maintenancePct": "1.0",
+    "appreciationPct": "4",
+    "buyingCostPct": "3",
+    "sellingCostPct": "3",
+    "monthlyRent": "2000",
+    "rentIncreasePct": "3",
+    "investmentReturnPct": "8",
+    "inflationRatePct": "3",
+    "analysisYears": "30"
+  }
+}

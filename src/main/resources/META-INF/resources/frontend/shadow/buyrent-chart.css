@@ -1,0 +1,16 @@
+/*
+ * Buy vs Rent comparison chart. Buy equity uses the primary colour; rent
+ * portfolio uses the success colour, so buy = blue and rent = green at a glance.
+ */
+
+:host(.buyrent-chart) {
+    & .buyrent-buy > .highcharts-graph {
+        stroke: var(--chart-primary-color);
+        stroke-width: 3px;
+    }
+
+    & .buyrent-rent > .highcharts-graph {
+        stroke: var(--chart-success-color);
+        stroke-width: 3px;
+    }
+}
