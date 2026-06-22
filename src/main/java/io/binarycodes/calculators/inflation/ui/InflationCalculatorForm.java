@@ -1,7 +1,6 @@
 package io.binarycodes.calculators.inflation.ui;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
@@ -22,6 +21,7 @@ import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
 
@@ -52,6 +52,7 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
     private final Select<Month> targetMonth = monthSelect();
 
     private final FormLayout horizonFields = new FormLayout();
+    private FormCard inflationCard;
     private final Signal<InflationInputs> inputsSignal;
 
     public InflationCalculatorForm(UserPreferences preferences) {
@@ -95,8 +96,20 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
         renderHorizonFieldsFor(inputs.getHorizonMode());
     }
 
+    public void clear() {
+        setInputs(new InflationInputs());
+    }
+
     public InflationInputs getInputs() {
         return buildInputs();
+    }
+
+    @Override
+    public void showValidationMessages(String calculationError) {
+        FormCard.refreshGenericErrors(this);
+        if (calculationError != null && !this.inflationCard.hasInvalidField()) {
+            this.inflationCard.showError(calculationError);
+        }
     }
 
     public boolean isValid() {
@@ -133,11 +146,11 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
         content.setPadding(false);
         content.setSpacing(true);
 
-        final Card card = new Card();
-        card.setTitle("Inflation");
+        final FormCard card = new FormCard("Inflation");
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
+        this.inflationCard = card;
         return card;
     }
 

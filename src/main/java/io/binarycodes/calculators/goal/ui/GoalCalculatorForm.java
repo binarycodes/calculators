@@ -1,7 +1,6 @@
 package io.binarycodes.calculators.goal.ui;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -20,6 +19,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
@@ -59,6 +59,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private final InvestmentsCard investmentsCard;
     private final FormLayout horizonFields = new FormLayout();
+    private FormCard goalCard;
     private final Signal<GoalInputs> inputsSignal;
 
     public GoalCalculatorForm(UserPreferences preferences) {
@@ -104,6 +105,21 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         this.investmentsCard.setInvestments(inputs.getInvestments());
     }
 
+    public void clear() {
+        setInputs(new GoalInputs());
+    }
+
+    @Override
+    public void showValidationMessages(String calculationError) {
+        FormCard.refreshGenericErrors(this);
+        if (!this.investmentsCard.hasInvalidField() && !this.investmentsCard.isAllocationValid()) {
+            this.investmentsCard.showError("Allocations must sum to 100%.");
+        }
+        if (calculationError != null && !this.goalCard.hasInvalidField()) {
+            this.goalCard.showError(calculationError);
+        }
+    }
+
     public GoalInputs getInputs() {
         return buildInputs();
     }
@@ -114,10 +130,6 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
 
     public BinderValidationStatus<GoalInputs> validate() {
         return this.binder.validate();
-    }
-
-    public InvestmentsCard investmentsCard() {
-        return this.investmentsCard;
     }
 
     /**
@@ -156,11 +168,11 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         content.setPadding(false);
         content.setSpacing(true);
 
-        final Card card = new Card();
-        card.setTitle("Goal");
+        final FormCard card = new FormCard("Goal");
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
+        this.goalCard = card;
         return card;
     }
 

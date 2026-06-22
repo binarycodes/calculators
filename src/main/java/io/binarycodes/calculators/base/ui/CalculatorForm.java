@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.base.ui;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.signals.Signal;
 
 /**
@@ -12,6 +13,23 @@ import com.vaadin.flow.signals.Signal;
 public interface CalculatorForm<I> {
 
     void setInputs(I inputs);
+
+    /** Blank every field and drop optional rows — an empty form, not the defaults. */
+    void clear();
+
+    /**
+     * Refresh the per-card validation messages (top-right of each form card):
+     * a generic note on cards with invalid fields, plus any card-level rules.
+     * {@code calculationError} (nullable) is a whole-calculation failure to
+     * attribute to the form's primary input card. The default marks every
+     * {@link FormCard} whose own fields are invalid; forms with card-level rules
+     * or a calculator error to surface override this and add to it.
+     */
+    default void showValidationMessages(String calculationError) {
+        if (this instanceof Component component) {
+            FormCard.refreshGenericErrors(component);
+        }
+    }
 
     I getInputs();
 

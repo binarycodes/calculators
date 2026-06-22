@@ -75,7 +75,8 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
     protected void updateResults() {
         if (!this.form.isValid()) {
             this.form.validate();
-            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
+            this.form.showValidationMessages(null);
+            showInvalidFormPlaceholders();
             return;
         }
 
@@ -85,9 +86,11 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
         try {
             result = RetirementCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
-            showInvalidFormPlaceholders(invalid.getMessage());
+            this.form.showValidationMessages(invalid.getMessage());
+            showInvalidFormPlaceholders();
             return;
         }
+        this.form.showValidationMessages(null);
 
         final SupportedCurrency currency = this.preferences.currency();
         updateRetirementYearSummaries(result, currency);
@@ -167,11 +170,11 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
         return gridCard;
     }
 
-    private void showInvalidFormPlaceholders(String dangerMessage) {
+    private void showInvalidFormPlaceholders() {
         this.corpusAtRetirement.setValue("—", null);
         this.expensesAtRetirement.setValue("—", null);
         this.lastsUntil.setValue("—", null);
-        this.finalCorpus.setValue(dangerMessage, Status.DANGER);
+        this.finalCorpus.setValue("—", null);
     }
 
     private void updateRetirementYearSummaries(RetirementResult result, SupportedCurrency currency) {

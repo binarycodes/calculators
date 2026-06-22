@@ -60,13 +60,10 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
 
     @Override
     protected void updateResults() {
-        if (!this.form.investmentsCard().isAllocationValid()) {
-            showInvalidFormPlaceholders("Allocations must sum to 100%.");
-            return;
-        }
         if (!this.form.isValid()) {
             this.form.validate();
-            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
+            this.form.showValidationMessages(null);
+            showInvalidFormPlaceholders();
             return;
         }
 
@@ -75,9 +72,11 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
         try {
             result = GoalCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
-            showInvalidFormPlaceholders(invalid.getMessage());
+            this.form.showValidationMessages(invalid.getMessage());
+            showInvalidFormPlaceholders();
             return;
         }
+        this.form.showValidationMessages(null);
 
         final SupportedCurrency currency = this.preferences.currency();
         this.form.setInflationHelperText(
@@ -142,11 +141,11 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
         return card;
     }
 
-    private void showInvalidFormPlaceholders(String dangerMessage) {
+    private void showInvalidFormPlaceholders() {
         this.monthlyInvestment.setValue("—", null);
         this.yearlyInvestment.setValue("—", null);
         this.finalCorpus.setValue("—", null);
-        this.taxAtExit.setValue(dangerMessage, Status.DANGER);
+        this.taxAtExit.setValue("—", null);
         this.form.setInflationHelperText("");
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);

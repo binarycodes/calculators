@@ -13,6 +13,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.base.ui.TabIndicator;
@@ -54,7 +55,17 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
                 event -> addRow(new RetirementBenefit()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        add(intro, this.rowsContainer, addButton);
+        // A section card so this tab carries its validation message at the
+        // top-right like every other form card.
+        final VerticalLayout inner = new VerticalLayout(intro, this.rowsContainer, addButton);
+        inner.setPadding(false);
+        inner.setSpacing(true);
+
+        final FormCard card = new FormCard("Benefits");
+        card.setWidthFull();
+        card.addClassName("form-section");
+        card.add(inner);
+        add(card);
     }
 
     Signal<List<RetirementBenefit>> retirementBenefitsSignal() {

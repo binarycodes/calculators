@@ -38,6 +38,28 @@ version or currency, and numerically absurd values are rejected, and an invalid
 link falls back to the normal persisted/default load with an "Invalid share
 link" notice.
 
+## Form validation messages
+
+Every calculator's inputs are grouped into **form-section cards** (`FormCard`).
+Validation feedback is shown consistently, in three layers:
+
+- **Field-level** — invalid fields keep their inline Vaadin error (e.g.
+  "Required", range messages).
+- **Card-level** — each `FormCard` shows a danger **chip at its top-right**
+  (the header-suffix slot) describing why *that card* blocks calculation: a
+  generic "Fix the highlighted fields" when any of its own fields are invalid,
+  or a card-specific rule (e.g. Goal's "Allocations must sum to 100%"). A
+  whole-calculation failure (an exception thrown by the calculator) is attached
+  to the form's primary/first card. The chip is hidden when the card is valid.
+- **Tab-level** — for tabbed forms, a small dot on each tab marks tabs that hold
+  data (primary colour) or contain an invalid field (danger colour).
+
+Every card that hosts inputs participates — including the otherwise card-less
+list tabs (e.g. Retirement's Future Expenses / Incomes / **Benefits**), which
+are wrapped in a section card so they carry the same top-right message. Summary
+/ result cards stay neutral placeholders ("—") while a form is invalid; the
+message lives on the input card, never on a result card.
+
 # Retirement Planner
 
 ## 1. Inputs

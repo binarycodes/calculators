@@ -9,6 +9,7 @@ import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
@@ -120,8 +121,22 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
         this.futureIncomesTab.setRecurringIncomes(inputs.getRecurringIncomes());
     }
 
+    public void clear() {
+        setInputs(new RetirementInputs());
+    }
+
     public RetirementInputs getInputs() {
         return buildInputs();
+    }
+
+    @Override
+    public void showValidationMessages(String calculationError) {
+        FormCard.refreshGenericErrors(this);
+        if (calculationError != null) {
+            FormCard.firstCard(this)
+                    .filter(card -> !card.hasInvalidField())
+                    .ifPresent(card -> card.showError(calculationError));
+        }
     }
 
     public boolean isValid() {

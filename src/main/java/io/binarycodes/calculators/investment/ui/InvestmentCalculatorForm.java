@@ -1,7 +1,6 @@
 package io.binarycodes.calculators.investment.ui;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -21,6 +20,7 @@ import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.investment.domain.ContributionFrequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
@@ -51,6 +51,8 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
     private final NumberField taxRate = percentageField("Tax Rate");
     private final NumberField inflationRate = percentageField("Inflation Rate");
     private final NumberField stepUp = percentageField("Step-Up (Yearly)");
+
+    private FormCard contributionCard;
 
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
     private final IntegerField investYears = yearsField("Years");
@@ -115,8 +117,20 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         renderHorizonFieldsFor(inputs.getHorizonMode());
     }
 
+    public void clear() {
+        setInputs(new InvestmentInputs());
+    }
+
     public InvestmentInputs getInputs() {
         return buildInputs();
+    }
+
+    @Override
+    public void showValidationMessages(String calculationError) {
+        FormCard.refreshGenericErrors(this);
+        if (calculationError != null && !this.contributionCard.hasInvalidField()) {
+            this.contributionCard.showError(calculationError);
+        }
     }
 
     public boolean isValid() {
@@ -148,7 +162,8 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         final Span frequencyLabel = new Span("Contribution frequency");
         frequencyLabel.addClassName("subsection-label");
 
-        return card("Contribution", topLayout, frequencyLabel, this.frequency);
+        this.contributionCard = card("Contribution", topLayout, frequencyLabel, this.frequency);
+        return this.contributionCard;
     }
 
     private Component buildInvestmentTimeCard() {
@@ -178,13 +193,12 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         return card("Holding Period", intro, holdLayout);
     }
 
-    private static Card card(String title, Component... children) {
+    private static FormCard card(String title, Component... children) {
         final VerticalLayout content = new VerticalLayout(children);
         content.setPadding(false);
         content.setSpacing(true);
 
-        final Card card = new Card();
-        card.setTitle(title);
+        final FormCard card = new FormCard(title);
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");

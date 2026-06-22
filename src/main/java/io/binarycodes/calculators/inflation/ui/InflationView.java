@@ -5,7 +5,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -49,8 +48,9 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
     protected void updateResults() {
         if (!this.form.isValid()) {
             this.form.validate();
+            this.form.showValidationMessages(null);
             this.enteredCard.setValue("—", null);
-            this.resultCard.setValue("Fix the highlighted fields to recalculate.", Status.DANGER);
+            this.resultCard.setValue("—", null);
             this.chartCard.setVisible(false);
             return;
         }
@@ -60,11 +60,13 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
         try {
             result = InflationCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
+            this.form.showValidationMessages(invalid.getMessage());
             this.enteredCard.setValue("—", null);
-            this.resultCard.setValue(invalid.getMessage(), Status.DANGER);
+            this.resultCard.setValue("—", null);
             this.chartCard.setVisible(false);
             return;
         }
+        this.form.showValidationMessages(null);
 
         final SupportedCurrency currency = this.preferences.currency();
         // Left card is always today's money, right card is always the value

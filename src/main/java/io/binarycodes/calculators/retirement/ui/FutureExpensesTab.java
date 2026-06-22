@@ -3,7 +3,6 @@ package io.binarycodes.calculators.retirement.ui;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -17,6 +16,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.base.ui.TabIndicator;
@@ -108,8 +108,7 @@ class FutureExpensesTab extends VerticalLayout implements TabIndicator.Source {
         inner.setPadding(false);
         inner.setSpacing(true);
 
-        final Card card = new Card();
-        card.setTitle(title);
+        final FormCard card = new FormCard(title);
         card.setWidthFull();
         card.add(inner);
         return card;

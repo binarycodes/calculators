@@ -11,6 +11,6 @@
     --vaadin-vertical-layout-gap: 1.5rem;
 }
 
-vaadin-tabs {
+.chart-card vaadin-tabs {
     margin-block: 0.25rem 1.5rem;
 }

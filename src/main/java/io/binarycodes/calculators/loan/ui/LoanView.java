@@ -84,7 +84,8 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
     protected void updateResults() {
         if (!this.form.isValid()) {
             this.form.validate();
-            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
+            this.form.showValidationMessages(null);
+            showInvalidFormPlaceholders();
             return;
         }
 
@@ -93,9 +94,11 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         try {
             result = LoanCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
-            showInvalidFormPlaceholders(invalid.getMessage());
+            this.form.showValidationMessages(invalid.getMessage());
+            showInvalidFormPlaceholders();
             return;
         }
+        this.form.showValidationMessages(null);
 
         final SupportedCurrency currency = this.preferences.currency();
         this.emiCard.setValue(MoneyFormatter.format(result.emi(), currency), null);
@@ -195,10 +198,10 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         return card;
     }
 
-    private void showInvalidFormPlaceholders(String dangerMessage) {
+    private void showInvalidFormPlaceholders() {
         this.emiCard.setValue("—", null);
         this.totalInterestCard.setValue("—", null);
-        this.totalPaymentCard.setValue(dangerMessage, Status.DANGER);
+        this.totalPaymentCard.setValue("—", null);
         this.interestSavedCard.setValue("—", null);
         this.lowerEmiCard.setValue("—", null);
         this.realInterestCard.setValue("—", null);

@@ -1,7 +1,6 @@
 package io.binarycodes.calculators.loan.ui;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.tabs.Tab;
@@ -21,6 +20,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
@@ -51,6 +51,8 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Span extraPaymentDot = TabIndicator.dot("A recurring extra payment is set");
     private final Span extraEmisDot = TabIndicator.dot("Extra EMIs per year are set");
     private final Span stepUpDot = TabIndicator.dot("An annual EMI step-up is set");
+
+    private FormCard loanCard;
 
     private final Signal<LoanInputs> inputsSignal;
 
@@ -120,8 +122,20 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         this.binder.readBean(inputs);
     }
 
+    public void clear() {
+        setInputs(new LoanInputs());
+    }
+
     public LoanInputs getInputs() {
         return buildInputs();
+    }
+
+    @Override
+    public void showValidationMessages(String calculationError) {
+        FormCard.refreshGenericErrors(this);
+        if (calculationError != null && !this.loanCard.hasInvalidField()) {
+            this.loanCard.showError(calculationError);
+        }
     }
 
     public boolean isValid() {
@@ -145,7 +159,8 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         final FormLayout layout = sectionForm();
         layout.add(this.loanAmount, withPercentageSuffix(this.annualRate),
                 withPercentageSuffix(this.inflationRate));
-        return card("Loan", layout);
+        this.loanCard = card("Loan", layout);
+        return this.loanCard;
     }
 
     private Component buildDurationCard() {
@@ -290,13 +305,12 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
                 .valueSignal();
     }
 
-    private static Card card(String title, Component... children) {
+    private static FormCard card(String title, Component... children) {
         final VerticalLayout content = new VerticalLayout(children);
         content.setPadding(false);
         content.setSpacing(true);
 
-        final Card card = new Card();
-        card.setTitle(title);
+        final FormCard card = new FormCard(title);
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");

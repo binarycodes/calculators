@@ -15,6 +15,7 @@ import com.vaadin.flow.data.converter.Converter;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.ValueProvider;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 import java.math.BigDecimal;
@@ -71,8 +72,7 @@ final class FormFields {
                 new FormLayout.ResponsiveStep("90em", 4));
         formLayout.add(fields);
 
-        final var card = new Card();
-        card.setTitle(title);
+        final var card = new FormCard(title);
         card.add(formLayout);
         card.setWidthFull();
         card.addClassNames("form-section");

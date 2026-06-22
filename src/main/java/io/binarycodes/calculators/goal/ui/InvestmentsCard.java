@@ -1,12 +1,9 @@
 package io.binarycodes.calculators.goal.ui;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
@@ -15,6 +12,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.goal.domain.Investment;
@@ -29,26 +27,24 @@ import java.util.function.Consumer;
  * corpus, growth, tax, step-up, and allocation share; the user can add or
  * remove rows freely.
  *
- * <p>The card header carries a live "Allocations: 100%" chip that tints
- * green when the sum is on-target and red otherwise — the calculator enforces
- * the constraint when called.</p>
+ * <p>When the allocation shares don't sum to 100% the card flags it through its
+ * top-right validation message; the calculator also enforces the constraint
+ * when called.</p>
  */
-public class InvestmentsCard extends Card {
+public class InvestmentsCard extends FormCard {
 
     private final UserPreferences preferences;
     private final VerticalLayout rowsContainer = new VerticalLayout();
     private final List<InvestmentRow> rows = new ArrayList<>();
     private final ValueSignal<List<Investment>> investmentsSignal = new ValueSignal<>(List.of());
-    private final Span allocationChip = new Span("0%");
 
     public InvestmentsCard(UserPreferences preferences) {
+        super("Investments");
         this.preferences = preferences;
 
         setWidthFull();
         addClassName("form-section");
         addClassName("investments-card");
-
-        setTitle(buildHeader());
 
         final Span intro = new Span("List every bucket the SIP should flow into. "
                 + "Each row carries its own corpus, growth, tax, and step-up; "
@@ -67,20 +63,6 @@ public class InvestmentsCard extends Card {
         content.setPadding(false);
         content.setSpacing(true);
         add(content);
-    }
-
-    private Component buildHeader() {
-        final Span title = new Span("Investments");
-        title.addClassName("investments-card-title");
-
-        this.allocationChip.addClassName("allocation-total");
-
-        final HorizontalLayout header = new HorizontalLayout(title, this.allocationChip);
-        header.addClassName("investments-card-header");
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        return header;
     }
 
     public Signal<List<Investment>> investmentsSignal() {
@@ -131,14 +113,6 @@ public class InvestmentsCard extends Card {
 
     private void publish() {
         this.investmentsSignal.set(snapshot());
-        updateAllocationChip();
-    }
-
-    private void updateAllocationChip() {
-        final BigDecimal sum = allocationSum();
-        this.allocationChip.setText("Allocations: " + sum.toPlainString() + "%");
-        this.allocationChip.getElement().setAttribute("status",
-                isAllocationValid() ? "success" : "danger");
     }
 
     private BigDecimal allocationSum() {

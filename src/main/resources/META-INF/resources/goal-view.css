@@ -20,29 +20,3 @@
     color: var(--color-text);
     margin-top: 0.5rem;
 }
-
-.goal-view .investments-card-header {
-    --vaadin-padding-m: 0;
-}
-
-.goal-view .investments-card-title {
-    font-weight: 700;
-    font-size: var(--vaadin-card-title-font-size, 1rem);
-}
-
-.goal-view .allocation-total {
-    font-weight: 700;
-    padding: 0.2rem 0.65rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.goal-view .allocation-total[status="success"] {
-    background-color: var(--color-success-bg);
-    color: var(--color-success-text);
-}
-
-.goal-view .allocation-total[status="danger"] {
-    background-color: var(--color-danger-bg);
-    color: var(--color-danger-text);
-}

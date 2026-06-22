@@ -45,6 +45,19 @@ a.brand-link:hover {
     gap: 0.75rem;
 }
 
+/* Validation message anchored at a form card's top-right (header suffix) —
+ * the standard place to explain why that card's inputs block calculation.
+ * Rendered as a danger chip to read as a status badge, not body text. */
+.form-card-message {
+    padding: 0.2rem 0.65rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* Repeating input rows (one record per row: expenses, incomes, investment
  * buckets, …). Two states, no awkward in-between: when the row fits it stays
  * on a single line; below the breakpoint it collapses into a stacked card

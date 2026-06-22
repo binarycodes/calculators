@@ -7,7 +7,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -58,7 +57,8 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
     protected void updateResults() {
         if (!this.form.isValid()) {
             this.form.validate();
-            showInvalidFormPlaceholders("Fix the highlighted fields to recalculate.");
+            this.form.showValidationMessages(null);
+            showInvalidFormPlaceholders();
             return;
         }
 
@@ -67,9 +67,11 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
         try {
             result = InvestmentCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
-            showInvalidFormPlaceholders(invalid.getMessage());
+            this.form.showValidationMessages(invalid.getMessage());
+            showInvalidFormPlaceholders();
             return;
         }
+        this.form.showValidationMessages(null);
 
         final SupportedCurrency currency = this.preferences.currency();
         this.investedCard.setValue(MoneyFormatter.format(result.totalInvested(), currency), null);
@@ -119,11 +121,11 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
         return card;
     }
 
-    private void showInvalidFormPlaceholders(String dangerMessage) {
+    private void showInvalidFormPlaceholders() {
         this.investedCard.setValue("—", null);
         this.maturityCard.setValue("—", null);
         this.netCard.setValue("—", null);
-        this.buyingPowerCard.setValue(dangerMessage, Status.DANGER);
+        this.buyingPowerCard.setValue("—", null);
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
     }

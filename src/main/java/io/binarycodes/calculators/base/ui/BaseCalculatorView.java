@@ -112,11 +112,20 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         final Button calculateButton = new Button("Calculate", event -> recalculate());
         calculateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
+        // Reset restores the per-currency defaults; Clear blanks the form entirely.
         final Button resetButton = new Button("Reset", event -> resetToDefaults());
 
-        final HorizontalLayout actionRow = new HorizontalLayout(calculateButton, resetButton);
+        final Button clearButton = new Button("Clear", event -> clearInputs());
+        clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        final HorizontalLayout primaryActions = new HorizontalLayout(calculateButton, resetButton);
+        primaryActions.setSpacing(true);
+
+        final HorizontalLayout actionRow = new HorizontalLayout(primaryActions, clearButton);
         actionRow.addClassName("action-row");
-        actionRow.setSpacing(true);
+        actionRow.setWidthFull();
+        actionRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        actionRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         return actionRow;
     }
 
@@ -149,6 +158,12 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         final I defaultInputs = this.defaults.forCurrency(currency);
         this.inputsStore.save(currency, defaultInputs);
         this.form.setInputs(defaultInputs);
+        recalculate();
+    }
+
+    private void clearInputs() {
+        this.form.clear();
+        this.inputsStore.save(this.preferences.currency(), this.form.getInputs());
         recalculate();
     }
 
