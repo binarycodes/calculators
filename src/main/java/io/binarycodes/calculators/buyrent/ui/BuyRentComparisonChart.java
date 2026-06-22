@@ -60,8 +60,8 @@ public class BuyRentComparisonChart extends Chart {
         rentSeries.setPlotOptions(rentOptions);
 
         for (final BuyRentYear row : result.rows()) {
-            buySeries.add(new DataSeriesItem(row.year(), row.equity().doubleValue()));
-            rentSeries.add(new DataSeriesItem(row.year(), row.rentPortfolio().doubleValue()));
+            buySeries.add(new DataSeriesItem(row.year(), row.equityAfterTax().doubleValue()));
+            rentSeries.add(new DataSeriesItem(row.year(), row.rentPortfolioAfterTax().doubleValue()));
         }
 
         configuration.setSeries(buySeries, rentSeries);

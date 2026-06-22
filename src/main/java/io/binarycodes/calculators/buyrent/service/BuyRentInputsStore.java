@@ -92,6 +92,8 @@ public class BuyRentInputsStore implements InputsStore<BuyRentInputs> {
         node.put("investmentReturnPct", plain(inputs.getInvestmentReturnPct()));
         node.put("inflationRatePct", plain(inputs.getInflationRatePct()));
         node.put("analysisYears", intStr(inputs.getAnalysisYears()));
+        node.put("propertyCapitalGainsTaxPct", plain(inputs.getPropertyCapitalGainsTaxPct()));
+        node.put("investmentGainsTaxPct", plain(inputs.getInvestmentGainsTaxPct()));
         return node;
     }
 
@@ -112,6 +114,8 @@ public class BuyRentInputsStore implements InputsStore<BuyRentInputs> {
         inputs.setInvestmentReturnPct(bd(node, "investmentReturnPct"));
         inputs.setInflationRatePct(bd(node, "inflationRatePct"));
         inputs.setAnalysisYears(intField(node, "analysisYears"));
+        inputs.setPropertyCapitalGainsTaxPct(bd(node, "propertyCapitalGainsTaxPct"));
+        inputs.setInvestmentGainsTaxPct(bd(node, "investmentGainsTaxPct"));
         return inputs;
     }
 

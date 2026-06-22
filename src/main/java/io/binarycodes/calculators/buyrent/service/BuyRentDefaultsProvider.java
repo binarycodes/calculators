@@ -71,6 +71,8 @@ public class BuyRentDefaultsProvider implements CalculatorDefaults<BuyRentInputs
         inputs.setInvestmentReturnPct(bd(node, "investmentReturnPct"));
         inputs.setInflationRatePct(bd(node, "inflationRatePct"));
         inputs.setAnalysisYears(intField(node, "analysisYears"));
+        inputs.setPropertyCapitalGainsTaxPct(bd(node, "propertyCapitalGainsTaxPct"));
+        inputs.setInvestmentGainsTaxPct(bd(node, "investmentGainsTaxPct"));
         return inputs;
     }
 
@@ -105,7 +107,9 @@ public class BuyRentDefaultsProvider implements CalculatorDefaults<BuyRentInputs
                 source.getRentIncreasePct(),
                 source.getInvestmentReturnPct(),
                 source.getInflationRatePct(),
-                source.getAnalysisYears());
+                source.getAnalysisYears(),
+                source.getPropertyCapitalGainsTaxPct(),
+                source.getInvestmentGainsTaxPct());
     }
 
     private static BuyRentInputs fallback() {
@@ -124,6 +128,8 @@ public class BuyRentDefaultsProvider implements CalculatorDefaults<BuyRentInputs
         inputs.setInvestmentReturnPct(BigDecimal.valueOf(10));
         inputs.setInflationRatePct(BigDecimal.valueOf(6));
         inputs.setAnalysisYears(20);
+        inputs.setPropertyCapitalGainsTaxPct(BigDecimal.valueOf(20));
+        inputs.setInvestmentGainsTaxPct(BigDecimal.valueOf(12.5));
         return inputs;
     }
 }

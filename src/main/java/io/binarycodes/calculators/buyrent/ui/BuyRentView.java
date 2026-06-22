@@ -85,21 +85,18 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
         this.monthlyCostRentCard.setValue(MoneyFormatter.format(result.initialMonthlyCostRent(), currency), null);
 
         if (result.breakEvenYear() > 0) {
-            final boolean buyWins = result.equityAtHorizon()
-                    .compareTo(result.rentPortfolioAtHorizon()) >= 0;
-            this.breakEvenCard.setValue("Year " + result.breakEvenYear(),
-                    buyWins ? Status.SUCCESS : null);
+            this.breakEvenCard.setValue("Year " + result.breakEvenYear(), Status.SUCCESS);
         } else {
             this.breakEvenCard.setValue("Not in horizon", Status.WARNING);
         }
 
-        final boolean buyAheadAtHorizon = result.equityAtHorizon()
-                .compareTo(result.rentPortfolioAtHorizon()) >= 0;
+        final boolean buyAheadAtHorizon = result.equityAtHorizonAfterTax()
+                .compareTo(result.rentPortfolioAtHorizonAfterTax()) >= 0;
         this.netWorthBuyCard.setValue(
-                MoneyFormatter.format(result.equityAtHorizon(), currency),
+                MoneyFormatter.format(result.equityAtHorizonAfterTax(), currency),
                 buyAheadAtHorizon ? Status.SUCCESS : null);
         this.netWorthRentCard.setValue(
-                MoneyFormatter.format(result.rentPortfolioAtHorizon(), currency),
+                MoneyFormatter.format(result.rentPortfolioAtHorizonAfterTax(), currency),
                 buyAheadAtHorizon ? null : Status.SUCCESS);
 
         this.chartCard.setVisible(true);

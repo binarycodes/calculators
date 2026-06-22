@@ -17,14 +17,17 @@ import java.util.List;
  *
  * <p><b>Buy path</b> — down payment + buying costs paid upfront; monthly EMI
  * until loan payoff; annual property tax and maintenance as a % of current home
- * value; home appreciates at the stated rate.</p>
+ * value; home appreciates at the stated rate. On exit: property capital-gains
+ * tax applies to the profit (sale proceeds − cost basis).</p>
  *
  * <p><b>Rent path</b> — the down payment + buying costs that were not spent are
  * invested immediately at the investment return rate; each month any surplus
  * (buy costs > rent) is added to the portfolio and any deficit (rent > buy
- * costs) is withdrawn; rent grows annually.</p>
+ * costs) is withdrawn; rent grows annually. On exit: investment capital-gains
+ * tax applies to the gain (portfolio − net contributions).</p>
  *
- * <p>Break-even is the first year where buy equity ≥ rent portfolio.</p>
+ * <p>Break-even is the first year where after-tax buy equity ≥ after-tax rent
+ * portfolio.</p>
  */
 public final class BuyRentCalculator {
 
@@ -42,6 +45,12 @@ public final class BuyRentCalculator {
         final BigDecimal maintenanceFraction = Rates.pctToFraction(inputs.getMaintenancePct());
         final BigDecimal appreciationFraction = Rates.pctToFraction(inputs.getAppreciationPct());
         final BigDecimal rentIncreaseFraction = Rates.pctToFraction(inputs.getRentIncreasePct());
+        final BigDecimal propertyCgtFraction = Rates.pctToFraction(inputs.getPropertyCapitalGainsTaxPct());
+        final BigDecimal investmentCgtFraction = Rates.pctToFraction(inputs.getInvestmentGainsTaxPct());
+
+        // Cost basis for property capital-gains calculation (home price + buying costs).
+        final BigDecimal propertyCostBasis = homePrice.multiply(
+                BigDecimal.ONE.add(buyingCostFraction, Rates.CONTEXT), Rates.CONTEXT);
 
         final BigDecimal loanAmount = homePrice.multiply(
                 BigDecimal.ONE.subtract(downFraction, Rates.CONTEXT), Rates.CONTEXT);
@@ -57,13 +66,16 @@ public final class BuyRentCalculator {
         final BigDecimal monthlyInflationRate = Rates.monthlyFromAnnual(
                 Rates.pctToFraction(inputs.getInflationRatePct()));
 
-        // The rent-path portfolio starts with the capital not spent on the purchase.
+        // Rent portfolio is seeded with the capital not spent on the purchase.
         final BigDecimal initialInvestment = homePrice.multiply(downFraction, Rates.CONTEXT)
                 .add(homePrice.multiply(buyingCostFraction, Rates.CONTEXT), Rates.CONTEXT);
 
         BigDecimal homeValue = homePrice;
         BigDecimal mortgageBalance = loanAmount;
         BigDecimal rentPortfolio = initialInvestment;
+        // Net contributions tracks the cost basis for the rent portfolio tax calculation.
+        // Starts at the initial investment; monthly surpluses (positive or negative) are added.
+        BigDecimal netContributions = initialInvestment;
         BigDecimal cumulativeRentPaid = BigDecimal.ZERO;
         BigDecimal cumulativeBuyCost = BigDecimal.ZERO;
         BigDecimal inflationAccumulator = BigDecimal.ONE;
@@ -77,7 +89,6 @@ public final class BuyRentCalculator {
         int breakEvenYear = -1;
 
         for (int month = 1; month <= totalMonths; month++) {
-            // Advance home value and inflation accumulator.
             homeValue = homeValue.multiply(BigDecimal.ONE.add(monthlyAppreciationRate, Rates.CONTEXT), Rates.CONTEXT);
             inflationAccumulator = inflationAccumulator.multiply(
                     BigDecimal.ONE.add(monthlyInflationRate, Rates.CONTEXT), Rates.CONTEXT);
@@ -93,7 +104,6 @@ public final class BuyRentCalculator {
                 }
                 emiThisMonth = monthlyEmi;
             } else if (month <= loanMonths && monthlyMortgageRate.signum() == 0) {
-                // Zero-rate loan: divide principal evenly.
                 final BigDecimal principalPortion = loanAmount.divide(BigDecimal.valueOf(loanMonths), Rates.CONTEXT);
                 mortgageBalance = mortgageBalance.subtract(principalPortion, Rates.CONTEXT);
                 if (mortgageBalance.signum() < 0) {
@@ -108,7 +118,7 @@ public final class BuyRentCalculator {
             final BigDecimal totalBuyCostThisMonth = emiThisMonth.add(monthlyTaxAndMaint, Rates.CONTEXT);
             cumulativeBuyCost = cumulativeBuyCost.add(totalBuyCostThisMonth, Rates.CONTEXT);
 
-            // Rent path — grow portfolio, add/subtract surplus.
+            // Rent path — grow portfolio, invest/withdraw surplus.
             final double yearFraction = (double) (month - 1) / 12.0;
             final BigDecimal monthlyRentNow = initialMonthlyRent.multiply(
                     BigDecimal.valueOf(Math.pow(1.0 + rentIncreaseFraction.doubleValue(), yearFraction)),
@@ -119,15 +129,31 @@ public final class BuyRentCalculator {
                     BigDecimal.ONE.add(monthlyInvestmentRate, Rates.CONTEXT), Rates.CONTEXT);
             final BigDecimal surplus = totalBuyCostThisMonth.subtract(monthlyRentNow, Rates.CONTEXT);
             rentPortfolio = rentPortfolio.add(surplus, Rates.CONTEXT);
+            netContributions = netContributions.add(surplus, Rates.CONTEXT);
 
             // Snapshot at each year boundary.
             if (month % 12 == 0) {
                 final int year = month / 12;
                 final BigDecimal currentMortgageBalance = mortgageBalance.max(BigDecimal.ZERO);
-                final BigDecimal equity = homeValue
-                        .multiply(BigDecimal.ONE.subtract(sellingCostFraction, Rates.CONTEXT), Rates.CONTEXT)
-                        .subtract(currentMortgageBalance, Rates.CONTEXT);
-                final BigDecimal netDiff = equity.subtract(rentPortfolio, Rates.CONTEXT);
+                final BigDecimal saleProceeds = homeValue
+                        .multiply(BigDecimal.ONE.subtract(sellingCostFraction, Rates.CONTEXT), Rates.CONTEXT);
+                final BigDecimal equity = saleProceeds.subtract(currentMortgageBalance, Rates.CONTEXT);
+
+                // Property capital-gains tax: tax on profit above cost basis.
+                final BigDecimal propertyGain = saleProceeds.subtract(propertyCostBasis, Rates.CONTEXT);
+                final BigDecimal propertyCgt = propertyGain.signum() > 0
+                        ? propertyGain.multiply(propertyCgtFraction, Rates.CONTEXT)
+                        : BigDecimal.ZERO;
+                final BigDecimal equityAfterTax = equity.subtract(propertyCgt, Rates.CONTEXT);
+
+                // Investment capital-gains tax: tax on gain above net contributions.
+                final BigDecimal investmentGain = rentPortfolio.subtract(netContributions, Rates.CONTEXT);
+                final BigDecimal investmentCgt = investmentGain.signum() > 0
+                        ? investmentGain.multiply(investmentCgtFraction, Rates.CONTEXT)
+                        : BigDecimal.ZERO;
+                final BigDecimal rentPortfolioAfterTax = rentPortfolio.subtract(investmentCgt, Rates.CONTEXT);
+
+                final BigDecimal netDiff = equityAfterTax.subtract(rentPortfolioAfterTax, Rates.CONTEXT);
                 final BigDecimal realNetDiff = netDiff.divide(inflationAccumulator, Rates.CONTEXT);
 
                 rows.add(new BuyRentYear(
@@ -135,13 +161,15 @@ public final class BuyRentCalculator {
                         homeValue,
                         currentMortgageBalance,
                         equity,
+                        equityAfterTax,
                         rentPortfolio,
+                        rentPortfolioAfterTax,
                         cumulativeRentPaid,
                         cumulativeBuyCost,
                         netDiff,
                         realNetDiff));
 
-                if (breakEvenYear < 0 && equity.compareTo(rentPortfolio) >= 0) {
+                if (breakEvenYear < 0 && equityAfterTax.compareTo(rentPortfolioAfterTax) >= 0) {
                     breakEvenYear = year;
                 }
             }
@@ -154,7 +182,9 @@ public final class BuyRentCalculator {
                 initialMonthlyRent,
                 lastRow == null ? homePrice : lastRow.homeValue(),
                 lastRow == null ? BigDecimal.ZERO : lastRow.equity(),
+                lastRow == null ? BigDecimal.ZERO : lastRow.equityAfterTax(),
                 lastRow == null ? initialInvestment : lastRow.rentPortfolio(),
+                lastRow == null ? initialInvestment : lastRow.rentPortfolioAfterTax(),
                 breakEvenYear,
                 rows);
     }
@@ -166,8 +196,6 @@ public final class BuyRentCalculator {
         if (monthlyRate.signum() == 0) {
             return principal.divide(BigDecimal.valueOf(months), Rates.CONTEXT);
         }
-        // Standard amortisation: P × r × (1+r)^n / ((1+r)^n − 1)
-        final BigDecimal onePlusR = BigDecimal.ONE.add(monthlyRate, Rates.CONTEXT);
         final BigDecimal factor = Rates.pow1plus(monthlyRate, months);
         return principal.multiply(monthlyRate, Rates.CONTEXT)
                 .multiply(factor, Rates.CONTEXT)

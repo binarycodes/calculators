@@ -34,4 +34,7 @@ public class BuyRentInputs {
     private BigDecimal investmentReturnPct;
     private BigDecimal inflationRatePct;
     private Integer analysisYears;
+
+    private BigDecimal propertyCapitalGainsTaxPct;
+    private BigDecimal investmentGainsTaxPct;
 }

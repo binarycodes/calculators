@@ -29,8 +29,8 @@ public class BuyRentProjectionGrid extends Grid<BuyRentYear> {
                 .setAutoWidth(true);
         addMoneyColumn("Home Value", BuyRentYear::homeValue);
         addMoneyColumn("Mortgage Balance", BuyRentYear::mortgageBalance);
-        addMoneyColumn("Buy Net Worth", BuyRentYear::equity);
-        addMoneyColumn("Rent Portfolio", BuyRentYear::rentPortfolio);
+        addMoneyColumn("Buy Net Worth (after tax)", BuyRentYear::equityAfterTax);
+        addMoneyColumn("Rent Portfolio (after tax)", BuyRentYear::rentPortfolioAfterTax);
         addMoneyColumn("Difference (Buy − Rent)", BuyRentYear::netDifference);
 
         getColumns().forEach(column -> {

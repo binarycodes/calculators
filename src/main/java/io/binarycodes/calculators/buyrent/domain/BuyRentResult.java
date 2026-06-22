@@ -9,11 +9,13 @@ import java.util.List;
  * @param monthlyEmi                first-year monthly mortgage payment (0 if no loan)
  * @param initialMonthlyCostBuy     EMI + monthly property tax + maintenance in month 1
  * @param initialMonthlyCostRent    first month's rent
- * @param homeValueAtHorizon        home price at end of the analysis period
- * @param equityAtHorizon           buy-path net worth at horizon (after sell costs, net of mortgage)
- * @param rentPortfolioAtHorizon    rent-path net worth at horizon
- * @param breakEvenYear             first year where equity ≥ rentPortfolio; −1 if none within horizon
- * @param rows                      year-by-year projection
+ * @param homeValueAtHorizon            home price at end of the analysis period
+ * @param equityAtHorizon               buy-path net worth at horizon, pre-tax
+ * @param equityAtHorizonAfterTax       buy-path net worth after property capital-gains tax
+ * @param rentPortfolioAtHorizon        rent-path net worth at horizon, pre-tax
+ * @param rentPortfolioAtHorizonAfterTax rent-path net worth after investment capital-gains tax
+ * @param breakEvenYear                 first year where after-tax equity ≥ after-tax portfolio; −1 if none
+ * @param rows                          year-by-year projection
  */
 public record BuyRentResult(
         BigDecimal monthlyEmi,
@@ -21,7 +23,9 @@ public record BuyRentResult(
         BigDecimal initialMonthlyCostRent,
         BigDecimal homeValueAtHorizon,
         BigDecimal equityAtHorizon,
+        BigDecimal equityAtHorizonAfterTax,
         BigDecimal rentPortfolioAtHorizon,
+        BigDecimal rentPortfolioAtHorizonAfterTax,
         int breakEvenYear,
         List<BuyRentYear> rows
 ) {

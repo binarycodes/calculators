@@ -13,7 +13,9 @@
     "rentIncreasePct": "5",
     "investmentReturnPct": "10",
     "inflationRatePct": "6",
-    "analysisYears": "20"
+    "analysisYears": "20",
+    "propertyCapitalGainsTaxPct": "20",
+    "investmentGainsTaxPct": "12.5"
   },
   "EUR": {
     "homePrice": "250000",
@@ -29,7 +31,9 @@
     "rentIncreasePct": "2",
     "investmentReturnPct": "7",
     "inflationRatePct": "3",
-    "analysisYears": "25"
+    "analysisYears": "25",
+    "propertyCapitalGainsTaxPct": "26",
+    "investmentGainsTaxPct": "26"
   },
   "USD": {
     "homePrice": "400000",
@@ -45,6 +49,8 @@
     "rentIncreasePct": "3",
     "investmentReturnPct": "8",
     "inflationRatePct": "3",
-    "analysisYears": "30"
+    "analysisYears": "30",
+    "propertyCapitalGainsTaxPct": "15",
+    "investmentGainsTaxPct": "15"
   }
 }

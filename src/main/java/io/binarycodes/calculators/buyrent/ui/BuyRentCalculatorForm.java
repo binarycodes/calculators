@@ -54,6 +54,8 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
     private final NumberField investmentReturnPct = percentageField("Investment Return");
     private final NumberField inflationRatePct = percentageField("Inflation Rate");
     private final IntegerField analysisYears = yearsField("Analysis Horizon");
+    private final NumberField propertyCapitalGainsTaxPct = percentageField("Property Capital Gains Tax");
+    private final NumberField investmentGainsTaxPct = percentageField("Investment Gains Tax");
 
     private FormCard homePurchaseCard;
 
@@ -71,6 +73,8 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
     private Signal<?> investmentReturnSignal;
     private Signal<?> inflationRateSignal;
     private Signal<?> analysisYearsSignal;
+    private Signal<?> propertyCapitalGainsTaxSignal;
+    private Signal<?> investmentGainsTaxSignal;
 
     private final Signal<BuyRentInputs> inputsSignal;
 
@@ -102,6 +106,8 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
             this.investmentReturnSignal.get();
             this.inflationRateSignal.get();
             this.analysisYearsSignal.get();
+            this.propertyCapitalGainsTaxSignal.get();
+            this.investmentGainsTaxSignal.get();
             return buildInputs();
         });
     }
@@ -184,12 +190,15 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
     private Component buildAnalysisCard() {
         final FormLayout layout = threeColForm();
         layout.add(withPercentageSuffix(this.investmentReturnPct),
-                withPercentageSuffix(this.inflationRatePct), this.analysisYears);
+                withPercentageSuffix(this.inflationRatePct), this.analysisYears,
+                withPercentageSuffix(this.propertyCapitalGainsTaxPct),
+                withPercentageSuffix(this.investmentGainsTaxPct));
 
         final Span hint = new Span(
                 "The investment return is applied to the down payment (and monthly surplus) "
-                + "in the rent scenario. Inflation is used to express the final net-worth difference "
-                + "in today's money.");
+                + "in the rent scenario. Both tax rates apply on exit only — property capital gains "
+                + "tax on the home's profit, investment gains tax on the portfolio's profit. "
+                + "Set either to 0 to model a tax-exempt scenario.");
         hint.addClassName("subsection-hint");
 
         final VerticalLayout content = new VerticalLayout(layout, hint);
@@ -296,6 +305,18 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                     return com.vaadin.flow.data.binder.ValidationResult.ok();
                 })
                 .bind(BuyRentInputs::getAnalysisYears, BuyRentInputs::setAnalysisYears)
+                .valueSignal();
+
+        this.propertyCapitalGainsTaxSignal = this.binder.forField(this.propertyCapitalGainsTaxPct)
+                .withValidator(new DoubleRangeValidator("Must be between 0 and 60", 0d, 60d))
+                .withConverter(doubleToBigDecimalConverter())
+                .bind(BuyRentInputs::getPropertyCapitalGainsTaxPct, BuyRentInputs::setPropertyCapitalGainsTaxPct)
+                .valueSignal();
+
+        this.investmentGainsTaxSignal = this.binder.forField(this.investmentGainsTaxPct)
+                .withValidator(new DoubleRangeValidator("Must be between 0 and 60", 0d, 60d))
+                .withConverter(doubleToBigDecimalConverter())
+                .bind(BuyRentInputs::getInvestmentGainsTaxPct, BuyRentInputs::setInvestmentGainsTaxPct)
                 .valueSignal();
     }
 
