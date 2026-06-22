@@ -655,6 +655,8 @@ snapshotted at each year boundary.
 | Investment Return | Analysis | 0–30 %, Required | Annual return on the rent-path portfolio. |
 | Inflation Rate | Analysis | 0–20 % | Used to express the net-worth difference in today's money. |
 | Analysis Horizon | Analysis | 1–50 yrs, Required | How many years to project. |
+| Property Capital Gains Tax | Analysis | 0–60 % | Tax rate on the profit when the home is sold (sale proceeds − cost basis). |
+| Investment Gains Tax | Analysis | 0–60 % | Tax rate on the investment portfolio profit at exit (portfolio − net contributions). |
 
 ## 2. Financial Model
 
@@ -664,7 +666,10 @@ snapshotted at each year boundary.
   full loan term; once the loan is paid off there is no more EMI.
 - Property tax + maintenance accrue monthly as a fraction of the current home
   value (which appreciates at the stated rate).
-- Net worth at year Y = home value × (1 − selling cost %) − outstanding mortgage balance.
+- Net worth at year Y (pre-tax) = home value × (1 − selling cost %) − outstanding mortgage balance.
+- Property capital-gains tax on exit = max(0, sale proceeds − cost basis) × property CGT rate,
+  where cost basis = home price × (1 + buying cost %).
+- Net worth after tax = pre-tax equity − property capital-gains tax.
 
 ### Rent path
 - The down payment + buying costs (capital not spent on the purchase) are
@@ -672,10 +677,13 @@ snapshotted at each year boundary.
 - Each month the **surplus** (buy monthly cost − rent this month) is added to
   the portfolio; if rent exceeds buy costs the deficit is withdrawn.
 - Rent grows each year at the rent-increase rate.
-- Net worth at year Y = investment portfolio balance.
+- Portfolio net worth (pre-tax) at year Y = investment portfolio balance.
+- Investment capital-gains tax on exit = max(0, portfolio − net contributions) × investment CGT rate,
+  where net contributions = initial investment + cumulative monthly surpluses (positive or negative).
+- Net worth after tax = portfolio − investment capital-gains tax.
 
 ### Break-even
-The first year where buy net worth ≥ rent net worth. Reported as "Not in
+The first year where after-tax buy equity ≥ after-tax rent portfolio. Reported as "Not in
 horizon" if buy never catches up within the analysis period.
 
 ## 3. Outputs
@@ -686,10 +694,10 @@ horizon" if buy never catches up within the analysis period.
 | Monthly Cost: Buy | EMI + first-month property tax + maintenance |
 | Monthly Cost: Rent | First month's rent |
 | Break-Even | First year buy is ahead, or "Not in horizon" |
-| Net Worth: Buy | Equity at end of horizon |
-| Net Worth: Rent | Portfolio at end of horizon |
+| Net Worth: Buy | After-tax equity at end of horizon |
+| Net Worth: Rent | After-tax portfolio at end of horizon |
 
-The winning path at the horizon is highlighted in success green.
+All net-worth values are after capital-gains tax. The winning path at the horizon is highlighted in success green.
 
 ### Comparison chart
 Line chart showing buy equity (blue) and rent portfolio (green) from year 1 to
