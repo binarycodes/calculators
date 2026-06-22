@@ -338,8 +338,6 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
 
     private static IntegerField yearsField(String label) {
         final IntegerField field = new IntegerField(label);
-        field.setMin(0);
-        field.setMax(100);
         field.setStepButtonsVisible(false);
         field.setSuffixComponent(secondaryText("yrs"));
         field.setValueChangeMode(ValueChangeMode.LAZY);
