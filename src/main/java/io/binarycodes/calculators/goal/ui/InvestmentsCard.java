@@ -189,8 +189,6 @@ public class InvestmentsCard extends FormCard {
 
         private static NumberField percentage(String label) {
             final NumberField field = new NumberField(label);
-            field.setMin(0);
-            field.setMax(100);
             field.setStep(0.1);
             field.setStepButtonsVisible(false);
             field.setValueChangeMode(ValueChangeMode.LAZY);

@@ -485,8 +485,6 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private static NumberField percentageField(String label) {
         final NumberField field = new NumberField(label);
-        field.setMin(0);
-        field.setMax(100);
         field.setStep(0.1);
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
