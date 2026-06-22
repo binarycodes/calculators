@@ -65,6 +65,14 @@ public class MoneyField extends CustomField<BigDecimal> {
     }
 
     @Override
+    public void setInvalid(boolean invalid) {
+        super.setInvalid(invalid);
+        // The red error border is drawn by the inner NumberField, not the
+        // CustomField host, so mirror the invalid state onto it.
+        this.inner.setInvalid(invalid);
+    }
+
+    @Override
     protected BigDecimal generateModelValue() {
         final Double v = this.inner.getValue();
         return v == null ? null : BigDecimal.valueOf(v);
