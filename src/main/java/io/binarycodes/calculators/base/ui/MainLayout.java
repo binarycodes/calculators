@@ -2,6 +2,7 @@ package io.binarycodes.calculators.base.ui;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -20,6 +21,9 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
  * SideNav populated automatically from {@code @Menu}-annotated views.
  */
 @Layout
+@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-number-field")
+@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-integer-field")
+@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-custom-field")
 public class MainLayout extends AppLayout {
 
     public MainLayout(UserPreferences prefs) {
