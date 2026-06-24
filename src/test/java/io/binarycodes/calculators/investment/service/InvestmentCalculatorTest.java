@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.math.MathContext;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -141,5 +142,52 @@ class InvestmentCalculatorTest {
         final InvestmentInputs inputs = base(0, 5);
         inputs.setInvestMonths(0);
         assertThrows(IllegalArgumentException.class, () -> InvestmentCalculator.calculate(inputs));
+    }
+
+    @Test
+    void hold_months_outside_zero_to_eleven_rejected() {
+        final InvestmentInputs twelve = base(5, 0);
+        twelve.setHoldMonths(12);
+        assertThrows(IllegalArgumentException.class, () -> InvestmentCalculator.calculate(twelve));
+
+        final InvestmentInputs negative = base(5, 0);
+        negative.setHoldMonths(-1);
+        assertThrows(IllegalArgumentException.class, () -> InvestmentCalculator.calculate(negative));
+
+        // 11 is the maximum valid value.
+        final InvestmentInputs eleven = base(5, 0);
+        eleven.setHoldMonths(11);
+        assertDoesNotThrow(() -> InvestmentCalculator.calculate(eleven));
+    }
+
+    @Test
+    void null_hold_years_and_months_default_to_zero() {
+        final InvestmentInputs inputs = base(5, 0);
+        inputs.setHoldYears(null);
+        inputs.setHoldMonths(null);
+        final InvestmentResult result = InvestmentCalculator.calculate(inputs);
+        assertEquals(0, result.holdMonths());
+    }
+
+    @Test
+    void null_frequency_defaults_to_monthly() {
+        // null frequency → MONTHLY → 12 × 10,000 = 120,000 invested per year.
+        final InvestmentInputs inputs = base(1, 0);
+        inputs.setFrequency(null);
+        final InvestmentResult result = InvestmentCalculator.calculate(inputs);
+        assertEquals(0, result.totalInvested().compareTo(new BigDecimal("120000")));
+    }
+
+    @Test
+    void zero_growth_rate_means_no_gains_and_no_tax() {
+        // With 0% growth there are no gains, so the 30% tax rate must produce zero tax.
+        final InvestmentInputs inputs = base(10, 0);
+        inputs.setGrowthRatePct(BigDecimal.ZERO);
+        inputs.setTaxRatePct(new BigDecimal("30"));
+        final InvestmentResult result = InvestmentCalculator.calculate(inputs);
+        assertEquals(0, result.gains().compareTo(BigDecimal.ZERO));
+        assertEquals(0, result.taxAtExit().compareTo(BigDecimal.ZERO));
+        assertEquals(0, result.netValue().compareTo(result.maturityValue()));
+        assertEquals(0, result.maturityValue().compareTo(result.totalInvested()));
     }
 }

@@ -3,6 +3,7 @@ package io.binarycodes.calculators.inflation.service;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -77,6 +79,17 @@ class InflationDefaultsJsonTest {
             assertDoesNotThrow(() -> InflationCalculator.calculate(inputs),
                     currency + ": defaults must produce a valid projection");
         }
+    }
+
+    @Test
+    void provider_returns_fallback_when_all_currency_entries_absent() throws Exception {
+        final var provider = new InflationDefaultsProvider(new ByteArrayResource("{}".getBytes()));
+        provider.load();
+        final InflationInputs result = provider.forCurrency(SupportedCurrency.USD);
+        assertNotNull(result);
+        assertEquals(0, result.getAmount().compareTo(BigDecimal.valueOf(1_000_000)));
+        assertEquals(0, result.getInflationRatePct().compareTo(BigDecimal.valueOf(6)));
+        assertTrue(result.isAmountIsToday());
     }
 
     private static JsonNode readTree() {

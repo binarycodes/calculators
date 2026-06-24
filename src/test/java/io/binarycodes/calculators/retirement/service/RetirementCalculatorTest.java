@@ -1,19 +1,26 @@
 package io.binarycodes.calculators.retirement.service;
 
+import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
+import io.binarycodes.calculators.retirement.domain.RecurringExpense;
+import io.binarycodes.calculators.retirement.domain.RecurringIncome;
 import io.binarycodes.calculators.retirement.domain.RetirementBenefit;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import io.binarycodes.calculators.retirement.domain.RetirementResult;
 
+import java.math.MathContext;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -336,6 +343,268 @@ class RetirementCalculatorTest {
     void rejects_retireAge_ge_lifeExp() {
         assertThrows(IllegalArgumentException.class,
                 () -> RetirementCalculator.calculate(allOnes(35, 90, 90)));
+    }
+
+    // -------------------------------------------------------------------------
+    // Recurring income
+    // -------------------------------------------------------------------------
+
+    @Test
+    void recurring_monthly_income_adds_net_amount_within_active_window() {
+        // MONTHLY 50,000 @ 10% tax → net = 540,000/year; only active between startYear..stopYear.
+        final int currentYear = Year.now().getValue();
+        final int startYear = currentYear + 2;  // age 40
+        final int stopYear = currentYear + 4;   // age 42
+
+        final RecurringIncome partTimeWork = new RecurringIncome();
+        partTimeWork.setYear(startYear);
+        partTimeWork.setStopYear(stopYear);
+        partTimeWork.setFrequency(Frequency.MONTHLY);
+        partTimeWork.setAmount(bd(50_000));
+        partTimeWork.setTaxRatePct(bd(10));
+
+        final RetirementInputs withIncome = inrDefaults();
+        withIncome.setRecurringIncomes(List.of(partTimeWork));
+
+        final List<ProjectionRow> base = RetirementCalculator.calculate(inrDefaults()).rows();
+        final List<ProjectionRow> with = RetirementCalculator.calculate(withIncome).rows();
+
+        final BigDecimal expectedNetAnnual = bd(50_000)
+                .multiply(BigDecimal.valueOf(12))
+                .multiply(new BigDecimal("0.90"), MathContext.DECIMAL64);
+
+        for (int index = 0; index < base.size(); index++) {
+            final int year = base.get(index).year();
+            final BigDecimal delta = with.get(index).investment()
+                    .subtract(base.get(index).investment()).abs();
+            if (year >= startYear && year <= stopYear) {
+                assertTrue(delta.subtract(expectedNetAnnual).abs()
+                                .compareTo(BigDecimal.ONE) < 0,
+                        "inside window: investment delta should be " + expectedNetAnnual + " at year " + year);
+            } else if (!base.get(index).isPost()) {
+                assertEquals(0, delta.compareTo(BigDecimal.ZERO),
+                        "outside window: investment unchanged at year " + year);
+            }
+        }
+    }
+
+    @Test
+    void recurring_yearly_income_is_not_multiplied_by_twelve() {
+        // YEARLY 50,000 @ 0% tax → net delta = 50,000/year.
+        // MONTHLY 50,000 @ 0% tax → net delta = 600,000/year.
+        final int currentYear = Year.now().getValue();
+        final int targetYear = currentYear + 1;
+
+        final RetirementInputs withYearly = inrDefaults();
+        final RecurringIncome yearly = new RecurringIncome();
+        yearly.setYear(targetYear);
+        yearly.setFrequency(Frequency.YEARLY);
+        yearly.setAmount(bd(50_000));
+        yearly.setTaxRatePct(bd(0));
+        withYearly.setRecurringIncomes(List.of(yearly));
+
+        final RetirementInputs withMonthly = inrDefaults();
+        final RecurringIncome monthly = new RecurringIncome();
+        monthly.setYear(targetYear);
+        monthly.setFrequency(Frequency.MONTHLY);
+        monthly.setAmount(bd(50_000));
+        monthly.setTaxRatePct(bd(0));
+        withMonthly.setRecurringIncomes(List.of(monthly));
+
+        final ProjectionRow baseRow = rowForYear(RetirementCalculator.calculate(inrDefaults()), targetYear);
+        final ProjectionRow yearlyRow = rowForYear(RetirementCalculator.calculate(withYearly), targetYear);
+        final ProjectionRow monthlyRow = rowForYear(RetirementCalculator.calculate(withMonthly), targetYear);
+
+        final BigDecimal yearlyDelta = yearlyRow.investment().subtract(baseRow.investment());
+        assertTrue(yearlyDelta.subtract(bd(50_000)).abs().compareTo(BigDecimal.ONE) < 0,
+                "YEARLY income should contribute 50,000; delta=" + yearlyDelta);
+
+        final BigDecimal monthlyDelta = monthlyRow.investment().subtract(baseRow.investment());
+        // Monthly contributes 12× the yearly amount.
+        assertTrue(monthlyDelta.compareTo(yearlyDelta.multiply(BigDecimal.valueOf(10))) > 0,
+                "MONTHLY income should be >> YEARLY; monthly=" + monthlyDelta + " yearly=" + yearlyDelta);
+    }
+
+    @Test
+    void recurring_income_not_active_before_start_year_or_after_stop_year() {
+        final int currentYear = Year.now().getValue();
+        final int startYear = currentYear + 3;
+        final int stopYear = currentYear + 5;
+
+        final RecurringIncome income = new RecurringIncome();
+        income.setYear(startYear);
+        income.setStopYear(stopYear);
+        income.setFrequency(Frequency.MONTHLY);
+        income.setAmount(bd(100_000));
+        income.setTaxRatePct(bd(0));
+
+        final RetirementInputs withIncome = inrDefaults();
+        withIncome.setRecurringIncomes(List.of(income));
+
+        final List<ProjectionRow> base = RetirementCalculator.calculate(inrDefaults()).rows();
+        final List<ProjectionRow> with = RetirementCalculator.calculate(withIncome).rows();
+
+        for (int index = 0; index < base.size(); index++) {
+            final int year = base.get(index).year();
+            if (year < startYear || year > stopYear) {
+                assertEquals(0, with.get(index).investment()
+                                .compareTo(base.get(index).investment()),
+                        "investment must be unchanged outside active window at year " + year);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Recurring expense
+    // -------------------------------------------------------------------------
+
+    @Test
+    void recurring_expense_active_window_adds_to_withdrawal() {
+        // A pre-retirement window (ages 40-42) means baseline withdrawal is 0.
+        // With the recurring expense, withdrawal should exceed 0 in that window.
+        final int currentYear = Year.now().getValue();
+        final int startYear = currentYear + 2;  // age 40
+        final int stopYear = currentYear + 4;   // age 42
+
+        final RecurringExpense schoolFees = new RecurringExpense();
+        schoolFees.setYear(startYear);
+        schoolFees.setStopYear(stopYear);
+        schoolFees.setFrequency(Frequency.MONTHLY);
+        schoolFees.setAmount(bd(30_000));
+        schoolFees.setInflationPct(bd(5));  // custom rate
+
+        final RetirementInputs withExpense = inrDefaults();
+        withExpense.setRecurringExpenses(List.of(schoolFees));
+
+        final List<ProjectionRow> base = RetirementCalculator.calculate(inrDefaults()).rows();
+        final List<ProjectionRow> with = RetirementCalculator.calculate(withExpense).rows();
+
+        for (int index = 0; index < base.size(); index++) {
+            final int year = base.get(index).year();
+            if (year >= startYear && year <= stopYear) {
+                assertTrue(with.get(index).withdrawal()
+                                .compareTo(base.get(index).withdrawal()) > 0,
+                        "withdrawal should increase within window at year " + year);
+            } else if (year < startYear && !base.get(index).isPost()) {
+                assertEquals(0, with.get(index).withdrawal()
+                                .compareTo(base.get(index).withdrawal()),
+                        "withdrawal unchanged before window at year " + year);
+            }
+        }
+    }
+
+    @Test
+    void recurring_expense_custom_inflation_differs_from_general_inflation() {
+        // Same expense, different inflation rates → different withdrawal amounts
+        // at a future year where compound differences are visible.
+        final int currentYear = Year.now().getValue();
+        final int targetYear = currentYear + 3;  // age 41, pre-retirement
+
+        final RetirementInputs withCustom = inrDefaults();
+        final RecurringExpense custom = new RecurringExpense();
+        custom.setYear(targetYear);
+        custom.setFrequency(Frequency.MONTHLY);
+        custom.setAmount(bd(10_000));
+        custom.setInflationPct(bd(4));  // 4% custom vs 8% general
+        withCustom.setRecurringExpenses(List.of(custom));
+
+        final RetirementInputs withGeneral = inrDefaults();
+        final RecurringExpense general = new RecurringExpense();
+        general.setYear(targetYear);
+        general.setFrequency(Frequency.MONTHLY);
+        general.setAmount(bd(10_000));
+        general.setInflationPct(null);  // falls back to general 8%
+        withGeneral.setRecurringExpenses(List.of(general));
+
+        final ProjectionRow customRow = rowForYear(RetirementCalculator.calculate(withCustom), targetYear);
+        final ProjectionRow generalRow = rowForYear(RetirementCalculator.calculate(withGeneral), targetYear);
+
+        // General 8% > custom 4% → larger withdrawal.
+        assertTrue(generalRow.withdrawal().compareTo(customRow.withdrawal()) > 0,
+                "8% general inflation should produce higher withdrawal than 4% custom");
+    }
+
+    // -------------------------------------------------------------------------
+    // Null / zero guard paths
+    // -------------------------------------------------------------------------
+
+    @Test
+    void null_and_zero_retirement_benefits_are_silently_skipped() {
+        // List with a null element, a zero-amount element, and one valid 500,000 entry at 0% tax.
+        // Only the valid entry should affect the retirement year investment column.
+        final RetirementBenefit zero = new RetirementBenefit();
+        zero.setAmount(BigDecimal.ZERO);
+        zero.setTaxRatePct(BigDecimal.ZERO);
+
+        final RetirementBenefit valid = new RetirementBenefit();
+        valid.setAmount(bd(500_000));
+        valid.setTaxRatePct(BigDecimal.ZERO);
+
+        final List<RetirementBenefit> benefits = new ArrayList<>();
+        benefits.add(null);      // null element
+        benefits.add(zero);      // zero-amount element
+        benefits.add(valid);     // only this should contribute
+
+        final RetirementInputs withBenefits = inrDefaults();
+        withBenefits.setRetirementBenefits(benefits);
+
+        final ProjectionRow baseRetire = retirementRow(RetirementCalculator.calculate(inrDefaults()));
+        final ProjectionRow withRetire = retirementRow(RetirementCalculator.calculate(withBenefits));
+
+        final BigDecimal delta = withRetire.investment().subtract(baseRetire.investment());
+        assertTrue(delta.subtract(bd(500_000)).abs().compareTo(BigDecimal.ONE) < 0,
+                "only valid benefit should contribute; null and zero silently skipped; delta=" + delta);
+    }
+
+    // -------------------------------------------------------------------------
+    // Corpus depletion
+    // -------------------------------------------------------------------------
+
+    @Test
+    void corpus_depletion_terminates_projection_and_sets_depletion_age() {
+        // Tiny corpus (1,000) with large monthly expenses guarantees depletion at retirement.
+        final var inputs = new RetirementInputs();
+        inputs.setCurrentAge(35);
+        inputs.setRetireAge(36);
+        inputs.setLifeExp(40);
+        inputs.setCorpus(bd(1_000));
+        inputs.setMonthlyExpenses(bd(100_000));
+        inputs.setInflationPct(bd(0));
+        inputs.setGrowthPrePct(bd(0));
+        inputs.setGrowthPostPct(bd(0));
+        inputs.setCorpusTaxRatePct(bd(0));
+        inputs.setMonthlyInvPre(bd(0));
+        inputs.setSipGrowthPrePct(bd(0));
+        inputs.setSipStepUpPrePct(bd(0));
+        inputs.setTaxRatePrePct(bd(0));
+        inputs.setMonthlyInvPost(bd(0));
+        inputs.setSipGrowthPostPct(bd(0));
+        inputs.setSipStepUpPostPct(bd(0));
+        inputs.setTaxRatePostPct(bd(0));
+
+        final RetirementResult result = RetirementCalculator.calculate(inputs);
+
+        assertTrue(result.corpusDepletedAt().isPresent(), "corpus depletion must be flagged");
+        assertEquals(36, result.corpusDepletedAt().get(),
+                "must deplete at retirement (age 36)");
+        // Loop breaks at depletion: 2 rows for ages 35 and 36.
+        assertEquals(2, result.rows().size(), "loop must break immediately after depletion");
+        assertTrue(result.rows().get(1).endCorpus().signum() < 0,
+                "depletion row must have negative end corpus");
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private static ProjectionRow rowForYear(RetirementResult result, int year) {
+        return result.rows().stream().filter(row -> row.year() == year)
+                .findFirst().orElseThrow();
+    }
+
+    private static ProjectionRow retirementRow(RetirementResult result) {
+        return result.rows().stream().filter(ProjectionRow::isRetireYear)
+                .findFirst().orElseThrow();
     }
 
     private static BigDecimal bd(long n) {

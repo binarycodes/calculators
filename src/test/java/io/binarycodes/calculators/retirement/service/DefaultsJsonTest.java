@@ -1,8 +1,10 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -12,8 +14,10 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -103,6 +107,70 @@ class DefaultsJsonTest {
             assertDoesNotThrow(() -> RetirementCalculator.calculate(inputs),
                     currency + ": defaults must produce a valid projection");
         }
+    }
+
+    @Test
+    void provider_returns_fallback_when_all_currency_entries_absent() throws Exception {
+        // Empty JSON → no currencies loaded → forCurrency falls through to fallback().
+        final var provider = new DefaultsProvider(new ByteArrayResource("{}".getBytes()));
+        provider.load();
+        final RetirementInputs result = provider.forCurrency(SupportedCurrency.USD);
+        assertNotNull(result);
+        assertEquals(35, result.getCurrentAge());
+        assertEquals(60, result.getRetireAge());
+        assertEquals(90, result.getLifeExp());
+        assertEquals(0, result.getCorpus().compareTo(BigDecimal.valueOf(5_000_000)));
+    }
+
+    @Test
+    void all_array_fields_are_parsed_and_invalid_frequency_falls_back_to_monthly() throws Exception {
+        // JSON with entries in all five array fields. "WEEKLY"/"QUARTERLY" are invalid
+        // frequency values — readFrequency must return MONTHLY for both. A blank inflation
+        // string in recurringExpenses must produce null via bdOrNull.
+        // Together this exercises the loop bodies of all five read*Array methods.
+        final String json = """
+                {"INR":{
+                  "currentAge":"35","retireAge":"60","lifeExp":"90",
+                  "corpus":"5000000","monthlyExp":"50000","inflation":"6",
+                  "growthPre":"12","growthPost":"8","corpusTaxRate":"0",
+                  "monthlyInvPre":"10000","sipGrowthPre":"12","sipStepUpPre":"0","taxRatePre":"0",
+                  "monthlyInvPost":"0","sipGrowthPost":"0","sipStepUpPost":"0","taxRatePost":"0",
+                  "recurringExpenses":[{"year":2030,"stopYear":2035,"description":"EMI",
+                    "amount":"5000","frequency":"WEEKLY","inflation":""}],
+                  "recurringIncomes":[{"year":2031,"stopYear":2036,"description":"Rent",
+                    "amount":"10000","frequency":"QUARTERLY","taxRate":"10"}],
+                  "futureExpenses":[{"year":2040,"description":"Wedding",
+                    "amount":"1000000","inflation":"5"}],
+                  "retirementBenefits":[{"description":"Gratuity",
+                    "amount":"500000","taxRate":"10"}],
+                  "futureIncomes":[{"year":2042,"description":"Sale",
+                    "amount":"2000000","taxRate":"15"}]
+                }}
+                """;
+        final var provider = new DefaultsProvider(new ByteArrayResource(json.getBytes()));
+        provider.load();
+        final RetirementInputs inputs = provider.forCurrency(SupportedCurrency.INR);
+
+        assertNotNull(inputs.getRecurringExpenses());
+        assertEquals(1, inputs.getRecurringExpenses().size());
+        assertEquals(Frequency.MONTHLY, inputs.getRecurringExpenses().get(0).getFrequency(),
+                "WEEKLY must fall back to MONTHLY");
+        assertNull(inputs.getRecurringExpenses().get(0).getInflationPct(),
+                "blank inflation string must yield null from bdOrNull");
+
+        assertNotNull(inputs.getRecurringIncomes());
+        assertEquals(1, inputs.getRecurringIncomes().size());
+        assertEquals(Frequency.MONTHLY, inputs.getRecurringIncomes().get(0).getFrequency(),
+                "QUARTERLY must fall back to MONTHLY");
+
+        assertNotNull(inputs.getFutureExpenses());
+        assertEquals(1, inputs.getFutureExpenses().size());
+
+        assertNotNull(inputs.getRetirementBenefits());
+        assertEquals(1, inputs.getRetirementBenefits().size());
+
+        assertNotNull(inputs.getFutureIncomes());
+        assertEquals(1, inputs.getFutureIncomes().size());
     }
 
     private static JsonNode readTree() {

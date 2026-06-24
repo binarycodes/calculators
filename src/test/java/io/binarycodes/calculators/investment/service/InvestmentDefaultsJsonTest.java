@@ -1,8 +1,10 @@
 package io.binarycodes.calculators.investment.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.investment.domain.ContributionFrequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -12,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -80,6 +83,17 @@ class InvestmentDefaultsJsonTest {
             assertDoesNotThrow(() -> InvestmentCalculator.calculate(inputs),
                     currency + ": defaults must produce a valid projection");
         }
+    }
+
+    @Test
+    void provider_returns_fallback_when_all_currency_entries_absent() throws Exception {
+        final var provider = new InvestmentDefaultsProvider(new ByteArrayResource("{}".getBytes()));
+        provider.load();
+        final InvestmentInputs result = provider.forCurrency(SupportedCurrency.EUR);
+        assertNotNull(result);
+        assertEquals(0, result.getAmount().compareTo(BigDecimal.valueOf(25_000)));
+        assertEquals(ContributionFrequency.MONTHLY, result.getFrequency());
+        assertEquals(0, result.getGrowthRatePct().compareTo(BigDecimal.valueOf(12)));
     }
 
     private static JsonNode readTree() {

@@ -139,4 +139,27 @@ class InflationCalculatorTest {
         inputs.setAmount(new BigDecimal("-1"));
         assertThrows(IllegalArgumentException.class, () -> InflationCalculator.calculate(inputs));
     }
+
+    @Test
+    void null_amount_is_rejected() {
+        final InflationInputs inputs = base(10, true);
+        inputs.setAmount(null);
+        assertThrows(IllegalArgumentException.class, () -> InflationCalculator.calculate(inputs));
+    }
+
+    @Test
+    void fractional_horizon_progression_has_extra_end_point_beyond_whole_years() {
+        // 30 months = 2 whole years + 6 months → 3 whole-year points (year 0,1,2)
+        // plus 1 fractional end point = 4 total.
+        final InflationInputs inputs = base(2, true);
+        inputs.setMonthsToGoal(6);
+        final InflationResult result = InflationCalculator.calculate(inputs);
+        assertEquals(4, result.progression().size(),
+                "2y6m horizon must produce 4 progression points");
+        // The extra point's value should match the result amount within rounding.
+        assertTrue(result.progression().getLast().value()
+                        .subtract(result.resultAmount(), MC).abs()
+                        .compareTo(new BigDecimal("0.01")) < 0,
+                "last progression point must equal the result amount");
+    }
 }
