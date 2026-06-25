@@ -3,6 +3,7 @@ package io.binarycodes.calculators.it;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.AriaRole;
 import io.binarycodes.calculators.it.support.SpringPlaywrightIT;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -17,6 +18,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
  * cross-field validators surface invalid entries to the user.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@DisplayName("Retirement form — recalculation & validation")
 class RetirementCalculatorFormIT extends SpringPlaywrightIT {
 
     @Override
@@ -25,6 +27,7 @@ class RetirementCalculatorFormIT extends SpringPlaywrightIT {
     }
 
     @Test
+    @DisplayName("Default load renders all four summary cards")
     void defaultLoad_rendersAllSummaryCards() {
         for (final String title : new String[]{
                 "Corpus at Retirement", "Annual Expenses at Retirement",
@@ -34,6 +37,7 @@ class RetirementCalculatorFormIT extends SpringPlaywrightIT {
     }
 
     @Test
+    @DisplayName("Editing the inflation rate updates the annual-expenses summary")
     void editingInflationRate_updatesAnnualExpensesSummary() {
         final Locator annualExpenses = summaryCard("Annual Expenses at Retirement");
         final String before = annualExpenses.textContent();
@@ -46,6 +50,7 @@ class RetirementCalculatorFormIT extends SpringPlaywrightIT {
     }
 
     @Test
+    @DisplayName("Retirement age below current age is flagged invalid")
     void retireAgeBelowCurrentAge_isFlaggedInvalid() {
         final IntegerFieldElement currentAge = IntegerFieldElement.getByLabel(page, "Current Age");
         final IntegerFieldElement retireAge = IntegerFieldElement.getByLabel(page, "Retirement Age");

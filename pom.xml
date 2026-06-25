@@ -167,6 +167,29 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
+                Renders the failsafe (e2e/Playwright) and surefire (unit) XML
+                results into a browsable HTML scenario list under
+                target/reports/. Not a coverage gate — it's a human-readable
+                catalogue of which scenarios ran and passed. @DisplayName on the
+                IT classes/methods becomes the scenario text.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>3.5.5</version>
+                <configuration>
+                    <outputDirectory>${project.build.directory}/reports</outputDirectory>
+                    <showSuccess>true</showSuccess>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>e2e-scenario-report</id>
+                        <phase>post-integration-test</phase>
+                        <goals><goal>failsafe-report-only</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

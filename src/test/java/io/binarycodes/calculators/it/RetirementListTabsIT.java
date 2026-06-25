@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page.GetByRoleOptions;
 import com.microsoft.playwright.options.AriaRole;
 import io.binarycodes.calculators.it.support.SpringPlaywrightIT;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -20,6 +21,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
  * (adding a row triggers recalculation in the summary cards).
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@DisplayName("Retirement form — list tabs drive recalculation")
 class RetirementListTabsIT extends SpringPlaywrightIT {
 
     @Override
@@ -28,6 +30,7 @@ class RetirementListTabsIT extends SpringPlaywrightIT {
     }
 
     @Test
+    @DisplayName("Adding a future expense reduces corpus at retirement")
     void addingFutureExpense_reducesCorpusAtRetirement() {
         final Locator corpusCard = summaryCard("Corpus at Retirement");
         final String before = corpusCard.textContent();
@@ -47,6 +50,7 @@ class RetirementListTabsIT extends SpringPlaywrightIT {
     }
 
     @Test
+    @DisplayName("Adding a recurring income increases the final corpus")
     void addingRecurringIncome_increasesFinalCorpus() {
         final Locator finalCorpusCard = summaryCard("Final Corpus");
         final String before = finalCorpusCard.textContent();

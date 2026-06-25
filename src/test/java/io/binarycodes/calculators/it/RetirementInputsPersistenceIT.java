@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.it;
 
 import io.binarycodes.calculators.it.support.SpringPlaywrightIT;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -13,6 +14,7 @@ import org.vaadin.addons.dramafinder.element.NumberFieldElement;
  * pure-Java tests).
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@DisplayName("Retirement form — input persistence")
 class RetirementInputsPersistenceIT extends SpringPlaywrightIT {
 
     @Override
@@ -21,6 +23,7 @@ class RetirementInputsPersistenceIT extends SpringPlaywrightIT {
     }
 
     @Test
+    @DisplayName("Edited inflation rate survives a full page reload")
     void editedInflationRate_survivesPageReload() {
         final NumberFieldElement inflation = NumberFieldElement.getByLabel(page, "Inflation Rate");
         inflation.setValue("7.5");
