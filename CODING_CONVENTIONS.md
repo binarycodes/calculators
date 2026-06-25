@@ -178,6 +178,17 @@ code should follow it without being prompted.
   Temurin JDK 21, Maven dependency cache via `actions/setup-java`.
 - **Tests live alongside the package they cover.** Golden-string /
   golden-number assertions for porting work.
+- **Commit messages follow Conventional Commits:**
+  `<type>[(scope)][!]: <description>`, with `type` one of `feat`, `fix`,
+  `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`,
+  `revert`. Keep the subject within 100 characters and do **not** add
+  `Co-Authored-By` trailers.
+- **A `commit-msg` hook enforces the above.** It lives in `.githooks/`
+  (version-controlled). Enable it once per clone with:
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
 
 ## 10. Working principles
 
