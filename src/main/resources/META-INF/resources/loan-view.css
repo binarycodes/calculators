@@ -32,7 +32,8 @@
     width: fit-content;
     background-color: var(--color-surface-overlay);
     padding: 0.25rem;
-    border-radius: 10px;
+    /* Full pill to match the currency / time-horizon toggles elsewhere. */
+    border-radius: 999px;
 }
 
 /* Each prepayment lever: a small gap between its fields and its caption. */
