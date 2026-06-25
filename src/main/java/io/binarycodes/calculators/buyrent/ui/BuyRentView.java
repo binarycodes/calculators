@@ -8,6 +8,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -85,9 +86,9 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
         this.monthlyCostRentCard.setValue(MoneyFormatter.format(result.initialMonthlyCostRent(), currency), null);
 
         if (result.breakEvenYear() > 0) {
-            this.breakEvenCard.setValue("Year " + result.breakEvenYear(), Status.SUCCESS);
+            this.breakEvenCard.setValue(getTranslation("buyrent.breakEvenYear", result.breakEvenYear()), Status.SUCCESS);
         } else {
-            this.breakEvenCard.setValue("Not in horizon", Status.WARNING);
+            this.breakEvenCard.setValue(getTranslation("buyrent.notInHorizon"), Status.WARNING);
         }
 
         final boolean buyAheadAtHorizon = result.equityAtHorizonAfterTax()
@@ -143,11 +144,11 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
     }
 
     private void showInvalidFormPlaceholders() {
-        this.monthlyCostBuyCard.setValue("—", null);
-        this.monthlyCostRentCard.setValue("—", null);
-        this.breakEvenCard.setValue("—", null);
-        this.netWorthBuyCard.setValue("—", null);
-        this.netWorthRentCard.setValue("—", null);
+        this.monthlyCostBuyCard.setValue(getTranslation("common.dash"), null);
+        this.monthlyCostRentCard.setValue(getTranslation("common.dash"), null);
+        this.breakEvenCard.setValue(getTranslation("common.dash"), null);
+        this.netWorthBuyCard.setValue(getTranslation("common.dash"), null);
+        this.netWorthRentCard.setValue(getTranslation("common.dash"), null);
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
     }

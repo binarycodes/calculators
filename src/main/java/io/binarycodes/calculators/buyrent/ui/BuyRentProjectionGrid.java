@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.buyrent.ui;
 
 import com.vaadin.flow.component.grid.ColumnTextAlign;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -24,14 +25,14 @@ public class BuyRentProjectionGrid extends ColumnChooserGrid<BuyRentYear> {
         super(BuyRentYear.class, false);
         this.preferences = preferences;
 
-        track("Year", addColumn(BuyRentYear::year)
-                .setHeader("Year")
+        track(Translations.get("grid.col.year"), addColumn(BuyRentYear::year)
+                .setHeader(Translations.get("grid.col.year"))
                 .setAutoWidth(true));
-        addMoneyColumn("Home Value", BuyRentYear::homeValue);
-        addMoneyColumn("Mortgage Balance", BuyRentYear::mortgageBalance);
-        addMoneyColumn("Buy Net Worth (after tax)", BuyRentYear::equityAfterTax);
-        addMoneyColumn("Rent Portfolio (after tax)", BuyRentYear::rentPortfolioAfterTax);
-        addMoneyColumn("Difference (Buy − Rent)", BuyRentYear::netDifference);
+        addMoneyColumn(Translations.get("grid.col.homeValue"), BuyRentYear::homeValue);
+        addMoneyColumn(Translations.get("grid.col.mortgageBalance"), BuyRentYear::mortgageBalance);
+        addMoneyColumn(Translations.get("grid.col.buyNetWorth"), BuyRentYear::equityAfterTax);
+        addMoneyColumn(Translations.get("grid.col.rentPortfolio"), BuyRentYear::rentPortfolioAfterTax);
+        addMoneyColumn(Translations.get("grid.col.difference"), BuyRentYear::netDifference);
 
         getColumns().forEach(column -> {
             column.setAutoWidth(true);
@@ -57,7 +58,7 @@ public class BuyRentProjectionGrid extends ColumnChooserGrid<BuyRentYear> {
 
     private String formatMoney(BigDecimal value) {
         if (value == null) {
-            return "—";
+            return getTranslation("common.dash");
         }
         final SupportedCurrency currency = this.preferences.currency();
         return MoneyFormatter.format(value, currency);

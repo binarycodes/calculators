@@ -14,6 +14,7 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
@@ -38,24 +39,24 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
     private final Binder<BuyRentInputs> binder = new Binder<>(BuyRentInputs.class);
 
     private final MoneyField homePrice;
-    private final NumberField downPaymentPct = percentageField("Down Payment");
-    private final IntegerField loanTermYears = yearsField("Loan Term");
-    private final NumberField mortgageRatePct = percentageField("Mortgage Rate");
+    private final NumberField downPaymentPct = percentageField(Translations.get("field.downPayment"));
+    private final IntegerField loanTermYears = yearsField(Translations.get("field.loanTerm"));
+    private final NumberField mortgageRatePct = percentageField(Translations.get("field.mortgageRate"));
 
-    private final NumberField propertyTaxRatePct = percentageField("Property Tax Rate");
-    private final NumberField maintenancePct = percentageField("Maintenance Rate");
-    private final NumberField appreciationPct = percentageField("Home Appreciation");
-    private final NumberField buyingCostPct = percentageField("Buying Costs (stamp duty etc.)");
-    private final NumberField sellingCostPct = percentageField("Selling Costs (agent fees etc.)");
+    private final NumberField propertyTaxRatePct = percentageField(Translations.get("field.propertyTaxRate"));
+    private final NumberField maintenancePct = percentageField(Translations.get("field.maintenanceRate"));
+    private final NumberField appreciationPct = percentageField(Translations.get("field.homeAppreciation"));
+    private final NumberField buyingCostPct = percentageField(Translations.get("field.buyingCosts"));
+    private final NumberField sellingCostPct = percentageField(Translations.get("field.sellingCosts"));
 
     private final MoneyField monthlyRent;
-    private final NumberField rentIncreasePct = percentageField("Annual Rent Increase");
+    private final NumberField rentIncreasePct = percentageField(Translations.get("field.annualRentIncrease"));
 
-    private final NumberField investmentReturnPct = percentageField("Investment Return");
-    private final NumberField inflationRatePct = percentageField("Inflation Rate");
-    private final IntegerField analysisYears = yearsField("Analysis Horizon");
-    private final NumberField propertyCapitalGainsTaxPct = percentageField("Property Capital Gains Tax");
-    private final NumberField investmentGainsTaxPct = percentageField("Investment Gains Tax");
+    private final NumberField investmentReturnPct = percentageField(Translations.get("field.investmentReturn"));
+    private final NumberField inflationRatePct = percentageField(Translations.get("field.inflationRate"));
+    private final IntegerField analysisYears = yearsField(Translations.get("field.analysisHorizon"));
+    private final NumberField propertyCapitalGainsTaxPct = percentageField(Translations.get("field.propertyCapitalGainsTax"));
+    private final NumberField investmentGainsTaxPct = percentageField(Translations.get("field.investmentGainsTax"));
 
     private FormCard homePurchaseCard;
 
@@ -84,8 +85,8 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
         setSpacing(true);
         setWidthFull();
 
-        this.homePrice = new MoneyField("Home Price", preferences);
-        this.monthlyRent = new MoneyField("Monthly Rent", preferences);
+        this.homePrice = new MoneyField(Translations.get("field.homePrice"), preferences);
+        this.monthlyRent = new MoneyField(Translations.get("field.monthlyRent"), preferences);
 
         configureBindings();
 
@@ -158,7 +159,7 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
         final FormLayout layout = threeColForm();
         layout.add(this.homePrice, withPercentageSuffix(this.downPaymentPct),
                 this.loanTermYears, withPercentageSuffix(this.mortgageRatePct));
-        this.homePurchaseCard = card("Home Purchase", layout);
+        this.homePurchaseCard = card(Translations.get("section.buyrent.homePurchase"), layout);
         return this.homePurchaseCard;
     }
 
@@ -170,21 +171,19 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                 withPercentageSuffix(this.buyingCostPct),
                 withPercentageSuffix(this.sellingCostPct));
 
-        final Span hint = new Span(
-                "Property tax and maintenance are annual percentages of the current home value. "
-                + "Buying costs cover stamp duty, registration, etc. Selling costs cover agent fees.");
+        final Span hint = new Span(Translations.get("buyrent.costs.hint"));
         hint.addClassName("subsection-hint");
 
         final VerticalLayout content = new VerticalLayout(layout, hint);
         content.setPadding(false);
         content.setSpacing(true);
-        return card("Costs & Appreciation", content);
+        return card(Translations.get("section.buyrent.costs"), content);
     }
 
     private Component buildRentingCard() {
         final FormLayout layout = twoColForm();
         layout.add(this.monthlyRent, withPercentageSuffix(this.rentIncreasePct));
-        return card("Renting", layout);
+        return card(Translations.get("section.buyrent.renting"), layout);
     }
 
     private Component buildAnalysisCard() {
@@ -194,39 +193,35 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                 withPercentageSuffix(this.propertyCapitalGainsTaxPct),
                 withPercentageSuffix(this.investmentGainsTaxPct));
 
-        final Span hint = new Span(
-                "The investment return is applied to the down payment (and monthly surplus) "
-                + "in the rent scenario. Both tax rates apply on exit only — property capital gains "
-                + "tax on the home's profit, investment gains tax on the portfolio's profit. "
-                + "Set either to 0 to model a tax-exempt scenario.");
+        final Span hint = new Span(Translations.get("buyrent.analysis.hint"));
         hint.addClassName("subsection-hint");
 
         final VerticalLayout content = new VerticalLayout(layout, hint);
         content.setPadding(false);
         content.setSpacing(true);
-        return card("Analysis", content);
+        return card(Translations.get("section.buyrent.analysis"), content);
     }
 
     private void configureBindings() {
         this.homePriceSignal = this.binder.forField(this.homePrice)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
                         new BigDecimal("0.01"), null))
                 .bind(BuyRentInputs::getHomePrice, BuyRentInputs::setHomePrice)
                 .valueSignal();
 
         this.downPaymentSignal = this.binder.forField(this.downPaymentPct)
-                .asRequired("Required")
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 99", 0d, 99d))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 99), 0d, 99d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getDownPaymentPct, BuyRentInputs::setDownPaymentPct)
                 .valueSignal();
 
         this.loanTermSignal = this.binder.forField(this.loanTermYears)
-                .asRequired("Required")
+                .asRequired(Translations.get("validation.required"))
                 .withValidator((value, context) -> {
                     if (value == null || value < 1 || value > 40) {
-                        return com.vaadin.flow.data.binder.ValidationResult.error("Must be between 1 and 40");
+                        return com.vaadin.flow.data.binder.ValidationResult.error(Translations.get("validation.between", 1, 40));
                     }
                     return com.vaadin.flow.data.binder.ValidationResult.ok();
                 })
@@ -234,73 +229,73 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                 .valueSignal();
 
         this.mortgageRateSignal = this.binder.forField(this.mortgageRatePct)
-                .asRequired("Required")
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 30", 0d, 30d))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 30), 0d, 30d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getMortgageRatePct, BuyRentInputs::setMortgageRatePct)
                 .valueSignal();
 
         this.propertyTaxSignal = this.binder.forField(this.propertyTaxRatePct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 5", 0d, 5d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 5), 0d, 5d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getPropertyTaxRatePct, BuyRentInputs::setPropertyTaxRatePct)
                 .valueSignal();
 
         this.maintenanceSignal = this.binder.forField(this.maintenancePct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 5", 0d, 5d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 5), 0d, 5d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getMaintenancePct, BuyRentInputs::setMaintenancePct)
                 .valueSignal();
 
         this.appreciationSignal = this.binder.forField(this.appreciationPct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 20", 0d, 20d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 20), 0d, 20d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getAppreciationPct, BuyRentInputs::setAppreciationPct)
                 .valueSignal();
 
         this.buyingCostSignal = this.binder.forField(this.buyingCostPct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 15", 0d, 15d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 15), 0d, 15d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getBuyingCostPct, BuyRentInputs::setBuyingCostPct)
                 .valueSignal();
 
         this.sellingCostSignal = this.binder.forField(this.sellingCostPct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 10", 0d, 10d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 10), 0d, 10d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getSellingCostPct, BuyRentInputs::setSellingCostPct)
                 .valueSignal();
 
         this.monthlyRentSignal = this.binder.forField(this.monthlyRent)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
                         new BigDecimal("0.01"), null))
                 .bind(BuyRentInputs::getMonthlyRent, BuyRentInputs::setMonthlyRent)
                 .valueSignal();
 
         this.rentIncreaseSignal = this.binder.forField(this.rentIncreasePct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 20", 0d, 20d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 20), 0d, 20d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getRentIncreasePct, BuyRentInputs::setRentIncreasePct)
                 .valueSignal();
 
         this.investmentReturnSignal = this.binder.forField(this.investmentReturnPct)
-                .asRequired("Required")
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 30", 0d, 30d))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 30), 0d, 30d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getInvestmentReturnPct, BuyRentInputs::setInvestmentReturnPct)
                 .valueSignal();
 
         this.inflationRateSignal = this.binder.forField(this.inflationRatePct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 20", 0d, 20d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 20), 0d, 20d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getInflationRatePct, BuyRentInputs::setInflationRatePct)
                 .valueSignal();
 
         this.analysisYearsSignal = this.binder.forField(this.analysisYears)
-                .asRequired("Required")
+                .asRequired(Translations.get("validation.required"))
                 .withValidator((value, context) -> {
                     if (value == null || value < 1 || value > 50) {
-                        return com.vaadin.flow.data.binder.ValidationResult.error("Must be between 1 and 50");
+                        return com.vaadin.flow.data.binder.ValidationResult.error(Translations.get("validation.between", 1, 50));
                     }
                     return com.vaadin.flow.data.binder.ValidationResult.ok();
                 })
@@ -308,13 +303,13 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                 .valueSignal();
 
         this.propertyCapitalGainsTaxSignal = this.binder.forField(this.propertyCapitalGainsTaxPct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 60", 0d, 60d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 60), 0d, 60d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getPropertyCapitalGainsTaxPct, BuyRentInputs::setPropertyCapitalGainsTaxPct)
                 .valueSignal();
 
         this.investmentGainsTaxSignal = this.binder.forField(this.investmentGainsTaxPct)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 60", 0d, 60d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 60), 0d, 60d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(BuyRentInputs::getInvestmentGainsTaxPct, BuyRentInputs::setInvestmentGainsTaxPct)
                 .valueSignal();
@@ -360,14 +355,14 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
     private static IntegerField yearsField(String label) {
         final IntegerField field = new IntegerField(label);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("yrs"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.yrs")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
 
     private static NumberField withPercentageSuffix(NumberField field) {
         if (field.getSuffixComponent() == null) {
-            field.setSuffixComponent(secondaryText("%"));
+            field.setSuffixComponent(secondaryText(Translations.get("unit.percent")));
         }
         return field;
     }

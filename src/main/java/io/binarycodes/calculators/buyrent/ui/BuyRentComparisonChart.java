@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotOptionsLine;
 import com.vaadin.flow.component.charts.model.XAxis;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.buyrent.domain.BuyRentResult;
@@ -37,7 +38,7 @@ public class BuyRentComparisonChart extends Chart {
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();
-        xAxis.setTitle("Year");
+        xAxis.setTitle(Translations.get("chart.axis.year"));
         xAxis.setType(AxisType.LINEAR);
         xAxis.setAllowDecimals(false);
     }
@@ -47,13 +48,13 @@ public class BuyRentComparisonChart extends Chart {
         configuration.getyAxis().setTitle(currency.name());
         configuration.getyAxis().getLabels().setFormatter(MoneyFormatter.compactAxisFormatterJs(currency));
 
-        final DataSeries buySeries = new DataSeries("Buy (equity)");
+        final DataSeries buySeries = new DataSeries(Translations.get("chart.buyrent.seriesBuy"));
         final PlotOptionsLine buyOptions = new PlotOptionsLine();
         buyOptions.setMarker(new Marker(false));
         buyOptions.setClassName(BUY_CLASSNAME);
         buySeries.setPlotOptions(buyOptions);
 
-        final DataSeries rentSeries = new DataSeries("Rent (portfolio)");
+        final DataSeries rentSeries = new DataSeries(Translations.get("chart.buyrent.seriesRent"));
         final PlotOptionsLine rentOptions = new PlotOptionsLine();
         rentOptions.setMarker(new Marker(false));
         rentOptions.setClassName(RENT_CLASSNAME);
