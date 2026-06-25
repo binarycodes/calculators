@@ -1,34 +1,136 @@
-# My Application README
+# Calculators
 
-- [ ] TODO Replace or update this README with instructions relevant to your application
+A small suite of personal-finance calculators — a [Vaadin](https://vaadin.com)
+(Spring Boot) web app. Pick a calculator, enter your numbers, and get an instant
+year-by-year projection with charts and a shareable link.
 
-To start the application in development mode, import it into your IDE and run the `Application` class. 
-You can also start the application from the command line by running: 
+**Calculators included:**
+
+| Calculator | What it answers |
+|---|---|
+| Retirement Planner | Will my corpus last through retirement? Projects cashflow to life expectancy. |
+| Goal Planner | How much must I invest monthly to hit a post-tax goal by a deadline? |
+| Investment | What does a regular contribution grow to over an invest-and-hold horizon? |
+| Loan / EMI | What's my EMI, and how do prepayments cut the tenure or interest? |
+| Inflation Projection | What will an amount be worth across a horizon — forward or backward? |
+| Buy vs Rent | Is buying a home better than renting and investing the difference? |
+
+**Your data stays in your browser.** Inputs and preferences are saved to the
+browser's `localStorage` — there's no database and nothing is sent to a server
+to be stored. A "Share" link encodes the scenario into the URL itself, so
+sharing is opt-in and self-contained.
+
+Supports three currencies (₹ INR, € EUR, $ USD) and a light/dark theme.
+
+---
+
+## Run it (self-hosting)
+
+A prebuilt, multi-architecture image (`linux/amd64` + `linux/arm64`) is published
+to Docker Hub at **[`binarycodes/calculators`](https://hub.docker.com/r/binarycodes/calculators)**.
+No build, no license key, no configuration required.
 
 ```bash
-./mvnw
+docker run --rm -p 8080:8080 binarycodes/calculators:latest
 ```
 
-To build the application in production mode, run:
+Then open <http://localhost:8080>.
+
+- Use `binarycodes/calculators:latest` for the newest build, or pin a version
+  tag — images are also tagged with the project's Maven version.
+- The app listens on port **8080**. Override it with the `PORT` environment
+  variable: `-e PORT=9090 -p 9090:9090`.
+
+### docker compose
+
+```yaml
+services:
+  calculators:
+    image: binarycodes/calculators:latest
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+```
+
+### Serve over HTTPS (recommended)
+
+Run the app behind a TLS-terminating reverse proxy (Caddy, Traefik, nginx, your
+cloud load balancer, …). Beyond the usual security reasons, **two features only
+work in a secure context (HTTPS, or `localhost`)**:
+
+- the **Share** button's native share sheet (browser Web Share API), and
+- copying the share link to the clipboard.
+
+Over plain HTTP on a LAN address (e.g. `http://192.168.1.10:8080`) the browser
+hides these APIs: the calculators work fully, but the Share button falls back to
+"Copy link" and, on iOS, the clipboard write is suppressed by the browser. Put
+the app behind HTTPS and the native share sheet appears automatically — no app
+configuration needed.
+
+A minimal Caddy reverse proxy (automatic HTTPS) looks like:
+
+```
+calc.example.com {
+    reverse_proxy calculators:8080
+}
+```
+
+---
+
+## Develop locally
+
+Requirements: **JDK 21** and Maven (a `./mvnw` wrapper is included).
 
 ```bash
-./mvnw package
+./mvnw spring-boot:run
 ```
 
-To build a Docker image, run:
+Open <http://localhost:8080>. `localhost` counts as a secure context, so the
+Web Share / clipboard features work here too. The frontend is rebuilt on the
+fly in development mode; the first start downloads npm dependencies and takes a
+little longer.
+
+Run the tests:
 
 ```bash
-docker build -t my-application:latest .
+./mvnw test
 ```
 
-If you use commercial components, pass the license key as a build secret:
+---
+
+## Build your own image
+
+Production build (fat jar in `target/`):
 
 ```bash
-docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
+./mvnw clean package
 ```
 
-## Getting Started
+Build a container — the repo ships a multi-stage `Dockerfile` and a
+`docker-bake.hcl` for multi-arch builds:
 
-The [Quick Start](https://vaadin.com/docs/v25/getting-started/quick-start) tutorial helps you get started with Vaadin in 
-around 10 minutes. This tutorial walks you through building a simple application, introducing the core concepts along 
-the way.
+```bash
+# single-arch, local
+docker build -t calculators:latest \
+  --build-arg APP_NAME=calculators \
+  --build-arg APP_VERSION=1.0.0-SNAPSHOT .
+
+# multi-arch (amd64 + arm64) via Buildx Bake
+docker buildx bake
+```
+
+> **Vaadin license:** this project builds against Vaadin's free, open-source
+> core, so no license is needed for the prebuilt image or a standard build. If
+> you add commercial Vaadin components, pass your server license to the build as
+> the `VAADIN_SERVER_LICENSE` build arg (wired through to `-Dvaadin.offlineKey`),
+> or mount your `proKey` as a Docker build secret.
+
+---
+
+## How it's published
+
+`binarycodes/calculators` on Docker Hub is built and pushed automatically by the
+GitHub Actions **CI** workflow: on every push to `main`, the Docker image is
+built and published **only after `mvn verify` passes** (the `docker` job is
+gated on the `verify` job). Images are signed with [cosign](https://github.com/sigstore/cosign)
+and ship with provenance + SBOM attestations.
