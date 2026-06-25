@@ -183,6 +183,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         this.scheduleToggle.addValueChangeListener(event -> renderSelectedSchedule());
 
         final HorizontalLayout titleGroup = new HorizontalLayout(title, this.scheduleToggle);
+        titleGroup.addClassName("schedule-title-group");
         titleGroup.setAlignItems(FlexComponent.Alignment.CENTER);
 
         final HorizontalLayout header = new HorizontalLayout(titleGroup,

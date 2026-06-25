@@ -36,6 +36,21 @@
     border-radius: 999px;
 }
 
+/* The amortization-schedule title and its Reduce Tenure / Reduce EMI toggle sit
+ * on one row on desktop, but when the card narrows the toggle wraps onto its own
+ * line instead of squashing the pills (which would wrap their labels). */
+.loan-view .schedule-title-group {
+    flex-wrap: wrap;
+}
+
+.loan-view .schedule-toggle vaadin-radio-button {
+    flex-shrink: 0;
+}
+
+.loan-view .schedule-toggle vaadin-radio-button label {
+    white-space: nowrap;
+}
+
 /* Each prepayment lever: a small gap between its fields and its caption. */
 .loan-view .prepay-lever {
     gap: 0.35rem;
