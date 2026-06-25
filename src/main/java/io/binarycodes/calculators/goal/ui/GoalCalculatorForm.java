@@ -17,6 +17,7 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
@@ -47,13 +48,13 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Binder<GoalInputs> binder = new Binder<>(GoalInputs.class);
 
     private final MoneyField goalAmount;
-    private final NumberField inflationRate = percentageField("Inflation Rate");
+    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
 
-    private final IntegerField yearsToGoal = yearsField("Years");
-    private final IntegerField monthsToGoal = monthsField("Months");
-    private final IntegerField currentAge = ageField("Current Age");
-    private final IntegerField goalAge = ageField("Goal Age");
+    private final IntegerField yearsToGoal = yearsField(Translations.get("field.years"));
+    private final IntegerField monthsToGoal = monthsField(Translations.get("field.months"));
+    private final IntegerField currentAge = ageField(Translations.get("field.currentAge"));
+    private final IntegerField goalAge = ageField(Translations.get("field.goalAge"));
     private final IntegerField targetYear = targetYearField();
     private final Select<Month> targetMonth = monthSelect();
 
@@ -68,7 +69,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         setSpacing(true);
         setWidthFull();
 
-        this.goalAmount = new MoneyField("Amount (today)", preferences);
+        this.goalAmount = new MoneyField(Translations.get("field.amountToday"), preferences);
         this.investmentsCard = new InvestmentsCard(preferences);
 
         configureHorizonModeGroup();
@@ -113,7 +114,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
     public void showValidationMessages(String calculationError) {
         FormCard.refreshGenericErrors(this);
         if (!this.investmentsCard.hasInvalidField() && !this.investmentsCard.isAllocationValid()) {
-            this.investmentsCard.showError("Allocations must sum to 100%.");
+            this.investmentsCard.showError(Translations.get("goal.allocationsSum"));
         }
         if (calculationError != null && !this.goalCard.hasInvalidField()) {
             this.goalCard.showError(calculationError);
@@ -160,7 +161,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
                 new FormLayout.ResponsiveStep("36em", 2));
         this.horizonFields.setWidthFull();
 
-        final Span horizonLabel = new Span("Time horizon");
+        final Span horizonLabel = new Span(Translations.get("timeHorizon.label"));
         horizonLabel.addClassName("subsection-label");
 
         final VerticalLayout content = new VerticalLayout(
@@ -168,7 +169,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         content.setPadding(false);
         content.setSpacing(true);
 
-        final FormCard card = new FormCard("Goal");
+        final FormCard card = new FormCard(Translations.get("section.goal"));
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
@@ -209,14 +210,14 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private void configureBindings() {
         this.goalAmountSignal = this.binder.forField(this.goalAmount)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
                         new BigDecimal("0.01"), null))
                 .bind(GoalInputs::getGoalAmount, GoalInputs::setGoalAmount)
                 .valueSignal();
 
         this.inflationSignal = this.binder.forField(this.inflationRate)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(GoalInputs::getInflationRatePct, GoalInputs::setInflationRatePct)
                 .valueSignal();
@@ -231,13 +232,13 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
                         final int months = this.monthsToGoal.getValue() == null
                                 ? 0 : this.monthsToGoal.getValue();
                         if (value == null) {
-                            return ValidationResult.error("Required");
+                            return ValidationResult.error(Translations.get("validation.required"));
                         }
                         if (value < 0 || value > 80) {
-                            return ValidationResult.error("Must be between 0 and 80");
+                            return ValidationResult.error(Translations.get("validation.between", 0, 80));
                         }
                         if (value == 0 && months == 0) {
-                            return ValidationResult.error("Years + months must be at least one month");
+                            return ValidationResult.error(Translations.get("validation.atLeastOneMonth"));
                         }
                     }
                     return ValidationResult.ok();
@@ -249,7 +250,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
                 .withValidator((value, context) -> {
                     if (this.horizonMode.getValue() == TimeHorizonMode.YEARS
                             && value != null && (value < 0 || value > 11)) {
-                        return ValidationResult.error("Must be between 0 and 11");
+                        return ValidationResult.error(Translations.get("validation.between", 0, 11));
                     }
                     return ValidationResult.ok();
                 })
@@ -260,10 +261,10 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
                 .withValidator((value, context) -> {
                     if (this.horizonMode.getValue() == TimeHorizonMode.AGES) {
                         if (value == null) {
-                            return ValidationResult.error("Required");
+                            return ValidationResult.error(Translations.get("validation.required"));
                         }
                         if (value < 1 || value > 120) {
-                            return ValidationResult.error("Must be between 1 and 120");
+                            return ValidationResult.error(Translations.get("validation.between", 1, 120));
                         }
                     }
                     return ValidationResult.ok();
@@ -277,14 +278,14 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
                         return ValidationResult.ok();
                     }
                     if (value == null) {
-                        return ValidationResult.error("Required");
+                        return ValidationResult.error(Translations.get("validation.required"));
                     }
                     if (value < 1 || value > 120) {
-                        return ValidationResult.error("Must be between 1 and 120");
+                        return ValidationResult.error(Translations.get("validation.between", 1, 120));
                     }
                     final Integer current = this.currentAge.getValue();
                     if (current != null && value <= current) {
-                        return ValidationResult.error("Must be greater than current age");
+                        return ValidationResult.error(Translations.get("validation.greaterThanCurrentAge"));
                     }
                     return ValidationResult.ok();
                 })
@@ -297,18 +298,18 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
                         return ValidationResult.ok();
                     }
                     if (value == null) {
-                        return ValidationResult.error("Required");
+                        return ValidationResult.error(Translations.get("validation.required"));
                     }
                     final int currentYear = Year.now().getValue();
                     final int currentMonth = java.time.LocalDate.now().getMonthValue();
                     if (value < currentYear) {
-                        return ValidationResult.error("Must be " + currentYear + " or later");
+                        return ValidationResult.error(Translations.get("validation.targetOrLater", String.valueOf(currentYear)));
                     }
                     final Month picked = this.targetMonth.getValue();
                     if (value.intValue() == currentYear
                             && picked != null
                             && picked.getValue() <= currentMonth) {
-                        return ValidationResult.error("Target must be in the future");
+                        return ValidationResult.error(Translations.get("validation.targetInFuture"));
                     }
                     return ValidationResult.ok();
                 })
@@ -336,9 +337,9 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private static String horizonModeLabel(TimeHorizonMode mode) {
         return switch (mode) {
-            case YEARS -> "Years";
-            case AGES -> "Ages";
-            case TARGET_YEAR -> "Target Year";
+            case YEARS -> Translations.get("timeHorizon.years");
+            case AGES -> Translations.get("timeHorizon.ages");
+            case TARGET_YEAR -> Translations.get("timeHorizon.targetYear");
         };
     }
 
@@ -356,7 +357,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         field.setMin(1);
         field.setMax(120);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("yrs"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.yrs")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
@@ -366,7 +367,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         field.setMin(0);
         field.setMax(80);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("yrs"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.yrs")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
@@ -376,26 +377,28 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         field.setMin(0);
         field.setMax(11);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("mo"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.mo")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
 
     private static Select<Month> monthSelect() {
         final Select<Month> select = new Select<>();
-        select.setLabel("Target Month");
+        select.setLabel(Translations.get("field.targetMonth"));
         select.setItems(List.of(Month.values()));
         select.setItemLabelGenerator(month -> month == null ? "" : monthLabel(month));
         return select;
     }
 
     private static String monthLabel(Month month) {
-        final String name = month.name();
-        return name.charAt(0) + name.substring(1).toLowerCase();
+        final java.util.Locale locale = com.vaadin.flow.component.UI.getCurrent() != null
+                ? com.vaadin.flow.component.UI.getCurrent().getLocale()
+                : java.util.Locale.UK;
+        return month.getDisplayName(java.time.format.TextStyle.FULL, locale);
     }
 
     private static IntegerField targetYearField() {
-        final IntegerField field = new IntegerField("Target Year");
+        final IntegerField field = new IntegerField(Translations.get("field.targetYear"));
         field.setMin(Year.now().getValue());
         field.setMax(Year.now().getValue() + 80);
         field.setStepButtonsVisible(false);
@@ -413,7 +416,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private static NumberField withPercentageSuffix(NumberField field) {
         if (field.getSuffixComponent() == null) {
-            field.setSuffixComponent(secondaryText("%"));
+            field.setSuffixComponent(secondaryText(Translations.get("unit.percent")));
         }
         return field;
     }

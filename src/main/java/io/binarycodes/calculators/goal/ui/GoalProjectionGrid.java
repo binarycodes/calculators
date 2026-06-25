@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.goal.ui;
 
 import com.vaadin.flow.component.grid.ColumnTextAlign;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -32,19 +33,19 @@ public class GoalProjectionGrid extends ColumnChooserGrid<GoalProjectionRow> {
         super(GoalProjectionRow.class, false);
         this.preferences = preferences;
 
-        track("Year", addColumn(GoalProjectionRow::year).setHeader("Year").setAutoWidth(true));
-        this.ageColumn = addColumn(row -> row.age() == null ? "—" : row.age().toString())
-                .setHeader("Age")
+        track(Translations.get("grid.col.year"), addColumn(GoalProjectionRow::year).setHeader(Translations.get("grid.col.year")).setAutoWidth(true));
+        this.ageColumn = addColumn(row -> row.age() == null ? Translations.get("common.dash") : row.age().toString())
+                .setHeader(Translations.get("grid.col.age"))
                 .setAutoWidth(true);
-        track("Age", this.ageColumn);
-        track("Investment", addColumn(MoneyCells.monthlyAndYearly(
+        track(Translations.get("grid.col.age"), this.ageColumn);
+        track(Translations.get("grid.col.investment"), addColumn(MoneyCells.monthlyAndYearly(
                         GoalProjectionRow::yearlyContribution, this.preferences::currency))
-                .setHeader("Investment")
+                .setHeader(Translations.get("grid.col.investment"))
                 .setTextAlign(ColumnTextAlign.END));
-        track("Balance",   addMoneyColumn("Balance",   GoalProjectionRow::balance));
-        track("Principal", addMoneyColumn("Principal", GoalProjectionRow::principal));
-        track("Gains",     addMoneyColumn("Gains",     GoalProjectionRow::gains));
-        track("Tax",       addMoneyColumn("Tax",       GoalProjectionRow::taxIfWithdrawn));
+        track(Translations.get("grid.col.balance"),   addMoneyColumn(Translations.get("grid.col.balance"),   GoalProjectionRow::balance));
+        track(Translations.get("grid.col.principal"), addMoneyColumn(Translations.get("grid.col.principal"), GoalProjectionRow::principal));
+        track(Translations.get("grid.col.gains"),     addMoneyColumn(Translations.get("grid.col.gains"),     GoalProjectionRow::gains));
+        track(Translations.get("grid.col.tax"),       addMoneyColumn(Translations.get("grid.col.tax"),       GoalProjectionRow::taxIfWithdrawn));
 
         getColumns().forEach(column -> {
             column.setAutoWidth(true);
@@ -77,7 +78,7 @@ public class GoalProjectionGrid extends ColumnChooserGrid<GoalProjectionRow> {
 
     private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
         if (amount == null || amount.signum() == 0) {
-            return "—";
+            return Translations.get("common.dash");
         }
         return MoneyFormatter.format(amount, currency);
     }

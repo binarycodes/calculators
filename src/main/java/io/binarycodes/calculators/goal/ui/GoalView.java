@@ -79,11 +79,11 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
 
         final SupportedCurrency currency = this.preferences.currency();
         this.form.setInflationHelperText(
-                "Target at horizon: " + MoneyFormatter.format(result.inflatedGoal(), currency));
+                getTranslation("goal.targetAtHorizon", MoneyFormatter.format(result.inflatedGoal(), currency)));
 
         if (result.goalAlreadyCovered()) {
-            this.monthlyInvestment.setValue("—", Status.SUCCESS);
-            this.yearlyInvestment.setValue("Goal already covered ✓", Status.SUCCESS);
+            this.monthlyInvestment.setValue(getTranslation("common.dash"), Status.SUCCESS);
+            this.yearlyInvestment.setValue(getTranslation("goal.alreadyCovered"), Status.SUCCESS);
             this.finalCorpus.setValue(MoneyFormatter.format(result.finalBalance(), currency), Status.SUCCESS);
             this.taxAtExit.setValue(MoneyFormatter.format(result.taxAtExit(), currency), null);
             this.chartCard.setVisible(false);
@@ -141,10 +141,10 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
     }
 
     private void showInvalidFormPlaceholders() {
-        this.monthlyInvestment.setValue("—", null);
-        this.yearlyInvestment.setValue("—", null);
-        this.finalCorpus.setValue("—", null);
-        this.taxAtExit.setValue("—", null);
+        this.monthlyInvestment.setValue(getTranslation("common.dash"), null);
+        this.yearlyInvestment.setValue(getTranslation("common.dash"), null);
+        this.finalCorpus.setValue(getTranslation("common.dash"), null);
+        this.taxAtExit.setValue(getTranslation("common.dash"), null);
         this.form.setInflationHelperText("");
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);

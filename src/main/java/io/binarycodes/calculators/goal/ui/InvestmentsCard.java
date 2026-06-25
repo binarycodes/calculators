@@ -11,6 +11,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
@@ -39,23 +40,21 @@ public class InvestmentsCard extends FormCard {
     private final ValueSignal<List<Investment>> investmentsSignal = new ValueSignal<>(List.of());
 
     public InvestmentsCard(UserPreferences preferences) {
-        super("Investments");
+        super(Translations.get("section.investments"));
         this.preferences = preferences;
 
         setWidthFull();
         addClassName("form-section");
         addClassName("investments-card");
 
-        final Span intro = new Span("List every bucket the SIP should flow into. "
-                + "Each row carries its own corpus, growth, tax, and step-up; "
-                + "allocations must sum to 100%.");
+        final Span intro = new Span(Translations.get("goal.investments.intro"));
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         this.rowsContainer.setPadding(false);
         this.rowsContainer.setSpacing(true);
         this.rowsContainer.setWidthFull();
 
-        final Button addButton = new Button("Add investment", VaadinIcon.PLUS.create(),
+        final Button addButton = new Button(Translations.get("goal.investments.add"), VaadinIcon.PLUS.create(),
                 event -> addRow(blank()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
@@ -135,16 +134,16 @@ public class InvestmentsCard extends FormCard {
     }
 
     private static final class InvestmentRow extends HorizontalLayout {
-        private final TextField labelField = new TextField("Label");
+        private final TextField labelField = new TextField(Translations.get("field.label"));
         private final MoneyField corpusField;
-        private final NumberField growthField = percentage("Growth %");
-        private final NumberField taxField = percentage("Tax %");
-        private final NumberField stepUpField = percentage("Step-Up %");
-        private final NumberField allocationField = percentage("Allocation %");
+        private final NumberField growthField = percentage(Translations.get("field.growthPct"));
+        private final NumberField taxField = percentage(Translations.get("field.taxPct"));
+        private final NumberField stepUpField = percentage(Translations.get("field.stepUpPct"));
+        private final NumberField allocationField = percentage(Translations.get("field.allocationPct"));
 
         InvestmentRow(UserPreferences preferences, Investment initial,
                       Consumer<InvestmentRow> onRemove, Runnable onChanged) {
-            this.corpusField = new MoneyField("Current", preferences);
+            this.corpusField = new MoneyField(Translations.get("field.current"), preferences);
 
             this.labelField.setValueChangeMode(ValueChangeMode.LAZY);
             this.labelField.setValue(initial.getLabel() == null ? "" : initial.getLabel());
@@ -192,7 +191,7 @@ public class InvestmentsCard extends FormCard {
             field.setStep(0.1);
             field.setStepButtonsVisible(false);
             field.setValueChangeMode(ValueChangeMode.LAZY);
-            final Span suffix = new Span("%");
+            final Span suffix = new Span(Translations.get("unit.percent"));
             suffix.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
             field.setSuffixComponent(suffix);
             return field;
