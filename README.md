@@ -52,6 +52,44 @@ services:
     restart: unless-stopped
 ```
 
+### Podman Quadlet (systemd)
+
+If you run [Podman](https://podman.io), a [Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)
+lets systemd manage the container declaratively — start on boot, restart on
+failure, and optional auto-updates — without a long-running daemon. Drop this in
+`/etc/containers/systemd/calculators.container` (rootful) or
+`~/.config/containers/systemd/calculators.container` (rootless):
+
+```ini
+[Unit]
+Description=Calculators web app
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=docker.io/binarycodes/calculators:latest
+PublishPort=8080:8080
+# Opt in to `podman auto-update` pulling newer :latest images.
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+# multi-user.target for rootful; default.target for a rootless --user unit.
+WantedBy=multi-user.target default.target
+```
+
+Then reload systemd and start it (add `--user` for the rootless path):
+
+```bash
+systemctl daemon-reload
+systemctl start calculators.service
+```
+
+With `AutoUpdate=registry`, enabling `podman-auto-update.timer` keeps the
+container on the latest published image.
+
 ### Serve over HTTPS (recommended)
 
 Run the app behind a TLS-terminating reverse proxy (Caddy, Traefik, nginx, your
