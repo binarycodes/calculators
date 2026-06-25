@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.PlotOptionsColumn;
 import com.vaadin.flow.component.charts.model.Stacking;
 import com.vaadin.flow.component.charts.model.XAxis;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.investment.domain.InvestmentResult;
@@ -32,19 +33,19 @@ public class InvestmentGrowthChart extends Chart {
         setHeight("340px");
 
         final Configuration configuration = getConfiguration();
-        configuration.setTitle("Corpus Build-Up");
+        configuration.setTitle(Translations.get("chart.corpusBuildUp"));
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();
-        xAxis.setTitle("Year");
+        xAxis.setTitle(Translations.get("chart.axis.year"));
         xAxis.setType(AxisType.LINEAR);
         xAxis.setAllowDecimals(false);
     }
 
     public void update(InvestmentResult result, SupportedCurrency currency) {
         // Series order fixes the palette index the CSS recolours: 0 = principal, 1 = gains.
-        final DataSeries principalSeries = stackedSeries("Principal");
-        final DataSeries gainsSeries = stackedSeries("Gains");
+        final DataSeries principalSeries = stackedSeries(Translations.get("chart.series.principal"));
+        final DataSeries gainsSeries = stackedSeries(Translations.get("chart.series.gains"));
         for (final InvestmentYear row : result.rows()) {
             principalSeries.add(new DataSeriesItem(row.year(), row.principal().doubleValue()));
             gainsSeries.add(new DataSeriesItem(row.year(), row.gains().doubleValue()));

@@ -121,10 +121,10 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
     }
 
     private void showInvalidFormPlaceholders() {
-        this.investedCard.setValue("—", null);
-        this.maturityCard.setValue("—", null);
-        this.netCard.setValue("—", null);
-        this.buyingPowerCard.setValue("—", null);
+        this.investedCard.setValue(getTranslation("common.dash"), null);
+        this.maturityCard.setValue(getTranslation("common.dash"), null);
+        this.netCard.setValue(getTranslation("common.dash"), null);
+        this.buyingPowerCard.setValue(getTranslation("common.dash"), null);
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
     }

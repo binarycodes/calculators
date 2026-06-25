@@ -18,6 +18,7 @@ import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
@@ -47,24 +48,24 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private final MoneyField amount;
     private final RadioButtonGroup<ContributionFrequency> frequency = new RadioButtonGroup<>();
-    private final NumberField growthRate = percentageField("Growth Rate");
-    private final NumberField taxRate = percentageField("Tax Rate");
-    private final NumberField inflationRate = percentageField("Inflation Rate");
-    private final NumberField stepUp = percentageField("Step-Up (Yearly)");
+    private final NumberField growthRate = percentageField(Translations.get("field.growthRate"));
+    private final NumberField taxRate = percentageField(Translations.get("field.taxRate"));
+    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
+    private final NumberField stepUp = percentageField(Translations.get("field.stepUpYearly"));
 
     private FormCard contributionCard;
 
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
-    private final IntegerField investYears = yearsField("Years");
-    private final IntegerField investMonths = monthsField("Months");
-    private final IntegerField currentAge = ageField("Current Age");
-    private final IntegerField goalAge = ageField("Goal Age");
+    private final IntegerField investYears = yearsField(Translations.get("field.years"));
+    private final IntegerField investMonths = monthsField(Translations.get("field.months"));
+    private final IntegerField currentAge = ageField(Translations.get("field.currentAge"));
+    private final IntegerField goalAge = ageField(Translations.get("field.goalAge"));
     private final IntegerField targetYear = targetYearField();
     private final Select<Month> targetMonth = monthSelect();
     private final FormLayout horizonFields = new FormLayout();
 
-    private final IntegerField holdYears = yearsField("Years");
-    private final IntegerField holdMonths = monthsField("Months");
+    private final IntegerField holdYears = yearsField(Translations.get("field.years"));
+    private final IntegerField holdMonths = monthsField(Translations.get("field.months"));
 
     private final Signal<InvestmentInputs> inputsSignal;
 
@@ -74,7 +75,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         setSpacing(true);
         setWidthFull();
 
-        this.amount = new MoneyField("Amount", preferences);
+        this.amount = new MoneyField(Translations.get("field.amount"), preferences);
         configureFrequencyGroup();
         configureHorizonModeGroup();
         configureBindings();
@@ -159,15 +160,15 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                 withPercentageSuffix(this.taxRate), withPercentageSuffix(this.inflationRate),
                 withPercentageSuffix(this.stepUp));
 
-        final Span frequencyLabel = new Span("Contribution frequency");
+        final Span frequencyLabel = new Span(Translations.get("investment.contributionFrequency"));
         frequencyLabel.addClassName("subsection-label");
 
-        this.contributionCard = card("Contribution", topLayout, frequencyLabel, this.frequency);
+        this.contributionCard = card(Translations.get("section.investment.contribution"), topLayout, frequencyLabel, this.frequency);
         return this.contributionCard;
     }
 
     private Component buildInvestmentTimeCard() {
-        final Span intro = new Span("How long you keep contributing.");
+        final Span intro = new Span(Translations.get("investment.investTime.hint"));
         intro.addClassName("subsection-hint");
 
         this.horizonFields.setResponsiveSteps(
@@ -175,12 +176,11 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                 new FormLayout.ResponsiveStep("36em", 2));
         this.horizonFields.setWidthFull();
 
-        return card("Investment Time", intro, this.horizonMode, this.horizonFields);
+        return card(Translations.get("section.investment.investmentTime"), intro, this.horizonMode, this.horizonFields);
     }
 
     private Component buildHoldingCard() {
-        final Span intro = new Span("How much longer the corpus keeps growing after "
-                + "contributions stop — no new money is added.");
+        final Span intro = new Span(Translations.get("investment.holding.hint"));
         intro.addClassName("subsection-hint");
 
         final FormLayout holdLayout = new FormLayout();
@@ -190,7 +190,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         holdLayout.add(this.holdYears, this.holdMonths);
         holdLayout.setWidthFull();
 
-        return card("Holding Period", intro, holdLayout);
+        return card(Translations.get("section.investment.holdingPeriod"), intro, holdLayout);
     }
 
     private static FormCard card(String title, Component... children) {
@@ -208,7 +208,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
     private void configureFrequencyGroup() {
         this.frequency.setItems(ContributionFrequency.values());
         this.frequency.setItemLabelGenerator(value ->
-                value == ContributionFrequency.MONTHLY ? "Monthly" : "Yearly");
+                value == ContributionFrequency.MONTHLY ? Translations.get("frequency.monthly") : Translations.get("frequency.yearly"));
         this.frequency.setValue(ContributionFrequency.MONTHLY);
         this.frequency.addClassName("segmented-toggle");
     }
@@ -252,8 +252,8 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private void configureBindings() {
         this.amountSignal = this.binder.forField(this.amount)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
                         new BigDecimal("0.01"), null))
                 .bind(InvestmentInputs::getAmount, InvestmentInputs::setAmount)
                 .valueSignal();
@@ -280,13 +280,13 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                     if (this.horizonMode.getValue() == TimeHorizonMode.YEARS) {
                         final int extra = this.investMonths.getValue() == null ? 0 : this.investMonths.getValue();
                         if (value == null) {
-                            return ValidationResult.error("Required");
+                            return ValidationResult.error(Translations.get("validation.required"));
                         }
                         if (value < 0 || value > 100) {
-                            return ValidationResult.error("Must be between 0 and 100");
+                            return ValidationResult.error(Translations.get("validation.between", 0, 100));
                         }
                         if (value == 0 && extra == 0) {
-                            return ValidationResult.error("Investment time must be at least one month");
+                            return ValidationResult.error(Translations.get("validation.investAtLeastOneMonth"));
                         }
                     }
                     return ValidationResult.ok();
@@ -303,10 +303,10 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                 .withValidator((value, context) -> {
                     if (this.horizonMode.getValue() == TimeHorizonMode.AGES) {
                         if (value == null) {
-                            return ValidationResult.error("Required");
+                            return ValidationResult.error(Translations.get("validation.required"));
                         }
                         if (value < 1 || value > 120) {
-                            return ValidationResult.error("Must be between 1 and 120");
+                            return ValidationResult.error(Translations.get("validation.between", 1, 120));
                         }
                     }
                     return ValidationResult.ok();
@@ -320,14 +320,14 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                         return ValidationResult.ok();
                     }
                     if (value == null) {
-                        return ValidationResult.error("Required");
+                        return ValidationResult.error(Translations.get("validation.required"));
                     }
                     if (value < 1 || value > 120) {
-                        return ValidationResult.error("Must be between 1 and 120");
+                        return ValidationResult.error(Translations.get("validation.between", 1, 120));
                     }
                     final Integer from = this.currentAge.getValue();
                     if (from != null && value <= from) {
-                        return ValidationResult.error("Must be greater than current age");
+                        return ValidationResult.error(Translations.get("validation.greaterThanCurrentAge"));
                     }
                     return ValidationResult.ok();
                 })
@@ -340,17 +340,17 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                         return ValidationResult.ok();
                     }
                     if (value == null) {
-                        return ValidationResult.error("Required");
+                        return ValidationResult.error(Translations.get("validation.required"));
                     }
                     final int currentYear = Year.now().getValue();
                     final int currentMonth = java.time.LocalDate.now().getMonthValue();
                     if (value < currentYear) {
-                        return ValidationResult.error("Must be " + currentYear + " or later");
+                        return ValidationResult.error(Translations.get("validation.targetOrLater", String.valueOf(currentYear)));
                     }
                     final Month picked = this.targetMonth.getValue();
                     if (value.intValue() == currentYear && picked != null
                             && picked.getValue() <= currentMonth) {
-                        return ValidationResult.error("Target must be in the future");
+                        return ValidationResult.error(Translations.get("validation.targetInFuture"));
                     }
                     return ValidationResult.ok();
                 })
@@ -367,7 +367,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         this.holdYearsSignal = this.binder.forField(this.holdYears)
                 .withValidator((value, context) ->
                         value != null && (value < 0 || value > 100)
-                                ? ValidationResult.error("Must be between 0 and 100")
+                                ? ValidationResult.error(Translations.get("validation.between", 0, 100))
                                 : ValidationResult.ok())
                 .bind(InvestmentInputs::getHoldYears, InvestmentInputs::setHoldYears)
                 .valueSignal();
@@ -387,7 +387,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
             BooleanSupplier active) {
         return (value, context) -> {
             if (active.getAsBoolean() && value != null && (value < 0 || value > 11)) {
-                return ValidationResult.error("Must be between 0 and 11");
+                return ValidationResult.error(Translations.get("validation.between", 0, 11));
             }
             return ValidationResult.ok();
         };
@@ -399,10 +399,10 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                                      boolean required) {
         var forField = this.binder.forField(field);
         if (required) {
-            forField = forField.asRequired("Required");
+            forField = forField.asRequired(Translations.get("validation.required"));
         }
         return forField
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(getter, setter)
                 .valueSignal();
@@ -416,9 +416,9 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private static String horizonModeLabel(TimeHorizonMode mode) {
         return switch (mode) {
-            case YEARS -> "Years";
-            case AGES -> "Ages";
-            case TARGET_YEAR -> "Target Year";
+            case YEARS -> Translations.get("timeHorizon.years");
+            case AGES -> Translations.get("timeHorizon.ages");
+            case TARGET_YEAR -> Translations.get("timeHorizon.targetYear");
         };
     }
 
@@ -436,7 +436,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         field.setMin(1);
         field.setMax(120);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("yrs"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.yrs")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
@@ -446,7 +446,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         field.setMin(0);
         field.setMax(100);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("yrs"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.yrs")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
@@ -456,26 +456,28 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         field.setMin(0);
         field.setMax(11);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("mo"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.mo")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
 
     private static Select<Month> monthSelect() {
         final Select<Month> select = new Select<>();
-        select.setLabel("Target Month");
+        select.setLabel(Translations.get("field.targetMonth"));
         select.setItems(List.of(Month.values()));
         select.setItemLabelGenerator(month -> month == null ? "" : monthLabel(month));
         return select;
     }
 
     private static String monthLabel(Month month) {
-        final String name = month.name();
-        return name.charAt(0) + name.substring(1).toLowerCase();
+        final java.util.Locale locale = com.vaadin.flow.component.UI.getCurrent() != null
+                ? com.vaadin.flow.component.UI.getCurrent().getLocale()
+                : java.util.Locale.UK;
+        return month.getDisplayName(java.time.format.TextStyle.FULL, locale);
     }
 
     private static IntegerField targetYearField() {
-        final IntegerField field = new IntegerField("Target Year");
+        final IntegerField field = new IntegerField(Translations.get("field.targetYear"));
         field.setMin(Year.now().getValue());
         field.setMax(Year.now().getValue() + 100);
         field.setStepButtonsVisible(false);
@@ -493,7 +495,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private static NumberField withPercentageSuffix(NumberField field) {
         if (field.getSuffixComponent() == null) {
-            field.setSuffixComponent(secondaryText("%"));
+            field.setSuffixComponent(secondaryText(Translations.get("unit.percent")));
         }
         return field;
     }

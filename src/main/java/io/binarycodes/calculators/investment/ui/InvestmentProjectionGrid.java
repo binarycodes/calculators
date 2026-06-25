@@ -3,6 +3,7 @@ package io.binarycodes.calculators.investment.ui;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -29,16 +30,16 @@ public class InvestmentProjectionGrid extends ColumnChooserGrid<InvestmentYear> 
         super(InvestmentYear.class, false);
         this.preferences = preferences;
 
-        track("Year", addColumn(InvestmentYear::year).setHeader("Year").setAutoWidth(true));
-        track("Phase", addComponentColumn(InvestmentProjectionGrid::phaseBadge).setHeader("Phase"));
-        track("Contribution", addColumn(MoneyCells.monthlyAndYearly(
+        track(Translations.get("grid.col.year"), addColumn(InvestmentYear::year).setHeader(Translations.get("grid.col.year")).setAutoWidth(true));
+        track(Translations.get("grid.col.phase"), addComponentColumn(InvestmentProjectionGrid::phaseBadge).setHeader(Translations.get("grid.col.phase")));
+        track(Translations.get("grid.col.contribution"), addColumn(MoneyCells.monthlyAndYearly(
                         InvestmentYear::contribution, this.preferences::currency))
-                .setHeader("Contribution")
+                .setHeader(Translations.get("grid.col.contribution"))
                 .setTextAlign(ColumnTextAlign.END));
-        track("Balance", addMoneyColumn("Balance", InvestmentYear::balance));
-        track("Principal", addMoneyColumn("Principal", InvestmentYear::principal));
-        track("Gains", addMoneyColumn("Gains", InvestmentYear::gains));
-        track("Real Value", addMoneyColumn("Real Value", InvestmentYear::realValue));
+        track(Translations.get("grid.col.balance"), addMoneyColumn(Translations.get("grid.col.balance"), InvestmentYear::balance));
+        track(Translations.get("grid.col.principal"), addMoneyColumn(Translations.get("grid.col.principal"), InvestmentYear::principal));
+        track(Translations.get("grid.col.gains"), addMoneyColumn(Translations.get("grid.col.gains"), InvestmentYear::gains));
+        track(Translations.get("grid.col.realValue"), addMoneyColumn(Translations.get("grid.col.realValue"), InvestmentYear::realValue));
 
         getColumns().forEach(column -> {
             column.setAutoWidth(true);
@@ -69,18 +70,18 @@ public class InvestmentProjectionGrid extends ColumnChooserGrid<InvestmentYear> 
 
     private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
         if (amount == null || amount.signum() == 0) {
-            return "—";
+            return Translations.get("common.dash");
         }
         return MoneyFormatter.format(amount, currency);
     }
 
     private static Badge phaseBadge(InvestmentYear row) {
         if (row.phase() == InvestmentYear.Phase.INVESTING) {
-            final Badge badge = new Badge("Investing");
+            final Badge badge = new Badge(Translations.get("investment.phase.investing"));
             badge.addThemeVariants(BadgeVariant.SUCCESS, BadgeVariant.SMALL);
             return badge;
         }
-        final Badge badge = new Badge("Holding");
+        final Badge badge = new Badge(Translations.get("investment.phase.holding"));
         badge.addThemeVariants(BadgeVariant.SMALL);
         return badge;
     }
