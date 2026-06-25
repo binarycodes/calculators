@@ -128,6 +128,19 @@ Web Share / clipboard features work here too. The frontend is rebuilt on the
 fly in development mode; the first start downloads npm dependencies and takes a
 little longer.
 
+To exercise those secure-context features from another device (e.g. the Share
+sheet on a phone), expose your local server over HTTPS with a quick
+[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/)
+— no account or DNS setup needed:
+
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
+
+It prints a temporary `https://<random>.trycloudflare.com` URL that proxies to
+your running app; open it on the device under test. (`ngrok http 8080` does the
+same thing.)
+
 > This app uses commercial Vaadin components. The first time one renders in
 > development, Vaadin Dev Tools prompts you to sign in to `vaadin.com` or start a
 > free trial. See [Vaadin license](#build-your-own-image) below.
