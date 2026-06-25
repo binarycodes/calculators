@@ -37,7 +37,8 @@ public class LandingView extends VerticalLayout {
             "goal", "Find the monthly investment needed to hit a post-tax goal by a given deadline.",
             "inflation", "See what an amount is worth at the other end of a horizon — forward or backward.",
             "investment", "Grow regular contributions through an invest-and-hold horizon; see maturity and real value.",
-            "loan", "Work out the EMI for a loan, then see how prepayments cut the tenure or the monthly outgo."
+            "loan", "Work out the EMI for a loan, then see how prepayments cut the tenure or the monthly outgo.",
+            "buyrent", "Compare buying a home against renting and investing the difference, with a break-even year."
     );
 
     public LandingView() {
@@ -104,7 +105,7 @@ public class LandingView extends VerticalLayout {
         return VaadinIcon.CIRCLE.create();
     }
 
-    private static String blurbFor(String path) {
+    static String blurbFor(String path) {
         final String key = path.startsWith("/") ? path.substring(1) : path;
         return BLURBS.getOrDefault(key, "");
     }
