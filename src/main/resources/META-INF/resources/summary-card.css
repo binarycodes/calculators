@@ -2,11 +2,17 @@ vaadin-card {
 
     &.summary-card {
         --vaadin-card-title-font-weight: 700;
+        min-width: 12rem;
     }
 
-    /* Leading label icon. Slotted into the header-prefix (light DOM), so it is
-       reachable without ::part. A soft tinted chip echoes the landing tiles;
-       tinted (status) cards recolour the chip to match their accent. */
+    /* The icon sits in the media slot (horizontal variant), so vertically centre
+       it against the label/value column on its right. */
+    &.summary-card::part(media) {
+        align-self: center;
+    }
+
+    /* Leading label icon. A soft tinted chip echoes the landing tiles; tinted
+       (status) cards recolour the chip to match their accent. */
     &.summary-card .summary-card-icon {
         box-sizing: border-box;
         width: 1.75rem;
