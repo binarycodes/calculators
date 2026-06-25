@@ -52,3 +52,8 @@
     padding-inline: 0;
 }
 
+/* Align the tab row flush with the card heading and the field below it. */
+.loan-view .prepay-tabs::part(tabs-container) {
+    padding-inline: 0;
+}
+
