@@ -90,9 +90,9 @@ Web Share / clipboard features work here too. The frontend is rebuilt on the
 fly in development mode; the first start downloads npm dependencies and takes a
 little longer.
 
-> The charts use Vaadin Charts (commercial). Without a Vaadin subscription the
-> app runs fine but the charts show a trial banner — see
-> [Vaadin license](#build-your-own-image) below.
+> The charts use Vaadin Charts (commercial). The first time a chart renders in
+> development, Vaadin Dev Tools prompts you to sign in to `vaadin.com` or start a
+> free trial. See [Vaadin license](#build-your-own-image) below.
 
 Run the tests:
 
@@ -124,16 +124,25 @@ docker buildx bake
 ```
 
 > **Vaadin license:** this app uses **Vaadin Charts**, a commercial Vaadin
-> component, so a valid [Vaadin subscription](https://vaadin.com/pricing) is
-> required to build it. Provide your license to the build as the
-> `VAADIN_SERVER_LICENSE` build arg (wired through to `-Dvaadin.offlineKey`), or
-> mount your `proKey` as a Docker build secret. Without a license the app still
-> builds and runs, but the charts render with a **trial / commercial-component
-> banner**.
+> component, so building it requires one of:
 >
-> The prebuilt Docker Hub image is built with a license, so **running it needs no
-> key and shows no banner** — the license is checked at build time, not at
-> runtime.
+> - **A valid [Vaadin subscription](https://vaadin.com/pricing)** (no banner).
+>   On a local machine the license is validated through your `vaadin.com` login
+>   (stored at `~/.vaadin/proKey`). For a CI / Docker build, pass it as the
+>   `VAADIN_SERVER_LICENSE` build arg (wired through to `-Dvaadin.offlineKey`) or
+>   mount your `proKey` as a build secret.
+> - **A trial build with the opt-in flag `-Dvaadin.commercialWithBanner`.** A
+>   production build does *not* enable commercial components without a license
+>   unless you opt in with this flag, which builds with Charts enabled but shows
+>   a persistent banner at the bottom of the page at runtime:
+>
+>   ```bash
+>   ./mvnw clean package -Dvaadin.commercialWithBanner
+>   ```
+>
+> The license is checked at build time, not at runtime. The prebuilt Docker Hub
+> image is built with a license, so **running it needs no key and shows no
+> banner**.
 
 ---
 
