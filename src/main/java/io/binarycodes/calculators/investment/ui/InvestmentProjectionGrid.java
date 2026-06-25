@@ -2,24 +2,17 @@ package io.binarycodes.calculators.investment.ui;
 
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
-import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.menubar.MenuBar;
-import com.vaadin.flow.component.menubar.MenuBarVariant;
-import com.vaadin.flow.component.shared.Tooltip;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
 import io.binarycodes.calculators.base.ui.MoneyCells;
 import io.binarycodes.calculators.investment.domain.InvestmentYear;
 
 import java.math.BigDecimal;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -28,10 +21,9 @@ import java.util.function.Function;
  * carry a words tooltip. {@link #createColumnChooser()} returns a cog-menu the
  * parent view places beside the grid header to toggle columns.
  */
-public class InvestmentProjectionGrid extends Grid<InvestmentYear> {
+public class InvestmentProjectionGrid extends ColumnChooserGrid<InvestmentYear> {
 
     private final UserPreferences preferences;
-    private final Map<String, Column<InvestmentYear>> columnsByHeader = new LinkedHashMap<>();
 
     public InvestmentProjectionGrid(UserPreferences preferences) {
         super(InvestmentYear.class, false);
@@ -58,28 +50,6 @@ public class InvestmentProjectionGrid extends Grid<InvestmentYear> {
 
     public void update(List<InvestmentYear> rows) {
         setItems(rows);
-    }
-
-    public MenuBar createColumnChooser() {
-        final MenuBar menuBar = new MenuBar();
-        menuBar.addThemeVariants(MenuBarVariant.LUMO_TERTIARY, MenuBarVariant.LUMO_ICON);
-        final var rootItem = menuBar.addItem(VaadinIcon.COG.create());
-        Tooltip.forComponent(rootItem).setText("Choose columns");
-        rootItem.getElement().setAttribute("aria-label", "Choose columns");
-
-        final SubMenu submenu = rootItem.getSubMenu();
-        for (final var entry : this.columnsByHeader.entrySet()) {
-            final Column<InvestmentYear> column = entry.getValue();
-            final var item = submenu.addItem(entry.getKey());
-            item.setCheckable(true);
-            item.setChecked(column.isVisible());
-            item.addClickListener(event -> column.setVisible(item.isChecked()));
-        }
-        return menuBar;
-    }
-
-    private void track(String header, Column<InvestmentYear> column) {
-        this.columnsByHeader.put(header, column);
     }
 
     private Column<InvestmentYear> addMoneyColumn(String header,

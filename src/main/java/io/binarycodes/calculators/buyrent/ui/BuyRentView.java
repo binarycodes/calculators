@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.buyrent.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
@@ -129,8 +130,12 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
 
     private VerticalLayout buildProjectionCard() {
         final H2 title = new H2("Year-by-Year Projection");
+        final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createColumnChooser());
+        header.setWidthFull();
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        final VerticalLayout card = new VerticalLayout(title, this.projectionGrid);
+        final VerticalLayout card = new VerticalLayout(header, this.projectionGrid);
         card.addClassName("grid-card");
         card.setPadding(false);
         card.setSpacing(true);
