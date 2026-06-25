@@ -27,16 +27,16 @@ public class InflationChart extends Chart {
         setHeight("340px");
 
         final Configuration configuration = getConfiguration();
-        configuration.setTitle("Value Over Time");
+        configuration.setTitle(getTranslation("chart.inflation.title"));
         configuration.getChart().setStyledMode(true);
-        configuration.getxAxis().setTitle("Year");
+        configuration.getxAxis().setTitle(getTranslation("chart.axis.year"));
         // Years are whole numbers — suppress fractional ticks like "2026.25".
         configuration.getxAxis().setAllowDecimals(false);
         configuration.getLegend().setEnabled(false);
     }
 
     public void update(InflationResult result, SupportedCurrency currency) {
-        final DataSeries series = new DataSeries("Value");
+        final DataSeries series = new DataSeries(getTranslation("chart.inflation.series"));
         for (final InflationPoint point : result.progression()) {
             series.add(new DataSeriesItem(point.year(), point.value().doubleValue()));
         }

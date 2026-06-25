@@ -48,8 +48,8 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
         if (!this.form.isValid()) {
             this.form.validate();
             this.form.showValidationMessages(null);
-            this.enteredCard.setValue("—", null);
-            this.resultCard.setValue("—", null);
+            this.enteredCard.setValue(getTranslation("common.dash"), null);
+            this.resultCard.setValue(getTranslation("common.dash"), null);
             this.chartCard.setVisible(false);
             return;
         }
@@ -60,8 +60,8 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
             result = InflationCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
             this.form.showValidationMessages(invalid.getMessage());
-            this.enteredCard.setValue("—", null);
-            this.resultCard.setValue("—", null);
+            this.enteredCard.setValue(getTranslation("common.dash"), null);
+            this.resultCard.setValue(getTranslation("common.dash"), null);
             this.chartCard.setVisible(false);
             return;
         }
