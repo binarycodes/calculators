@@ -26,20 +26,25 @@ vaadin-radio-group.segmented-toggle::part(group-field) {
 
 vaadin-radio-group.segmented-toggle vaadin-radio-button {
     background-color: transparent;
-    color: var(--radio-pill-text);
     border-radius: 999px;
     transition: color 0.12s ease, background-color 0.12s ease;
 
-    &:hover:not([checked]) {
+    &[checked] {
+        background-color: var(--radio-pill-selected-background);
+    }
+
+    /* Colour the label, not the host: Vaadin paints the slotted label via
+       --vaadin-text-color, so a colour on the host never reaches the text. */
+    label {
+        padding: 0.5rem 1rem;
+        color: var(--radio-pill-text);
+    }
+
+    &:hover:not([checked]) label {
         color: var(--color-text);
     }
 
-    &[checked] {
-        background-color: var(--radio-pill-selected-background);
+    &[checked] label {
         color: var(--radio-pill-selected-text);
-    }
-
-    label {
-        padding: 0.5rem 1rem;
     }
 }
