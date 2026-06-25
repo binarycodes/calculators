@@ -12,6 +12,7 @@ import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -55,13 +56,13 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
 
     /** Which amortization schedule the grid renders; selected via the header toggle. */
     private enum ScheduleScenario {
-        REDUCE_TENURE("Reduce Tenure"),
-        REDUCE_EMI("Reduce EMI");
+        REDUCE_TENURE("loan.schedule.reduceTenure"),
+        REDUCE_EMI("loan.schedule.reduceEmi");
 
-        private final String label;
+        private final String labelKey;
 
-        ScheduleScenario(String label) {
-            this.label = label;
+        ScheduleScenario(String labelKey) {
+            this.labelKey = labelKey;
         }
     }
 
@@ -105,19 +106,19 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         this.totalPaymentCard.setValue(MoneyFormatter.format(result.totalPaymentBaseline(), currency), null);
 
         if (result.hasPrepayments()) {
-            this.interestSavedCard.setLabel("Interest Saved · Reduce Tenure");
+            this.interestSavedCard.setLabel(getTranslation("loan.interestSavedReduceTenure"));
             this.interestSavedCard.setValue(
                     MoneyFormatter.format(result.interestSavedTenure(), currency)
                             + "  (" + monthsSavedText(result.monthsSaved()) + ")",
                     Status.SUCCESS);
 
-            this.lowerEmiCard.setLabel("Interest Saved · Reduce EMI");
+            this.lowerEmiCard.setLabel(getTranslation("loan.interestSavedReduceEmi"));
             this.lowerEmiCard.setValue(MoneyFormatter.format(result.interestSavedEmi(), currency), Status.SUCCESS);
         } else {
-            this.interestSavedCard.setLabel("Interest Saved");
-            this.interestSavedCard.setValue("—", null);
-            this.lowerEmiCard.setLabel("Interest Saved · Reduce EMI");
-            this.lowerEmiCard.setValue("—", null);
+            this.interestSavedCard.setLabel(getTranslation("summary.loan.interestSaved"));
+            this.interestSavedCard.setValue(getTranslation("common.dash"), null);
+            this.lowerEmiCard.setLabel(getTranslation("loan.interestSavedReduceEmi"));
+            this.lowerEmiCard.setValue(getTranslation("common.dash"), null);
         }
 
         this.realInterestCard.setValue(MoneyFormatter.format(result.realTotalInterest(), currency), null);
@@ -159,8 +160,8 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
     private VerticalLayout buildChartCard() {
         final TabSheet charts = new TabSheet();
         charts.setWidthFull();
-        charts.add("Outstanding Balance", this.balanceChart);
-        charts.add("Principal vs Interest", this.paymentSplitChart);
+        charts.add(getTranslation("loan.tab.outstandingBalance"), this.balanceChart);
+        charts.add(getTranslation("loan.tab.principalVsInterest"), this.paymentSplitChart);
 
         final VerticalLayout card = new VerticalLayout(charts);
         card.addClassName("chart-card");
@@ -174,7 +175,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         final H2 title = new H2(getTranslation("loan.amortization"));
 
         this.scheduleToggle.setItems(ScheduleScenario.values());
-        this.scheduleToggle.setItemLabelGenerator(scenario -> scenario.label);
+        this.scheduleToggle.setItemLabelGenerator(scenario -> getTranslation(scenario.labelKey));
         this.scheduleToggle.setValue(ScheduleScenario.REDUCE_TENURE);
         this.scheduleToggle.addClassNames("segmented-toggle", "schedule-toggle");
         this.scheduleToggle.setVisible(false);
@@ -199,30 +200,30 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
     }
 
     private void showInvalidFormPlaceholders() {
-        this.emiCard.setValue("—", null);
-        this.totalInterestCard.setValue("—", null);
-        this.totalPaymentCard.setValue("—", null);
-        this.interestSavedCard.setValue("—", null);
-        this.lowerEmiCard.setValue("—", null);
-        this.realInterestCard.setValue("—", null);
+        this.emiCard.setValue(getTranslation("common.dash"), null);
+        this.totalInterestCard.setValue(getTranslation("common.dash"), null);
+        this.totalPaymentCard.setValue(getTranslation("common.dash"), null);
+        this.interestSavedCard.setValue(getTranslation("common.dash"), null);
+        this.lowerEmiCard.setValue(getTranslation("common.dash"), null);
+        this.realInterestCard.setValue(getTranslation("common.dash"), null);
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
     }
 
     private static String monthsSavedText(int months) {
         if (months <= 0) {
-            return "no change";
+            return Translations.get("loan.monthsSaved.noChange");
         }
         final int years = months / 12;
         final int remainder = months % 12;
         final String span;
         if (years > 0 && remainder > 0) {
-            span = years + "y " + remainder + "m";
+            span = Translations.get("loan.monthsSaved.yearsMonths", years, remainder);
         } else if (years > 0) {
-            span = years + (years == 1 ? " yr" : " yrs");
+            span = Translations.get(years == 1 ? "loan.monthsSaved.year" : "loan.monthsSaved.years", years);
         } else {
-            span = remainder + " mo";
+            span = Translations.get("loan.monthsSaved.months", remainder);
         }
-        return span + " earlier";
+        return Translations.get("loan.monthsSaved.earlier", span);
     }
 }

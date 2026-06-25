@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.PlotOptionsColumn;
 import com.vaadin.flow.component.charts.model.Stacking;
 import com.vaadin.flow.component.charts.model.XAxis;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.loan.domain.LoanResult;
@@ -37,7 +38,7 @@ public class LoanPaymentSplitChart extends Chart {
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();
-        xAxis.setTitle("Year");
+        xAxis.setTitle(Translations.get("chart.axis.year"));
         xAxis.setType(AxisType.LINEAR);
         xAxis.setAllowDecimals(false);
     }
@@ -45,9 +46,9 @@ public class LoanPaymentSplitChart extends Chart {
     public void update(LoanResult result, SupportedCurrency currency) {
         // Series order fixes the palette mapping the CSS recolours:
         // 0 = principal, 1 = interest, 2 = prepayment.
-        final DataSeries principalSeries = stackedSeries("Principal");
-        final DataSeries interestSeries = stackedSeries("Interest");
-        final DataSeries prepaySeries = stackedSeries("Prepayment");
+        final DataSeries principalSeries = stackedSeries(Translations.get("chart.series.principal"));
+        final DataSeries interestSeries = stackedSeries(Translations.get("chart.series.interest"));
+        final DataSeries prepaySeries = stackedSeries(Translations.get("loan.series.prepayment"));
         for (final LoanYear row : result.rows()) {
             principalSeries.add(new DataSeriesItem(row.year(), row.principalPaid().doubleValue()));
             interestSeries.add(new DataSeriesItem(row.year(), row.interestPaid().doubleValue()));

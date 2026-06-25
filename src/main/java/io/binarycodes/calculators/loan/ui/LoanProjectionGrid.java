@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.loan.ui;
 
 import com.vaadin.flow.component.grid.ColumnTextAlign;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -27,14 +28,14 @@ public class LoanProjectionGrid extends ColumnChooserGrid<LoanYear> {
         super(LoanYear.class, false);
         this.preferences = preferences;
 
-        track("Year", addColumn(LoanYear::year).setHeader("Year").setAutoWidth(true));
-        track("EMI Paid", addColumn(MoneyCells.monthlyAndYearly(LoanYear::emiPaid, this.preferences::currency))
-                .setHeader("EMI Paid").setTextAlign(ColumnTextAlign.END));
-        track("Principal", addMoneyColumn("Principal", LoanYear::principalPaid));
-        track("Interest", addMoneyColumn("Interest", LoanYear::interestPaid));
-        track("Prepayment", addColumn(MoneyCells.monthlyAndYearly(LoanYear::prepayment, this.preferences::currency))
-                .setHeader("Prepayment").setTextAlign(ColumnTextAlign.END));
-        track("Balance", addMoneyColumn("Balance", LoanYear::endBalance));
+        track(Translations.get("grid.col.year"), addColumn(LoanYear::year).setHeader(Translations.get("grid.col.year")).setAutoWidth(true));
+        track(Translations.get("grid.col.emiPaid"), addColumn(MoneyCells.monthlyAndYearly(LoanYear::emiPaid, this.preferences::currency))
+                .setHeader(Translations.get("grid.col.emiPaid")).setTextAlign(ColumnTextAlign.END));
+        track(Translations.get("grid.col.principal"), addMoneyColumn(Translations.get("grid.col.principal"), LoanYear::principalPaid));
+        track(Translations.get("grid.col.interest"), addMoneyColumn(Translations.get("grid.col.interest"), LoanYear::interestPaid));
+        track(Translations.get("grid.col.prepayment"), addColumn(MoneyCells.monthlyAndYearly(LoanYear::prepayment, this.preferences::currency))
+                .setHeader(Translations.get("grid.col.prepayment")).setTextAlign(ColumnTextAlign.END));
+        track(Translations.get("grid.col.balance"), addMoneyColumn(Translations.get("grid.col.balance"), LoanYear::endBalance));
 
         getColumns().forEach(column -> {
             column.setAutoWidth(true);
@@ -64,7 +65,7 @@ public class LoanProjectionGrid extends ColumnChooserGrid<LoanYear> {
 
     private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
         if (amount == null || amount.signum() == 0) {
-            return "—";
+            return Translations.get("common.dash");
         }
         return MoneyFormatter.format(amount, currency);
     }

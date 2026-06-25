@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotOptionsLine;
 import com.vaadin.flow.component.charts.model.XAxis;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.loan.domain.LoanResult;
@@ -39,7 +40,7 @@ public class LoanBalanceChart extends Chart {
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();
-        xAxis.setTitle("Year");
+        xAxis.setTitle(Translations.get("chart.axis.year"));
         xAxis.setType(AxisType.LINEAR);
         xAxis.setAllowDecimals(false);
     }
@@ -51,11 +52,11 @@ public class LoanBalanceChart extends Chart {
 
         if (result.hasPrepayments()) {
             configuration.setSeries(
-                    balanceSeries("Without prepayment", BASELINE_CLASSNAME, result.baselineRows(), principal),
-                    balanceSeries("With prepayment", PREPAY_CLASSNAME, result.rows(), principal));
+                    balanceSeries(Translations.get("loan.series.withoutPrepayment"), BASELINE_CLASSNAME, result.baselineRows(), principal),
+                    balanceSeries(Translations.get("loan.series.withPrepayment"), PREPAY_CLASSNAME, result.rows(), principal));
         } else {
             configuration.setSeries(
-                    balanceSeries("Balance", PREPAY_CLASSNAME, result.rows(), principal));
+                    balanceSeries(Translations.get("loan.series.balance"), PREPAY_CLASSNAME, result.rows(), principal));
         }
         drawChart(true);
     }

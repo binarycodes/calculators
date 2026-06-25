@@ -18,6 +18,7 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
@@ -38,19 +39,19 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Binder<LoanInputs> binder = new Binder<>(LoanInputs.class);
 
     private final MoneyField loanAmount;
-    private final NumberField annualRate = percentageField("Interest Rate");
-    private final IntegerField tenureYears = yearsField("Years");
-    private final IntegerField tenureMonths = monthsField("Months");
-    private final NumberField inflationRate = percentageField("Inflation Rate");
+    private final NumberField annualRate = percentageField(Translations.get("field.interestRate"));
+    private final IntegerField tenureYears = yearsField(Translations.get("field.years"));
+    private final IntegerField tenureMonths = monthsField(Translations.get("field.months"));
+    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
 
     private final MoneyField extraPerPeriod;
     private final RadioButtonGroup<PrepaymentFrequency> extraFrequency = new RadioButtonGroup<>();
-    private final IntegerField extraEmisPerYear = countField("Extra EMIs / year");
-    private final NumberField emiStepUp = percentageField("EMI Step-Up (Yearly)");
+    private final IntegerField extraEmisPerYear = countField(Translations.get("field.extraEmisPerYear"));
+    private final NumberField emiStepUp = percentageField(Translations.get("field.emiStepUp"));
 
-    private final Span extraPaymentDot = TabIndicator.dot("A recurring extra payment is set");
-    private final Span extraEmisDot = TabIndicator.dot("Extra EMIs per year are set");
-    private final Span stepUpDot = TabIndicator.dot("An annual EMI step-up is set");
+    private final Span extraPaymentDot = TabIndicator.dot(Translations.get("loan.dot.extraPayment"));
+    private final Span extraEmisDot = TabIndicator.dot(Translations.get("loan.dot.extraEmis"));
+    private final Span stepUpDot = TabIndicator.dot(Translations.get("loan.dot.stepUp"));
 
     private FormCard loanCard;
 
@@ -72,8 +73,8 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         setSpacing(true);
         setWidthFull();
 
-        this.loanAmount = new MoneyField("Loan Amount", preferences);
-        this.extraPerPeriod = new MoneyField("Extra Payment", preferences);
+        this.loanAmount = new MoneyField(Translations.get("field.loanAmount"), preferences);
+        this.extraPerPeriod = new MoneyField(Translations.get("field.extraPayment"), preferences);
         configureFrequencyGroup();
         configureBindings();
 
@@ -159,7 +160,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         final FormLayout layout = sectionForm();
         layout.add(this.loanAmount, withPercentageSuffix(this.annualRate),
                 withPercentageSuffix(this.inflationRate));
-        this.loanCard = card("Loan", layout);
+        this.loanCard = card(Translations.get("section.loan"), layout);
         return this.loanCard;
     }
 
@@ -170,12 +171,11 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
                 new FormLayout.ResponsiveStep("36em", 2));
         layout.add(this.tenureYears, this.tenureMonths);
         layout.setWidthFull();
-        return card("Duration", layout);
+        return card(Translations.get("section.duration"), layout);
     }
 
     private Component buildPrepaymentCard() {
-        final Span intro = new Span("Optional — leave every tab at zero for a plain EMI. Each tab is a different "
-                + "way to pay more, and they combine.");
+        final Span intro = new Span(Translations.get("loan.prepay.intro"));
         intro.addClassName("subsection-hint");
 
         // Amount and frequency share one responsive row (two columns above 36em,
@@ -183,29 +183,29 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         final FormLayout amountFields = twoColForm();
         amountFields.add(this.extraPerPeriod, this.extraFrequency);
         final Component extraPayment = lever(
-                "A fixed amount paid on top of the EMI, at the chosen frequency.",
+                Translations.get("loan.lever.extraPayment"),
                 amountFields);
 
         final FormLayout emiFields = twoColForm();
         emiFields.add(this.extraEmisPerYear);
         final Component extraEmis = lever(
-                "Extra full EMIs paid once a year — e.g. 1 means paying 13 EMIs instead of 12.",
+                Translations.get("loan.lever.extraEmis"),
                 emiFields);
 
         final FormLayout stepUpFields = twoColForm();
         stepUpFields.add(withPercentageSuffix(this.emiStepUp));
         final Component stepUp = lever(
-                "Permanently raises the EMI by this percentage every year, which shortens the loan.",
+                Translations.get("loan.lever.stepUp"),
                 stepUpFields);
 
         final TabSheet tabs = new TabSheet();
         tabs.addClassName("prepay-tabs");
         tabs.setWidthFull();
-        tabs.add(new Tab(new Span("Extra payment"), this.extraPaymentDot), extraPayment);
-        tabs.add(new Tab(new Span("Extra EMIs / year"), this.extraEmisDot), extraEmis);
-        tabs.add(new Tab(new Span("Step-up EMI"), this.stepUpDot), stepUp);
+        tabs.add(new Tab(new Span(Translations.get("loan.tab.extraPayment")), this.extraPaymentDot), extraPayment);
+        tabs.add(new Tab(new Span(Translations.get("loan.tab.extraEmis")), this.extraEmisDot), extraEmis);
+        tabs.add(new Tab(new Span(Translations.get("loan.tab.stepUp")), this.stepUpDot), stepUp);
 
-        return card("Prepayments", intro, tabs);
+        return card(Translations.get("section.prepayments"), intro, tabs);
     }
 
     /** One prepayment lever: its field(s) above a one-line caption explaining it. */
@@ -229,7 +229,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private void configureFrequencyGroup() {
-        this.extraFrequency.setLabel("Frequency");
+        this.extraFrequency.setLabel(Translations.get("field.frequency"));
         this.extraFrequency.setItems(PrepaymentFrequency.values());
         this.extraFrequency.setItemLabelGenerator(LoanCalculatorForm::frequencyLabel);
         this.extraFrequency.setValue(PrepaymentFrequency.YEARLY);
@@ -238,28 +238,28 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private void configureBindings() {
         this.loanAmountSignal = this.binder.forField(this.loanAmount)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
                         new BigDecimal("0.01"), null))
                 .bind(LoanInputs::getLoanAmount, LoanInputs::setLoanAmount)
                 .valueSignal();
 
         this.annualRateSignal = this.binder.forField(this.annualRate)
-                .asRequired("Required")
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(LoanInputs::getAnnualRatePct, LoanInputs::setAnnualRatePct)
                 .valueSignal();
 
         this.tenureYearsSignal = this.binder.forField(this.tenureYears)
-                .asRequired("Required")
+                .asRequired(Translations.get("validation.required"))
                 .withValidator((value, context) -> {
                     if (value == null || value < 0 || value > 100) {
-                        return ValidationResult.error("Must be between 0 and 100");
+                        return ValidationResult.error(Translations.get("validation.between", 0, 100));
                     }
                     final int extra = this.tenureMonths.getValue() == null ? 0 : this.tenureMonths.getValue();
                     if (value == 0 && extra == 0) {
-                        return ValidationResult.error("Tenure must be at least one month");
+                        return ValidationResult.error(Translations.get("loan.tenureAtLeastOneMonth"));
                     }
                     return ValidationResult.ok();
                 })
@@ -269,20 +269,20 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         this.tenureMonthsSignal = this.binder.forField(this.tenureMonths)
                 .withValidator((value, context) ->
                         value != null && (value < 0 || value > 11)
-                                ? ValidationResult.error("Must be between 0 and 11")
+                                ? ValidationResult.error(Translations.get("validation.between", 0, 11))
                                 : ValidationResult.ok())
                 .bind(LoanInputs::getTenureMonths, LoanInputs::setTenureMonths)
                 .valueSignal();
         this.tenureMonths.addValueChangeListener(event -> this.binder.validate());
 
         this.inflationSignal = this.binder.forField(this.inflationRate)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(LoanInputs::getInflationRatePct, LoanInputs::setInflationRatePct)
                 .valueSignal();
 
         this.extraPerPeriodSignal = this.binder.forField(this.extraPerPeriod)
-                .withValidator(new BigDecimalRangeValidator("Must be 0 or more", BigDecimal.ZERO, null))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.zeroOrMore"), BigDecimal.ZERO, null))
                 .bind(LoanInputs::getExtraPerPeriod, LoanInputs::setExtraPerPeriod)
                 .valueSignal();
 
@@ -293,13 +293,13 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         this.extraEmisSignal = this.binder.forField(this.extraEmisPerYear)
                 .withValidator((value, context) ->
                         value != null && (value < 0 || value > 12)
-                                ? ValidationResult.error("Must be between 0 and 12")
+                                ? ValidationResult.error(Translations.get("validation.between", 0, 12))
                                 : ValidationResult.ok())
                 .bind(LoanInputs::getExtraEmisPerYear, LoanInputs::setExtraEmisPerYear)
                 .valueSignal();
 
         this.emiStepUpSignal = this.binder.forField(this.emiStepUp)
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(LoanInputs::getEmiStepUpPct, LoanInputs::setEmiStepUpPct)
                 .valueSignal();
@@ -328,9 +328,9 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private static String frequencyLabel(PrepaymentFrequency frequency) {
         return switch (frequency) {
-            case MONTHLY -> "Monthly";
-            case QUARTERLY -> "Quarterly";
-            case YEARLY -> "Yearly";
+            case MONTHLY -> Translations.get("frequency.monthly");
+            case QUARTERLY -> Translations.get("frequency.quarterly");
+            case YEARLY -> Translations.get("frequency.yearly");
         };
     }
 
@@ -345,7 +345,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         field.setMin(0);
         field.setMax(100);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("yrs"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.yrs")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
@@ -355,7 +355,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         field.setMin(0);
         field.setMax(11);
         field.setStepButtonsVisible(false);
-        field.setSuffixComponent(secondaryText("mo"));
+        field.setSuffixComponent(secondaryText(Translations.get("unit.mo")));
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
     }
@@ -379,7 +379,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private static NumberField withPercentageSuffix(NumberField field) {
         if (field.getSuffixComponent() == null) {
-            field.setSuffixComponent(secondaryText("%"));
+            field.setSuffixComponent(secondaryText(Translations.get("unit.percent")));
         }
         return field;
     }
