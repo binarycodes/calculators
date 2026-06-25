@@ -32,8 +32,8 @@ public class ShareLinkButton extends Composite<HorizontalLayout> {
     // Reactive source for the Web Share URL, read on the client within the
     // gesture; kept in sync with the current scenario link.
     private final TextField shareUrl = new TextField();
-    private final Button shareButton = new Button("Share", VaadinIcon.CONNECT.create());
-    private final Button copyButton = new Button("Copy link", VaadinIcon.COPY.create());
+    private final Button shareButton = new Button(getTranslation("share.share"), VaadinIcon.CONNECT.create());
+    private final Button copyButton = new Button(getTranslation("share.copy"), VaadinIcon.COPY.create());
 
     private String baseUrl;       // absolute origin + path, resolved on attach
     private String currentToken;  // latest scenario token
@@ -42,8 +42,8 @@ public class ShareLinkButton extends Composite<HorizontalLayout> {
     public ShareLinkButton(String shareTitle) {
         this.shareButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         this.copyButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        this.shareButton.setTooltipText("Share a link to this scenario");
-        this.copyButton.setTooltipText("Copy a link to this scenario");
+        this.shareButton.setTooltipText(getTranslation("share.tooltip.share"));
+        this.copyButton.setTooltipText(getTranslation("share.tooltip.copy"));
 
         // Hidden via CSS, not setVisible(false): Flow withholds property syncs
         // from invisible components, which would leave the share URL empty.
@@ -62,7 +62,7 @@ public class ShareLinkButton extends Composite<HorizontalLayout> {
                         + "  if (url && navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }"
                         + "});");
         this.copyButton.addClickListener(event ->
-                Notification.show("Link copied", 2000, Notification.Position.BOTTOM_START));
+                Notification.show(getTranslation("share.copied"), 2000, Notification.Position.BOTTOM_START));
 
         final HorizontalLayout content = getContent();
         content.addClassName("share-link-button");

@@ -36,7 +36,7 @@ public class MainLayout extends AppLayout {
     }
 
     private RouterLink buildBrand() {
-        final H1 brand = new H1("Calculators");
+        final H1 brand = new H1(getTranslation("app.name"));
         brand.getStyle()
                 .setFontSize("var(--vaadin-font-size-xl, 1.25rem)")
                 .setMargin("var(--vaadin-padding-m, 0.75rem)")
@@ -56,7 +56,7 @@ public class MainLayout extends AppLayout {
         // entry until the first view is added so the drawer is not empty.
         final var entries = MenuConfiguration.getMenuEntries();
         if (entries.isEmpty()) {
-            nav.addItem(new SideNavItem("Welcome", "/", VaadinIcon.HOME.create()));
+            nav.addItem(new SideNavItem(getTranslation("nav.welcome"), "/", VaadinIcon.HOME.create()));
         } else {
             entries.forEach(entry -> nav.addItem(toSideNavItem(entry)));
         }
@@ -64,7 +64,7 @@ public class MainLayout extends AppLayout {
     }
 
     private SideNavItem toSideNavItem(MenuEntry entry) {
-        final SideNavItem item = new SideNavItem(entry.title(), entry.path());
+        final SideNavItem item = new SideNavItem(MenuTitles.titleFor(entry), entry.path());
         if (entry.icon() != null && !entry.icon().isBlank()) {
             // Vaadin icon class string like "vaadin:piggy-bank" or "lumo:cog".
             try {

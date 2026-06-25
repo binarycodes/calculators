@@ -6,7 +6,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -31,13 +30,12 @@ import io.binarycodes.calculators.goal.service.GoalInputsStore;
  */
 @Route("goal")
 @Menu(title = "Goal Planner", icon = "vaadin:bullseye", order = 2)
-@PageTitle("Goal Planner")
 public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm> {
 
-    private final SummaryCard monthlyInvestment   = new SummaryCard("Monthly Investment", VaadinIcon.CALENDAR.create());
-    private final SummaryCard yearlyInvestment    = new SummaryCard("First-Year Investment", VaadinIcon.COIN_PILES.create());
-    private final SummaryCard finalCorpus         = new SummaryCard("Final Corpus (gross)", VaadinIcon.FLAG_CHECKERED.create());
-    private final SummaryCard taxAtExit           = new SummaryCard("Tax at Exit", VaadinIcon.INVOICE.create());
+    private final SummaryCard monthlyInvestment   = new SummaryCard(getTranslation("summary.goal.monthlyInvestment"), VaadinIcon.CALENDAR.create());
+    private final SummaryCard yearlyInvestment    = new SummaryCard(getTranslation("summary.goal.firstYearInvestment"), VaadinIcon.COIN_PILES.create());
+    private final SummaryCard finalCorpus         = new SummaryCard(getTranslation("summary.goal.finalCorpusGross"), VaadinIcon.FLAG_CHECKERED.create());
+    private final SummaryCard taxAtExit           = new SummaryCard(getTranslation("summary.goal.taxAtExit"), VaadinIcon.INVOICE.create());
 
     private final GoalGrowthChart    growthChart    = new GoalGrowthChart();
     private final GoalProjectionGrid projectionGrid;
@@ -49,7 +47,7 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
                     GoalDefaultsProvider defaultsProvider,
                     GoalInputsStore inputsStore) {
         super(preferences, inputsStore, defaultsProvider,
-                new GoalCalculatorForm(preferences), "goal", "Goal Planner");
+                new GoalCalculatorForm(preferences), "goal", "page.goal");
         this.projectionGrid = new GoalProjectionGrid(preferences);
 
         add(buildSummaryRow());
@@ -127,7 +125,7 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
     }
 
     private VerticalLayout buildProjectionCard() {
-        final H2 title = new H2("Year-on-Year Projection");
+        final H2 title = new H2(getTranslation("section.projection"));
         final HorizontalLayout header = new HorizontalLayout(title,
                 this.projectionGrid.createColumnChooser());
         header.setWidthFull();

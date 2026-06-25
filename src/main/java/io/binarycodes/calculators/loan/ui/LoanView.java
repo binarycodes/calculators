@@ -8,7 +8,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -35,15 +34,14 @@ import io.binarycodes.calculators.loan.service.LoanInputsStore;
  */
 @Route("loan")
 @Menu(title = "Loan / EMI", icon = "vaadin:cash", order = 5)
-@PageTitle("Loan / EMI Calculator")
 public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm> {
 
-    private final SummaryCard emiCard = new SummaryCard("Monthly EMI", VaadinIcon.CALENDAR.create());
-    private final SummaryCard totalInterestCard = new SummaryCard("Total Interest", VaadinIcon.CHART_LINE.create());
-    private final SummaryCard totalPaymentCard = new SummaryCard("Total Payment", VaadinIcon.MONEY.create());
-    private final SummaryCard interestSavedCard = new SummaryCard("Interest Saved", VaadinIcon.PIGGY_BANK_COIN.create());
-    private final SummaryCard lowerEmiCard = new SummaryCard("Lower EMI", VaadinIcon.ARROW_DOWN.create());
-    private final SummaryCard realInterestCard = new SummaryCard("Interest (today's money)", VaadinIcon.TIME_FORWARD.create());
+    private final SummaryCard emiCard = new SummaryCard(getTranslation("summary.loan.monthlyEmi"), VaadinIcon.CALENDAR.create());
+    private final SummaryCard totalInterestCard = new SummaryCard(getTranslation("summary.loan.totalInterest"), VaadinIcon.CHART_LINE.create());
+    private final SummaryCard totalPaymentCard = new SummaryCard(getTranslation("summary.loan.totalPayment"), VaadinIcon.MONEY.create());
+    private final SummaryCard interestSavedCard = new SummaryCard(getTranslation("summary.loan.interestSaved"), VaadinIcon.PIGGY_BANK_COIN.create());
+    private final SummaryCard lowerEmiCard = new SummaryCard(getTranslation("summary.loan.lowerEmi"), VaadinIcon.ARROW_DOWN.create());
+    private final SummaryCard realInterestCard = new SummaryCard(getTranslation("summary.loan.interestToday"), VaadinIcon.TIME_FORWARD.create());
 
     private final LoanBalanceChart balanceChart = new LoanBalanceChart();
     private final LoanPaymentSplitChart paymentSplitChart = new LoanPaymentSplitChart();
@@ -71,7 +69,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
                     LoanDefaultsProvider defaultsProvider,
                     LoanInputsStore inputsStore) {
         super(preferences, inputsStore, defaultsProvider,
-                new LoanCalculatorForm(preferences), "loan", "Loan / EMI Calculator");
+                new LoanCalculatorForm(preferences), "loan", "page.loan");
         this.projectionGrid = new LoanProjectionGrid(preferences);
 
         add(buildSummaryRow());
@@ -173,7 +171,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
     }
 
     private VerticalLayout buildProjectionCard() {
-        final H2 title = new H2("Amortization Schedule");
+        final H2 title = new H2(getTranslation("loan.amortization"));
 
         this.scheduleToggle.setItems(ScheduleScenario.values());
         this.scheduleToggle.setItemLabelGenerator(scenario -> scenario.label);

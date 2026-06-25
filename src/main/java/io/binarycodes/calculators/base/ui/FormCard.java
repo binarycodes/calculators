@@ -59,7 +59,9 @@ public class FormCard extends Card {
      */
     public static void refreshGenericErrors(Component root) {
         forEachCard(root, card ->
-                card.showError(card.hasInvalidField() ? "Fix the highlighted fields" : null));
+                card.showError(card.hasInvalidField()
+                        ? io.binarycodes.calculators.base.i18n.Translations.get("form.fixHighlighted")
+                        : null));
     }
 
     private static void forEachCard(Component root, java.util.function.Consumer<FormCard> action) {

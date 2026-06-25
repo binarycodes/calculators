@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.base.ui;
 
 import com.vaadin.flow.data.renderer.LitRenderer;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -49,16 +50,16 @@ public final class MoneyCells {
 
     private static String formatMonthly(BigDecimal yearlyAmount, SupportedCurrency currency) {
         if (yearlyAmount == null || yearlyAmount.signum() == 0) {
-            return "—";
+            return Translations.get("common.dash");
         }
-        return MoneyFormatter.format(monthlyOf(yearlyAmount), currency) + " /mo";
+        return MoneyFormatter.format(monthlyOf(yearlyAmount), currency) + " " + Translations.get("unit.perMonth");
     }
 
     private static String formatYearly(BigDecimal yearlyAmount, SupportedCurrency currency) {
         if (yearlyAmount == null || yearlyAmount.signum() == 0) {
             return "";
         }
-        return MoneyFormatter.format(yearlyAmount, currency) + " /yr";
+        return MoneyFormatter.format(yearlyAmount, currency) + " " + Translations.get("unit.perYear");
     }
 
     private static BigDecimal monthlyOf(BigDecimal yearlyAmount) {

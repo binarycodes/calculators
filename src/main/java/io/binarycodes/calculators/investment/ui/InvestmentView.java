@@ -6,7 +6,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -26,13 +25,12 @@ import io.binarycodes.calculators.investment.service.InvestmentInputsStore;
  */
 @Route("investment")
 @Menu(title = "Investment", icon = "vaadin:coin-piles", order = 4)
-@PageTitle("Investment Calculator")
 public class InvestmentView extends BaseCalculatorView<InvestmentInputs, InvestmentCalculatorForm> {
 
-    private final SummaryCard investedCard = new SummaryCard("Total Invested", VaadinIcon.WALLET.create());
-    private final SummaryCard maturityCard = new SummaryCard("Maturity Value", VaadinIcon.TRENDING_UP.create());
-    private final SummaryCard netCard = new SummaryCard("Net After Tax", VaadinIcon.MONEY.create());
-    private final SummaryCard buyingPowerCard = new SummaryCard("Buying Power Today", VaadinIcon.CART.create());
+    private final SummaryCard investedCard = new SummaryCard(getTranslation("summary.investment.totalInvested"), VaadinIcon.WALLET.create());
+    private final SummaryCard maturityCard = new SummaryCard(getTranslation("summary.investment.maturityValue"), VaadinIcon.TRENDING_UP.create());
+    private final SummaryCard netCard = new SummaryCard(getTranslation("summary.investment.netAfterTax"), VaadinIcon.MONEY.create());
+    private final SummaryCard buyingPowerCard = new SummaryCard(getTranslation("summary.investment.buyingPower"), VaadinIcon.CART.create());
 
     private final InvestmentGrowthChart chart = new InvestmentGrowthChart();
     private final InvestmentProjectionGrid projectionGrid;
@@ -44,7 +42,7 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
                           InvestmentDefaultsProvider defaultsProvider,
                           InvestmentInputsStore inputsStore) {
         super(preferences, inputsStore, defaultsProvider,
-                new InvestmentCalculatorForm(preferences), "investment", "Investment Calculator");
+                new InvestmentCalculatorForm(preferences), "investment", "page.investment");
         this.projectionGrid = new InvestmentProjectionGrid(preferences);
 
         add(buildSummaryRow());
@@ -107,7 +105,7 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
     }
 
     private VerticalLayout buildProjectionCard() {
-        final H2 title = new H2("Year-on-Year Projection");
+        final H2 title = new H2(getTranslation("section.projection"));
         final HorizontalLayout header = new HorizontalLayout(title,
                 this.projectionGrid.createColumnChooser());
         header.setWidthFull();

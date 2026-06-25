@@ -4,7 +4,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -26,11 +25,10 @@ import java.math.BigDecimal;
  */
 @Route("inflation")
 @Menu(title = "Inflation Projection", icon = "vaadin:trending-up", order = 3)
-@PageTitle("Inflation Projection")
 public class InflationView extends BaseCalculatorView<InflationInputs, InflationCalculatorForm> {
 
-    private final SummaryCard enteredCard = new SummaryCard("Amount Today", VaadinIcon.MONEY.create());
-    private final SummaryCard resultCard = new SummaryCard("Amount After Time Period", VaadinIcon.TIME_FORWARD.create());
+    private final SummaryCard enteredCard = new SummaryCard(getTranslation("summary.inflation.amountToday"), VaadinIcon.MONEY.create());
+    private final SummaryCard resultCard = new SummaryCard(getTranslation("summary.inflation.amountAfter"), VaadinIcon.TIME_FORWARD.create());
     private final InflationChart chart = new InflationChart();
     private final VerticalLayout chartCard;
 
@@ -38,7 +36,7 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
                          InflationDefaultsProvider defaultsProvider,
                          InflationInputsStore inputsStore) {
         super(preferences, inputsStore, defaultsProvider,
-                new InflationCalculatorForm(preferences), "inflation", "Inflation Projection");
+                new InflationCalculatorForm(preferences), "inflation", "page.inflation");
 
         add(buildSummaryRow());
         this.chartCard = buildChartCard();

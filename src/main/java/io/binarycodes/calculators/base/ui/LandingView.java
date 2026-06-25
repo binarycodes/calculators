@@ -9,13 +9,12 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
-
-import java.util.Map;
+import io.binarycodes.calculators.base.i18n.Translations;
 
 /**
  * Landing page that introduces the calculators in the app and lets the user
@@ -24,22 +23,7 @@ import java.util.Map;
  * file required.
  */
 @Route("")
-@PageTitle("Calculators")
-public class LandingView extends VerticalLayout {
-
-    /**
-     * One-line blurb per calculator path. The map is consulted by
-     * {@link #blurbFor(String)} so tiles can carry a short description without
-     * each view having to advertise it through {@code @Menu}.
-     */
-    private static final Map<String, String> BLURBS = Map.of(
-            "retirement", "Project your retirement corpus through life expectancy with detailed cashflow modelling.",
-            "goal", "Find the monthly investment needed to hit a post-tax goal by a given deadline.",
-            "inflation", "See what an amount is worth at the other end of a horizon — forward or backward.",
-            "investment", "Grow regular contributions through an invest-and-hold horizon; see maturity and real value.",
-            "loan", "Work out the EMI for a loan, then see how prepayments cut the tenure or the monthly outgo.",
-            "buyrent", "Compare buying a home against renting and investing the difference, with a break-even year."
-    );
+public class LandingView extends VerticalLayout implements HasDynamicTitle {
 
     public LandingView() {
         addClassName("landing-view");
@@ -47,8 +31,8 @@ public class LandingView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
 
-        add(new H1("Calculators"));
-        add(new Paragraph("Pick a calculator to get started."));
+        add(new H1(getTranslation("app.name")));
+        add(new Paragraph(getTranslation("landing.subheading")));
 
         // A responsive CSS grid — four tiles per row on desktop, collapsing to
         // one per row on mobile (see landing-view.css).
@@ -65,11 +49,16 @@ public class LandingView extends VerticalLayout {
         add(cards);
     }
 
+    @Override
+    public String getPageTitle() {
+        return getTranslation("app.name");
+    }
+
     private static Component tile(MenuEntry entry) {
         final Span iconWrapper = new Span(iconFor(entry.icon()));
         iconWrapper.addClassName("landing-tile-icon");
 
-        final Span heading = new Span(entry.title());
+        final Span heading = new Span(MenuTitles.titleFor(entry));
         heading.addClassName("landing-tile-title");
 
         final Paragraph body = new Paragraph(blurbFor(entry.path()));
@@ -106,7 +95,8 @@ public class LandingView extends VerticalLayout {
     }
 
     static String blurbFor(String path) {
-        final String key = path.startsWith("/") ? path.substring(1) : path;
-        return BLURBS.getOrDefault(key, "");
+        final String key = "landing.blurb." + MenuTitles.stripLeadingSlash(path);
+        final String translated = Translations.get(key);
+        return translated.equals(key) ? "" : translated;
     }
 }

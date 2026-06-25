@@ -39,8 +39,8 @@ public abstract class ColumnChooserGrid<T> extends Grid<T> {
         final MenuBar menuBar = new MenuBar();
         menuBar.addThemeVariants(MenuBarVariant.LUMO_TERTIARY, MenuBarVariant.LUMO_ICON);
         final var rootItem = menuBar.addItem(VaadinIcon.COG.create());
-        Tooltip.forComponent(rootItem).setText("Choose columns");
-        rootItem.getElement().setAttribute("aria-label", "Choose columns");
+        Tooltip.forComponent(rootItem).setText(getTranslation("grid.chooseColumns"));
+        rootItem.getElement().setAttribute("aria-label", getTranslation("grid.chooseColumns"));
 
         final SubMenu submenu = rootItem.getSubMenu();
         for (final var entry : this.columnsByHeader.entrySet()) {

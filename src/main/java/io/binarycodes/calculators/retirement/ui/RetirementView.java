@@ -8,7 +8,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -41,15 +40,14 @@ import java.math.BigDecimal;
  */
 @Route("retirement")
 @Menu(title = "Retirement Planner", icon = "vaadin:piggy-bank", order = 1)
-@PageTitle("Retirement Planner")
 public class RetirementView extends BaseCalculatorView<RetirementInputs, RetirementCalculatorForm> {
 
     private static final BigDecimal HEALTHY_CORPUS_MULTIPLIER = BigDecimal.valueOf(5);
 
-    private final SummaryCard corpusAtRetirement   = new SummaryCard("Corpus at Retirement", VaadinIcon.WALLET.create());
-    private final SummaryCard expensesAtRetirement = new SummaryCard("Annual Expenses at Retirement", VaadinIcon.CART.create());
-    private final SummaryCard lastsUntil           = new SummaryCard("Corpus Lasts Until", VaadinIcon.HOURGLASS.create());
-    private final SummaryCard finalCorpus          = new SummaryCard("Final Corpus", VaadinIcon.FLAG_CHECKERED.create());
+    private final SummaryCard corpusAtRetirement   = new SummaryCard(getTranslation("summary.retirement.corpusAtRetirement"), VaadinIcon.WALLET.create());
+    private final SummaryCard expensesAtRetirement = new SummaryCard(getTranslation("summary.retirement.annualExpenses"), VaadinIcon.CART.create());
+    private final SummaryCard lastsUntil           = new SummaryCard(getTranslation("summary.retirement.lastsUntil"), VaadinIcon.HOURGLASS.create());
+    private final SummaryCard finalCorpus          = new SummaryCard(getTranslation("summary.retirement.finalCorpus"), VaadinIcon.FLAG_CHECKERED.create());
 
     private final CorpusChart                corpusChart                = new CorpusChart();
     private final ExpensesChart              expensesChart              = new ExpensesChart();
@@ -64,7 +62,7 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
                           DefaultsProvider defaultsProvider,
                           RetirementInputsStore inputsStore) {
         super(preferences, inputsStore, defaultsProvider,
-                new RetirementCalculatorForm(preferences), "retirement", "Retirement Planner");
+                new RetirementCalculatorForm(preferences), "retirement", "page.retirement");
         this.projectionGrid = new ProjectionGrid(preferences);
 
         add(buildSummaryRow());
@@ -157,7 +155,7 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
     }
 
     private VerticalLayout buildProjectionGridCard() {
-        final H2 title = new H2("Year-on-Year Projection");
+        final H2 title = new H2(getTranslation("section.projection"));
         final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createColumnChooser());
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);

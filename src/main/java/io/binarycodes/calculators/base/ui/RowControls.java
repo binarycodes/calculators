@@ -20,14 +20,15 @@ public final class RowControls {
      * collapses into a stacked card, where a bare icon would read oddly.
      */
     public static Button removeButton(Runnable onRemove) {
-        final Span label = new Span("Remove");
+        final String removeLabel = io.binarycodes.calculators.base.i18n.Translations.get("row.remove");
+        final Span label = new Span(removeLabel);
         label.addClassName("remove-label");
 
         final Button button = new Button(VaadinIcon.TRASH.create(), event -> onRemove.run());
         button.getElement().appendChild(label.getElement());
         button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
         button.addClassName("row-remove");
-        button.getElement().setAttribute("aria-label", "Remove");
+        button.getElement().setAttribute("aria-label", removeLabel);
         return button;
     }
 }

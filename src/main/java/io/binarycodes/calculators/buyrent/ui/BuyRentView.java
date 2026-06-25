@@ -6,7 +6,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -32,14 +31,13 @@ import io.binarycodes.calculators.buyrent.service.BuyRentInputsStore;
  */
 @Route("buyrent")
 @Menu(title = "Buy vs Rent", icon = "vaadin:home", order = 6)
-@PageTitle("Buy vs Rent Calculator")
 public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalculatorForm> {
 
-    private final SummaryCard monthlyCostBuyCard = new SummaryCard("Monthly Cost: Buy", VaadinIcon.HOME.create());
-    private final SummaryCard monthlyCostRentCard = new SummaryCard("Monthly Cost: Rent", VaadinIcon.KEY_O.create());
-    private final SummaryCard breakEvenCard = new SummaryCard("Break-Even", VaadinIcon.SCALE.create());
-    private final SummaryCard netWorthBuyCard = new SummaryCard("Net Worth: Buy", VaadinIcon.HOME_O.create());
-    private final SummaryCard netWorthRentCard = new SummaryCard("Net Worth: Rent", VaadinIcon.CHART_LINE.create());
+    private final SummaryCard monthlyCostBuyCard = new SummaryCard(getTranslation("summary.buyrent.monthlyCostBuy"), VaadinIcon.HOME.create());
+    private final SummaryCard monthlyCostRentCard = new SummaryCard(getTranslation("summary.buyrent.monthlyCostRent"), VaadinIcon.KEY_O.create());
+    private final SummaryCard breakEvenCard = new SummaryCard(getTranslation("summary.buyrent.breakEven"), VaadinIcon.SCALE.create());
+    private final SummaryCard netWorthBuyCard = new SummaryCard(getTranslation("summary.buyrent.netWorthBuy"), VaadinIcon.HOME_O.create());
+    private final SummaryCard netWorthRentCard = new SummaryCard(getTranslation("summary.buyrent.netWorthRent"), VaadinIcon.CHART_LINE.create());
 
     private final BuyRentComparisonChart comparisonChart = new BuyRentComparisonChart();
     private final BuyRentProjectionGrid projectionGrid;
@@ -51,7 +49,7 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
                        BuyRentDefaultsProvider defaultsProvider,
                        BuyRentInputsStore inputsStore) {
         super(preferences, inputsStore, defaultsProvider,
-                new BuyRentCalculatorForm(preferences), "buyrent", "Buy vs Rent Calculator");
+                new BuyRentCalculatorForm(preferences), "buyrent", "page.buyrent");
         this.projectionGrid = new BuyRentProjectionGrid(preferences);
 
         add(buildSummaryRow());
@@ -130,7 +128,7 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
     }
 
     private VerticalLayout buildProjectionCard() {
-        final H2 title = new H2("Year-by-Year Projection");
+        final H2 title = new H2(getTranslation("section.projectionByYear"));
         final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createColumnChooser());
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);

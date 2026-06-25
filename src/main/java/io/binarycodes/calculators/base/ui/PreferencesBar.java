@@ -56,7 +56,7 @@ public class PreferencesBar extends HorizontalLayout {
         }));
         this.currencyGroup.addThemeVariants(RadioGroupVariant.AURA_HORIZONTAL);
         this.currencyGroup.addClassNames("segmented-toggle", "currency-toggle");
-        this.currencyGroup.setAriaLabel("Currency");
+        this.currencyGroup.setAriaLabel(getTranslation("prefs.currency"));
         this.currencyGroup.addValueChangeListener(e -> {
             if (e.getValue() != null) {
                 this.prefs.setCurrency(e.getValue());
@@ -66,7 +66,7 @@ public class PreferencesBar extends HorizontalLayout {
 
     private void configureThemeToggle() {
         this.themeToggle.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        Tooltip.forComponent(this.themeToggle).setText("Toggle theme");
+        Tooltip.forComponent(this.themeToggle).setText(getTranslation("prefs.toggleTheme"));
         this.themeToggle.addClickListener(e ->
                 this.prefs.setTheme(this.prefs.theme() == Theme.DARK ? Theme.LIGHT : Theme.DARK));
     }

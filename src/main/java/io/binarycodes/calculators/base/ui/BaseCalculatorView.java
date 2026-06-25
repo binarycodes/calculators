@@ -11,6 +11,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.common.InputsStore;
@@ -30,7 +31,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
  *            a {@link CalculatorForm} so it can be laid out and driven here
  */
 public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm<I>>
-        extends VerticalLayout implements BeforeEnterObserver {
+        extends VerticalLayout implements BeforeEnterObserver, HasDynamicTitle {
 
     protected final UserPreferences preferences;
     protected final F form;
@@ -38,6 +39,7 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     private final InputsStore<I> inputsStore;
     private final CalculatorDefaults<I> defaults;
     private final String routeSegment;
+    private final String titleKey;
 
     private final ShareLinkButton shareButton;
 
@@ -49,20 +51,21 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
                                  CalculatorDefaults<I> defaults,
                                  F form,
                                  String routeSegment,
-                                 String title) {
+                                 String titleKey) {
         this.preferences = preferences;
         this.inputsStore = inputsStore;
         this.defaults = defaults;
         this.form = form;
         this.routeSegment = routeSegment;
-        this.shareButton = new ShareLinkButton(title);
+        this.titleKey = titleKey;
+        this.shareButton = new ShareLinkButton(getTranslation(titleKey));
 
         addClassName(routeSegment + "-view");
         setWidthFull();
         setPadding(true);
         setSpacing(true);
 
-        add(buildHeader(title), form, buildActionRow());
+        add(buildHeader(getTranslation(titleKey)), form, buildActionRow());
 
         // Persist and recalculate on any field change; skip the initial run that
         // fires with the form's empty starting state before onAttach loads inputs.
@@ -79,6 +82,11 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
 
     /** Render the summary cards, charts, and grids from the current (valid) form state. */
     protected abstract void updateResults();
+
+    @Override
+    public String getPageTitle() {
+        return getTranslation(this.titleKey);
+    }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
@@ -110,13 +118,13 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     }
 
     private HorizontalLayout buildActionRow() {
-        final Button calculateButton = new Button("Calculate", event -> recalculate());
+        final Button calculateButton = new Button(getTranslation("action.calculate"), event -> recalculate());
         calculateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         // Reset restores the per-currency defaults; Clear blanks the form entirely.
-        final Button resetButton = new Button("Reset", event -> resetToDefaults());
+        final Button resetButton = new Button(getTranslation("action.reset"), event -> resetToDefaults());
 
-        final Button clearButton = new Button("Clear", event -> clearInputs());
+        final Button clearButton = new Button(getTranslation("action.clear"), event -> clearInputs());
         clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         final HorizontalLayout primaryActions = new HorizontalLayout(calculateButton, resetButton);
@@ -184,7 +192,7 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         try {
             decoded = ScenarioCodec.decode(token);
         } catch (final IllegalArgumentException invalid) {
-            Notification.show("Invalid share link", 3000, Notification.Position.MIDDLE);
+            Notification.show(getTranslation("share.invalid"), 3000, Notification.Position.MIDDLE);
             return false;
         }
         // Set currency first: it notifies listeners and repopulates the form from
