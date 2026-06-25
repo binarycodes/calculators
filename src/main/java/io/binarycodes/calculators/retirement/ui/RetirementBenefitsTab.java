@@ -13,6 +13,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
@@ -43,7 +44,7 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
         this.prefs = prefs;
         setPadding(true);
         setSpacing(true);
-        final Span intro = new Span("Plan retirement-period inflows (gratuities, provident fund payouts, etc) received on the retirement-age year. The tax rate is applied immediately on receipt; the net amount lands in the corpus that year.");
+        final Span intro = new Span(Translations.get("retirement.benefits.intro"));
 
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
@@ -51,7 +52,7 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
         this.rowsContainer.setSpacing(true);
         this.rowsContainer.setWidthFull();
 
-        final Button addButton = new Button("Add benefit", VaadinIcon.PLUS.create(),
+        final Button addButton = new Button(Translations.get("retirement.benefits.add"), VaadinIcon.PLUS.create(),
                 event -> addRow(new RetirementBenefit()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
@@ -61,7 +62,7 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
         inner.setPadding(false);
         inner.setSpacing(true);
 
-        final FormCard card = new FormCard("Benefits");
+        final FormCard card = new FormCard(Translations.get("section.retirement.benefits"));
         card.setWidthFull();
         card.addClassName("form-section");
         card.add(inner);
@@ -120,15 +121,15 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
     }
 
     private static final class RetirementBenefitRow extends HorizontalLayout {
-        private final TextField descriptionField = new TextField("Description");
+        private final TextField descriptionField = new TextField(Translations.get("field.description"));
         private final MoneyField amountField;
-        private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+        private final NumberField taxField = withPercentageSuffix(percentageField(Translations.get("field.taxRate")));
         private final Binder<RetirementBenefit> binder = new Binder<>(RetirementBenefit.class);
 
         RetirementBenefitRow(UserPreferences prefs, RetirementBenefit initial,
                              java.util.function.Consumer<RetirementBenefitRow> onRemove,
                              Runnable onChanged) {
-            this.amountField = new MoneyField("Amount", prefs);
+            this.amountField = new MoneyField(Translations.get("field.amount"), prefs);
 
             this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
             this.descriptionField.setWidthFull();
@@ -152,7 +153,7 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
 
             // A benefit with no amount is meaningless, so it is required; validating
             // now flags a freshly added blank row immediately.
-            this.binder.forField(this.amountField).asRequired("Enter an amount")
+            this.binder.forField(this.amountField).asRequired(Translations.get("retirement.validation.enterAmount"))
                     .bind(RetirementBenefit::getAmount, RetirementBenefit::setAmount);
             this.binder.validate();
             // Re-publish on validity changes so the tab indicator refreshes once

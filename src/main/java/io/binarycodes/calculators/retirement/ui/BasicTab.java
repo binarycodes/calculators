@@ -8,6 +8,7 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.IntegerRangeValidator;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -30,25 +31,25 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  */
 class BasicTab extends VerticalLayout implements TabIndicator.Source {
 
-    private final IntegerField currentAge = ageField("Current Age");
-    private final IntegerField retireAge = ageField("Retirement Age");
-    private final IntegerField lifeExp = ageField("Life Expectancy");
+    private final IntegerField currentAge = ageField(Translations.get("field.currentAge"));
+    private final IntegerField retireAge = ageField(Translations.get("field.retirementAge"));
+    private final IntegerField lifeExp = ageField(Translations.get("field.lifeExpectancy"));
     private final MoneyField corpus;
     private final MoneyField monthlyExpenses;
-    private final NumberField inflationPct = percentageField("Inflation Rate");
+    private final NumberField inflationPct = percentageField(Translations.get("field.inflationRate"));
 
     private final List<Signal<?>> fieldSignals = new ArrayList<>();
 
     BasicTab(Binder<RetirementInputs> binder, UserPreferences prefs) {
-        this.corpus = new MoneyField("Current Corpus", prefs);
-        this.monthlyExpenses = new MoneyField("Monthly Expenses (today)", prefs);
+        this.corpus = new MoneyField(Translations.get("field.currentCorpus"), prefs);
+        this.monthlyExpenses = new MoneyField(Translations.get("field.monthlyExpenses"), prefs);
 
         setPadding(false);
         setSpacing(true);
         add(
-                buildSectionCard("Timeline",
+                buildSectionCard(Translations.get("section.retirement.timeline"),
                         this.currentAge, this.retireAge, this.lifeExp),
-                buildSectionCard("Current Finances",
+                buildSectionCard(Translations.get("section.retirement.currentFinances"),
                         this.corpus, this.monthlyExpenses,
                         withPercentageSuffix(this.inflationPct)));
 
@@ -61,24 +62,24 @@ class BasicTab extends VerticalLayout implements TabIndicator.Source {
 
     private void configureBindings(Binder<RetirementInputs> binder) {
         this.fieldSignals.add(binder.forField(this.currentAge)
-                .asRequired("Required")
-                .withValidator(new IntegerRangeValidator("Must be between 1 and 120", 1, 120))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new IntegerRangeValidator(Translations.get("validation.between", 1, 120), 1, 120))
                 .bind(RetirementInputs::getCurrentAge, RetirementInputs::setCurrentAge)
                 .valueSignal());
 
         this.fieldSignals.add(binder.forField(this.retireAge)
-                .asRequired("Required")
-                .withValidator(new IntegerRangeValidator("Must be between 1 and 120", 1, 120))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new IntegerRangeValidator(Translations.get("validation.between", 1, 120), 1, 120))
                 .withValidator(age -> isGreaterThan(age, this.currentAge.getValue()),
-                        "Must be greater than current age")
+                        Translations.get("validation.greaterThanCurrentAge"))
                 .bind(RetirementInputs::getRetireAge, RetirementInputs::setRetireAge)
                 .valueSignal());
 
         this.fieldSignals.add(binder.forField(this.lifeExp)
-                .asRequired("Required")
-                .withValidator(new IntegerRangeValidator("Must be between 1 and 120", 1, 120))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new IntegerRangeValidator(Translations.get("validation.between", 1, 120), 1, 120))
                 .withValidator(age -> isGreaterThan(age, this.retireAge.getValue()),
-                        "Must be greater than retirement age")
+                        Translations.get("validation.greaterThanRetirementAge"))
                 .bind(RetirementInputs::getLifeExp, RetirementInputs::setLifeExp)
                 .valueSignal());
 
@@ -88,15 +89,15 @@ class BasicTab extends VerticalLayout implements TabIndicator.Source {
         this.retireAge.addValueChangeListener(event -> binder.validate());
 
         this.fieldSignals.add(binder.forField(this.corpus)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.nonNegative"),
                         BigDecimal.ZERO, null))
                 .bind(RetirementInputs::getCorpus, RetirementInputs::setCorpus)
                 .valueSignal());
 
         this.fieldSignals.add(binder.forField(this.monthlyExpenses)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be positive",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
                         BigDecimal.ZERO, null))
                 .bind(RetirementInputs::getMonthlyExpenses, RetirementInputs::setMonthlyExpenses)
                 .valueSignal());

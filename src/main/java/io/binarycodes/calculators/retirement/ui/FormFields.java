@@ -15,6 +15,7 @@ import com.vaadin.flow.data.converter.Converter;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.ValueProvider;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
@@ -32,7 +33,7 @@ final class FormFields {
     }
 
     static IntegerField ageField(String label) {
-        final var suffix = new Span("yrs");
+        final var suffix = new Span(Translations.get("unit.yrs"));
         suffix.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         final var field = new IntegerField(label);
@@ -54,7 +55,7 @@ final class FormFields {
 
     static NumberField withPercentageSuffix(NumberField field) {
         if (field.getSuffixComponent() == null) {
-            final var suffix = new Span("%");
+            final var suffix = new Span(Translations.get("unit.percent"));
             suffix.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
             field.setSuffixComponent(suffix);
         }
@@ -96,8 +97,8 @@ final class FormFields {
             ValueProvider<RetirementInputs, BigDecimal> getter,
             Setter<RetirementInputs, BigDecimal> setter) {
         return binder.forField(field)
-                .asRequired("Required")
-                .withValidator(new DoubleRangeValidator("Must be between 0 and 100", 0d, 100d))
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(getter, setter);
     }

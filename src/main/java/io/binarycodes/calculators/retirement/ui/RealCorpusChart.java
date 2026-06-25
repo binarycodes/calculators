@@ -8,6 +8,7 @@ import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -31,8 +32,8 @@ public class RealCorpusChart extends SplitLayout {
     private static final String NOMINAL_CLASSNAME = "nominal";
     private static final String REAL_CLASSNAME = "real";
 
-    private final Chart nominalChart = buildPane("Nominal Corpus", NOMINAL_CLASSNAME);
-    private final Chart realChart = buildPane("Real Corpus (today's money)", REAL_CLASSNAME);
+    private final Chart nominalChart = buildPane(Translations.get("chart.retirement.nominalCorpus"), NOMINAL_CLASSNAME);
+    private final Chart realChart = buildPane(Translations.get("chart.retirement.realCorpus"), REAL_CLASSNAME);
 
     public RealCorpusChart() {
         setOrientation(Orientation.HORIZONTAL);
@@ -63,8 +64,8 @@ public class RealCorpusChart extends SplitLayout {
             categories[index] = Integer.toString(row.age() + 1);
         }
 
-        applySeries(this.nominalChart, "Nominal", nominalValues, categories, currency, NOMINAL_CLASSNAME);
-        applySeries(this.realChart, "Real", realValues, categories, currency, REAL_CLASSNAME);
+        applySeries(this.nominalChart, Translations.get("chart.series.nominal"), nominalValues, categories, currency, NOMINAL_CLASSNAME);
+        applySeries(this.realChart, Translations.get("chart.series.real"), realValues, categories, currency, REAL_CLASSNAME);
     }
 
     private static Chart buildPane(String title, String className) {
@@ -74,7 +75,7 @@ public class RealCorpusChart extends SplitLayout {
         final Configuration cfg = chart.getConfiguration();
         cfg.setTitle(title);
         cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
+        cfg.getxAxis().setTitle(Translations.get("chart.axis.age"));
         cfg.getLegend().setEnabled(false);
         cfg.getChart().setClassName(className);
         return chart;

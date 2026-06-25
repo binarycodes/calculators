@@ -6,6 +6,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -28,40 +29,40 @@ import static io.binarycodes.calculators.retirement.ui.FormFields.withPercentage
  */
 class InvestmentsTab extends VerticalLayout implements TabIndicator.Source {
 
-    private final NumberField corpusReturnsPrePct = percentageField("Before Retirement");
-    private final NumberField corpusReturnsPostPct = percentageField("After Retirement");
-    private final NumberField corpusTaxRatePct = percentageField("Tax Rate");
+    private final NumberField corpusReturnsPrePct = percentageField(Translations.get("field.beforeRetirement"));
+    private final NumberField corpusReturnsPostPct = percentageField(Translations.get("field.afterRetirement"));
+    private final NumberField corpusTaxRatePct = percentageField(Translations.get("field.taxRate"));
 
     private final MoneyField monthlyInvestmentPre;
-    private final NumberField sipReturnsPrePct = percentageField("Growth Percentage");
-    private final NumberField sipStepUpPrePct = percentageField("Step Up Percentage (Yearly)");
-    private final NumberField taxRatePrePct = percentageField("Tax Rate");
+    private final NumberField sipReturnsPrePct = percentageField(Translations.get("field.growthPercentage"));
+    private final NumberField sipStepUpPrePct = percentageField(Translations.get("field.stepUpYearlyPct"));
+    private final NumberField taxRatePrePct = percentageField(Translations.get("field.taxRate"));
 
     private final MoneyField monthlyInvestmentPost;
-    private final NumberField sipReturnsPostPct = percentageField("Growth Percentage");
-    private final NumberField sipStepUpPostPct = percentageField("Step Up Percentage (Yearly)");
-    private final NumberField taxRatePostPct = percentageField("Tax Rate");
+    private final NumberField sipReturnsPostPct = percentageField(Translations.get("field.growthPercentage"));
+    private final NumberField sipStepUpPostPct = percentageField(Translations.get("field.stepUpYearlyPct"));
+    private final NumberField taxRatePostPct = percentageField(Translations.get("field.taxRate"));
 
     private final List<Signal<?>> fieldSignals = new ArrayList<>();
 
     InvestmentsTab(Binder<RetirementInputs> binder, UserPreferences prefs) {
-        this.monthlyInvestmentPre = new MoneyField("Amount", prefs);
-        this.monthlyInvestmentPost = new MoneyField("Amount", prefs);
+        this.monthlyInvestmentPre = new MoneyField(Translations.get("field.amount"), prefs);
+        this.monthlyInvestmentPost = new MoneyField(Translations.get("field.amount"), prefs);
 
         setPadding(false);
         setSpacing(true);
         add(
-                buildSectionCard("Existing Corpus Returns",
+                buildSectionCard(Translations.get("section.retirement.existingCorpusReturns"),
                         withPercentageSuffix(this.corpusReturnsPrePct),
                         withPercentageSuffix(this.corpusReturnsPostPct),
                         withPercentageSuffix(this.corpusTaxRatePct)),
-                buildNestedSectionCard("Monthly Contributions",
-                        buildSectionCard("Before Retirement",
+                buildNestedSectionCard(Translations.get("section.retirement.monthlyContributions"),
+                        buildSectionCard(Translations.get("field.beforeRetirement"),
                                 this.monthlyInvestmentPre,
                                 withPercentageSuffix(this.sipReturnsPrePct),
                                 withPercentageSuffix(this.sipStepUpPrePct),
                                 withPercentageSuffix(this.taxRatePrePct)),
-                        buildSectionCard("After Retirement",
+                        buildSectionCard(Translations.get("field.afterRetirement"),
                                 this.monthlyInvestmentPost,
                                 withPercentageSuffix(this.sipReturnsPostPct),
                                 withPercentageSuffix(this.sipStepUpPostPct),
@@ -76,15 +77,15 @@ class InvestmentsTab extends VerticalLayout implements TabIndicator.Source {
 
     private void configureBindings(Binder<RetirementInputs> binder) {
         this.fieldSignals.add(binder.forField(this.monthlyInvestmentPre)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.nonNegative"),
                         BigDecimal.ZERO, null))
                 .bind(RetirementInputs::getMonthlyInvPre, RetirementInputs::setMonthlyInvPre)
                 .valueSignal());
 
         this.fieldSignals.add(binder.forField(this.monthlyInvestmentPost)
-                .asRequired("Required")
-                .withValidator(new BigDecimalRangeValidator("Must be non-negative",
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.nonNegative"),
                         BigDecimal.ZERO, null))
                 .bind(RetirementInputs::getMonthlyInvPost, RetirementInputs::setMonthlyInvPost)
                 .valueSignal());

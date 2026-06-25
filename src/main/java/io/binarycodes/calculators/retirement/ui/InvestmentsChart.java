@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.LayoutDirection;
 import com.vaadin.flow.component.charts.model.PlotOptionsPie;
 import com.vaadin.flow.component.charts.model.VerticalAlign;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -33,7 +34,7 @@ public class InvestmentsChart extends Chart {
         setHeight("340px");
 
         final Configuration cfg = getConfiguration();
-        cfg.setTitle("Investments at Retirement");
+        cfg.setTitle(Translations.get("chart.retirement.investmentsAtRetirement"));
         cfg.getTitle().setAlign(HorizontalAlign.LEFT);
         cfg.getChart().setStyledMode(true);
         cfg.getLegend().setEnabled(true);
@@ -51,10 +52,10 @@ public class InvestmentsChart extends Chart {
 
         // Slice names embed the formatted amount so they appear next to each
         // legend swatch (Vaadin Charts builds the legend from series item names).
-        final var investedSeriesItem = new DataSeriesItem("Invested · " + MoneyFormatter.format(invested, currency), invested.doubleValue());
+        final var investedSeriesItem = new DataSeriesItem(Translations.get("chart.retirement.invested") + " · " + MoneyFormatter.format(invested, currency), invested.doubleValue());
         investedSeriesItem.setClassName(INVESTMENT_CLASSNAME);
 
-        final var interestSeriesItem = new DataSeriesItem("Interest · " + MoneyFormatter.format(interest, currency), interest.doubleValue());
+        final var interestSeriesItem = new DataSeriesItem(Translations.get("chart.series.interest") + " · " + MoneyFormatter.format(interest, currency), interest.doubleValue());
         interestSeriesItem.setClassName(INTEREST_CLASSNAME);
 
         final DataSeries series = new DataSeries(investedSeriesItem, interestSeriesItem);
@@ -67,7 +68,7 @@ public class InvestmentsChart extends Chart {
         pie.getDataLabels().setFormat("<b>{point.percentage:.1f}%</b>");
 
         final Configuration cfg = getConfiguration();
-        cfg.setSubTitle("Total · " + MoneyFormatter.format(total, currency));
+        cfg.setSubTitle(Translations.get("chart.retirement.total") + " · " + MoneyFormatter.format(total, currency));
         cfg.getSubTitle().setAlign(HorizontalAlign.LEFT);
         cfg.setSeries(series);
         cfg.setPlotOptions(pie);

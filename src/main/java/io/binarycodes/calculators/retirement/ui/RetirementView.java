@@ -121,12 +121,12 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
 
     private VerticalLayout buildChartsCard() {
         final Tabs chartTabs = new Tabs(
-                new Tab("Corpus"),
-                new Tab("Annual Expenses"),
-                new Tab("Investments"),
-                new Tab("Return on Investments"),
-                new Tab("Withdrawal vs Returns"),
-                new Tab("Real Corpus"));
+                new Tab(getTranslation("tab.retirement.chart.corpus")),
+                new Tab(getTranslation("tab.retirement.chart.annualExpenses")),
+                new Tab(getTranslation("tab.retirement.chart.investments")),
+                new Tab(getTranslation("tab.retirement.chart.returnOnInvestments")),
+                new Tab(getTranslation("tab.retirement.chart.withdrawalVsReturns")),
+                new Tab(getTranslation("tab.retirement.chart.realCorpus")));
 
         final VerticalLayout activeChartContainer = new VerticalLayout();
         activeChartContainer.setPadding(false);
@@ -134,15 +134,18 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
         activeChartContainer.setSizeFull();
         activeChartContainer.add(this.corpusChart);
 
+        // Switch on tab index, not the label: labels are now translated, so
+        // comparing display strings would break under any non-default locale.
         chartTabs.addSelectedChangeListener(event -> {
             activeChartContainer.removeAll();
-            switch (event.getSelectedTab().getLabel()) {
-                case "Corpus"                 -> activeChartContainer.add(this.corpusChart);
-                case "Annual Expenses"        -> activeChartContainer.add(this.expensesChart);
-                case "Investments"            -> activeChartContainer.add(this.investmentsChart);
-                case "Return on Investments"  -> activeChartContainer.add(this.returnOnInvestmentsChart);
-                case "Withdrawal vs Returns"  -> activeChartContainer.add(this.withdrawalVsReturnsChart);
-                case "Real Corpus"            -> activeChartContainer.add(this.realCorpusChart);
+            switch (chartTabs.getSelectedIndex()) {
+                case 0 -> activeChartContainer.add(this.corpusChart);
+                case 1 -> activeChartContainer.add(this.expensesChart);
+                case 2 -> activeChartContainer.add(this.investmentsChart);
+                case 3 -> activeChartContainer.add(this.returnOnInvestmentsChart);
+                case 4 -> activeChartContainer.add(this.withdrawalVsReturnsChart);
+                case 5 -> activeChartContainer.add(this.realCorpusChart);
+                default -> activeChartContainer.add(this.corpusChart);
             }
         });
 
@@ -170,10 +173,10 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
     }
 
     private void showInvalidFormPlaceholders() {
-        this.corpusAtRetirement.setValue("—", null);
-        this.expensesAtRetirement.setValue("—", null);
-        this.lastsUntil.setValue("—", null);
-        this.finalCorpus.setValue("—", null);
+        this.corpusAtRetirement.setValue(getTranslation("common.dash"), null);
+        this.expensesAtRetirement.setValue(getTranslation("common.dash"), null);
+        this.lastsUntil.setValue(getTranslation("common.dash"), null);
+        this.finalCorpus.setValue(getTranslation("common.dash"), null);
     }
 
     private void updateRetirementYearSummaries(RetirementResult result, SupportedCurrency currency) {
@@ -189,10 +192,10 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
     private void updateLastsUntilSummary(RetirementResult result, int lifeExpectancy) {
         if (result.corpusDepletedAt().isPresent()) {
             final int lastFullyCoveredAge = result.corpusDepletedAt().get() - 1;
-            this.lastsUntil.setLabel("Corpus Lasts Until");
-            this.lastsUntil.setValue(lastFullyCoveredAge + " yrs", Status.DANGER);
+            this.lastsUntil.setLabel(getTranslation("summary.retirement.lastsUntil"));
+            this.lastsUntil.setValue(getTranslation("retirement.lastsYears", lastFullyCoveredAge), Status.DANGER);
         } else {
-            this.lastsUntil.setValue("Beyond " + lifeExpectancy + " yrs ✓", Status.SUCCESS);
+            this.lastsUntil.setValue(getTranslation("retirement.lastsBeyond", lifeExpectancy), Status.SUCCESS);
         }
     }
 
@@ -200,8 +203,8 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
         final ProjectionRow lastsUntilRow = result.lastsUntilRow();
         final Status tone = finalCorpusTone(lastsUntilRow);
         this.finalCorpus.setLabel(result.corpusDepletedAt().isPresent()
-                ? "Final Corpus (at age " + lastsUntilRow.age() + ")"
-                : "Final Corpus (at life expectancy)");
+                ? getTranslation("retirement.finalCorpusAtAge", lastsUntilRow.age())
+                : getTranslation("retirement.finalCorpusAtLifeExp"));
         this.finalCorpus.setValue(MoneyFormatter.format(lastsUntilRow.endCorpus(), currency), tone);
     }
 

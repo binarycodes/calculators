@@ -4,6 +4,7 @@ import com.vaadin.flow.component.charts.Chart;
 import com.vaadin.flow.component.charts.model.ChartType;
 import com.vaadin.flow.component.charts.model.Configuration;
 import com.vaadin.flow.component.charts.model.ListSeries;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
@@ -23,9 +24,9 @@ public class ExpensesChart extends Chart {
         setHeight("340px");
 
         final Configuration cfg = getConfiguration();
-        cfg.setTitle("Annual Expenses");
+        cfg.setTitle(Translations.get("chart.retirement.annualExpenses"));
         cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
+        cfg.getxAxis().setTitle(Translations.get("chart.axis.age"));
     }
 
     public void update(RetirementResult result, SupportedCurrency currency) {
@@ -42,7 +43,7 @@ public class ExpensesChart extends Chart {
         final var config = getConfiguration();
         config.getyAxis().setTitle(currency.name());
         config.getyAxis().getLabels().setFormatter(MoneyFormatter.compactAxisFormatterJs(currency));
-        config.setSeries(new ListSeries("Annual Expenses", ys));
+        config.setSeries(new ListSeries(Translations.get("chart.retirement.annualExpenses"), ys));
         config.getxAxis().setCategories(categories);
         config.setPlotOptions(plotOptions);
 

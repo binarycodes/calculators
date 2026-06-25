@@ -8,6 +8,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.TabIndicator;
@@ -42,11 +43,11 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
     private final FutureExpensesTab futureExpensesTab;
     private final RetirementBenefitsTab retirementBenefitsTab;
     private final FutureIncomesTab futureIncomesTab;
-    private final Span basicDot = TabIndicator.dot("This tab is filled in");
-    private final Span investmentsDot = TabIndicator.dot("This tab is filled in");
-    private final Span futureExpensesDot = TabIndicator.dot("You have future expenses listed");
-    private final Span futureIncomesDot = TabIndicator.dot("You have future incomes listed");
-    private final Span retirementBenefitsDot = TabIndicator.dot("You have retirement benefits listed");
+    private final Span basicDot = TabIndicator.dot(Translations.get("retirement.dot.filledIn"));
+    private final Span investmentsDot = TabIndicator.dot(Translations.get("retirement.dot.filledIn"));
+    private final Span futureExpensesDot = TabIndicator.dot(Translations.get("retirement.dot.futureExpenses"));
+    private final Span futureIncomesDot = TabIndicator.dot(Translations.get("retirement.dot.futureIncomes"));
+    private final Span retirementBenefitsDot = TabIndicator.dot(Translations.get("retirement.dot.retirementBenefits"));
     private final Signal<RetirementInputs> inputsSignal;
 
     public RetirementCalculatorForm(UserPreferences prefs) {
@@ -62,11 +63,11 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
         this.futureIncomesTab = new FutureIncomesTab(prefs);
 
         final var tabSheet = new TabSheet();
-        tabSheet.add(new Tab(new Span("Basic"), this.basicDot), this.basicTab);
-        tabSheet.add(new Tab(new Span("Investments"), this.investmentsDot), this.investmentsTab);
-        tabSheet.add(new Tab(new Span("Future Expenses"), this.futureExpensesDot), this.futureExpensesTab);
-        tabSheet.add(new Tab(new Span("Future Incomes"), this.futureIncomesDot), this.futureIncomesTab);
-        tabSheet.add(new Tab(new Span("Retirement Benefits"), this.retirementBenefitsDot),
+        tabSheet.add(new Tab(new Span(Translations.get("tab.retirement.basic")), this.basicDot), this.basicTab);
+        tabSheet.add(new Tab(new Span(Translations.get("tab.retirement.investments")), this.investmentsDot), this.investmentsTab);
+        tabSheet.add(new Tab(new Span(Translations.get("tab.retirement.futureExpenses")), this.futureExpensesDot), this.futureExpensesTab);
+        tabSheet.add(new Tab(new Span(Translations.get("tab.retirement.futureIncomes")), this.futureIncomesDot), this.futureIncomesTab);
+        tabSheet.add(new Tab(new Span(Translations.get("tab.retirement.retirementBenefits")), this.retirementBenefitsDot),
                 this.retirementBenefitsTab);
         tabSheet.setWidthFull();
         add(tabSheet);

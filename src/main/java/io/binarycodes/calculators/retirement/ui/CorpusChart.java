@@ -10,6 +10,7 @@ import com.vaadin.flow.component.charts.model.PlotOptionsAreaspline;
 import com.vaadin.flow.component.charts.model.ZoneAxis;
 import com.vaadin.flow.component.charts.model.Zones;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
@@ -35,13 +36,13 @@ public class CorpusChart extends Chart {
         setHeight("340px");
 
         final var cfg = getConfiguration();
-        cfg.setTitle("Corpus Trajectory");
+        cfg.setTitle(Translations.get("chart.retirement.corpusTrajectory"));
         cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
+        cfg.getxAxis().setTitle(Translations.get("chart.axis.age"));
     }
 
     public void update(RetirementInputs inputs, RetirementResult result, SupportedCurrency currency) {
-        final var series = new DataSeries("Corpus");
+        final var series = new DataSeries(Translations.get("chart.retirement.corpusSeries"));
         series.add(new DataSeriesItem(inputs.getCurrentAge(), inputs.getCorpus().doubleValue()));
 
         for (final var row : result.rows()) {

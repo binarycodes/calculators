@@ -4,6 +4,7 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.data.renderer.LitRenderer;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -48,16 +49,16 @@ public class ProjectionGrid extends ColumnChooserGrid<ProjectionRow> {
     }
 
     private void configureColumns() {
-        track("Year",          addColumn(ProjectionRow::year).setHeader("Year"));
-        track("Age",           addColumn(ProjectionRow::age).setHeader("Age"));
-        track("Phase",         addComponentColumn(ProjectionGrid::phaseBadge).setHeader("Phase"));
-        track("Expenses",      addMonthlyAndYearlyColumn("Expenses", ProjectionRow::annualExp));
-        track("Corpus (Start)", addMoneyColumn("Corpus (Start)", ProjectionRow::startCorpus));
-        track("Returns",       addMonthlyAndYearlyColumn("Returns", ProjectionRow::returns));
-        track("Investment",    addMonthlyAndYearlyColumn("Investment", ProjectionRow::investment));
-        track("Withdrawal",    addMonthlyAndYearlyColumn("Withdrawal", ProjectionRow::withdrawal));
-        track("Tax Paid",      addMoneyColumn("Tax Paid", ProjectionRow::taxPaid));
-        track("Corpus (End)",  addMoneyColumn("Corpus (End)", ProjectionRow::endCorpus)
+        track(Translations.get("grid.col.year"),          addColumn(ProjectionRow::year).setHeader(Translations.get("grid.col.year")));
+        track(Translations.get("grid.col.age"),           addColumn(ProjectionRow::age).setHeader(Translations.get("grid.col.age")));
+        track(Translations.get("grid.col.phase"),         addComponentColumn(ProjectionGrid::phaseBadge).setHeader(Translations.get("grid.col.phase")));
+        track(Translations.get("grid.col.expenses"),      addMonthlyAndYearlyColumn(Translations.get("grid.col.expenses"), ProjectionRow::annualExp));
+        track(Translations.get("grid.col.corpusStart"), addMoneyColumn(Translations.get("grid.col.corpusStart"), ProjectionRow::startCorpus));
+        track(Translations.get("grid.col.returns"),       addMonthlyAndYearlyColumn(Translations.get("grid.col.returns"), ProjectionRow::returns));
+        track(Translations.get("grid.col.investment"),    addMonthlyAndYearlyColumn(Translations.get("grid.col.investment"), ProjectionRow::investment));
+        track(Translations.get("grid.col.withdrawal"),    addMonthlyAndYearlyColumn(Translations.get("grid.col.withdrawal"), ProjectionRow::withdrawal));
+        track(Translations.get("grid.col.taxPaid"),      addMoneyColumn(Translations.get("grid.col.taxPaid"), ProjectionRow::taxPaid));
+        track(Translations.get("grid.col.corpusEnd"),  addMoneyColumn(Translations.get("grid.col.corpusEnd"), ProjectionRow::endCorpus)
                 .setPartNameGenerator(ProjectionGrid::corpusEndPartName));
     }
 
@@ -94,16 +95,16 @@ public class ProjectionGrid extends ColumnChooserGrid<ProjectionRow> {
 
     private String formatMonthly(BigDecimal yearlyAmount) {
         if (yearlyAmount == null || yearlyAmount.signum() == 0) {
-            return "—";
+            return Translations.get("common.dash");
         }
-        return MoneyFormatter.format(monthlyOf(yearlyAmount), this.preferences.currency()) + " /mo";
+        return MoneyFormatter.format(monthlyOf(yearlyAmount), this.preferences.currency()) + " " + Translations.get("unit.perMonth");
     }
 
     private String formatYearly(BigDecimal yearlyAmount) {
         if (yearlyAmount == null || yearlyAmount.signum() == 0) {
             return "";
         }
-        return MoneyFormatter.format(yearlyAmount, this.preferences.currency()) + " /yr";
+        return MoneyFormatter.format(yearlyAmount, this.preferences.currency()) + " " + Translations.get("unit.perYear");
     }
 
     private static BigDecimal monthlyOf(BigDecimal yearlyAmount) {
@@ -148,7 +149,7 @@ public class ProjectionGrid extends ColumnChooserGrid<ProjectionRow> {
 
     private static String moneyOrDash(BigDecimal amount, SupportedCurrency currency) {
         if (amount == null || amount.signum() == 0) {
-            return "—";
+            return Translations.get("common.dash");
         }
         return MoneyFormatter.format(amount, currency);
     }
@@ -156,9 +157,9 @@ public class ProjectionGrid extends ColumnChooserGrid<ProjectionRow> {
     private static Badge phaseBadge(ProjectionRow row) {
         final Badge badge;
         if (row.isPost()) {
-            badge = new Badge("Post");
+            badge = new Badge(Translations.get("retirement.phase.post"));
         } else {
-            badge = new Badge("Pre");
+            badge = new Badge(Translations.get("retirement.phase.pre"));
             badge.addThemeVariants(BadgeVariant.SUCCESS);
         }
 

@@ -7,6 +7,7 @@ import com.vaadin.flow.component.charts.model.ListSeries;
 import com.vaadin.flow.component.charts.model.PlotOptionsColumn;
 import com.vaadin.flow.component.charts.model.Stacking;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -33,9 +34,9 @@ public class ReturnOnInvestmentsChart extends Chart {
         setHeight("340px");
 
         final Configuration cfg = getConfiguration();
-        cfg.setTitle("Return on Investments");
+        cfg.setTitle(Translations.get("chart.retirement.returnOnInvestments"));
         cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
+        cfg.getxAxis().setTitle(Translations.get("chart.axis.age"));
         cfg.getLegend().setEnabled(true);
     }
 
@@ -63,10 +64,10 @@ public class ReturnOnInvestmentsChart extends Chart {
         interestOptions.setStacking(Stacking.NORMAL);
         interestOptions.setClassName(INTEREST_CLASSNAME);
 
-        final ListSeries investmentSeries = new ListSeries("Investment", investmentValues);
+        final ListSeries investmentSeries = new ListSeries(Translations.get("chart.series.investment"), investmentValues);
         investmentSeries.setPlotOptions(investmentOptions);
 
-        final ListSeries interestSeries = new ListSeries("Interest", interestValues);
+        final ListSeries interestSeries = new ListSeries(Translations.get("chart.series.interest"), interestValues);
         interestSeries.setPlotOptions(interestOptions);
 
         final Configuration cfg = getConfiguration();

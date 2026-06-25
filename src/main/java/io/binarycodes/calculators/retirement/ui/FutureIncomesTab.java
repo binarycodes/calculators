@@ -16,6 +16,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
@@ -62,40 +63,33 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
     }
 
     private Component buildFixedCard() {
-        final Span intro = new Span("One-off inflows (house sale, business "
-                + "liquidation, inheritance, windfalls…). Amounts are the "
-                + "nominal value at the target year; the tax rate is applied "
-                + "immediately on receipt.");
+        final Span intro = new Span(Translations.get("retirement.futInc.fixedIntro"));
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         this.fixedRowsContainer.setPadding(false);
         this.fixedRowsContainer.setSpacing(true);
         this.fixedRowsContainer.setWidthFull();
 
-        final Button addButton = new Button("Add income", VaadinIcon.PLUS.create(),
+        final Button addButton = new Button(Translations.get("retirement.futInc.addFixed"), VaadinIcon.PLUS.create(),
                 event -> addFixedRow(new FutureIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        return wrapInCard("Fixed", intro, this.fixedRowsContainer, addButton);
+        return wrapInCard(Translations.get("section.retirement.fixed"), intro, this.fixedRowsContainer, addButton);
     }
 
     private Component buildRecurringCard() {
-        final Span intro = new Span("Repeating inflows (rental income, "
-                + "side-gig, etc.) starting in the selected year. Choose "
-                + "monthly or yearly cadence; amounts are nominal "
-                + "(not auto-inflated) and the tax rate applies on each "
-                + "period's receipt.");
+        final Span intro = new Span(Translations.get("retirement.futInc.recurringIntro"));
         intro.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
 
         this.recurringRowsContainer.setPadding(false);
         this.recurringRowsContainer.setSpacing(true);
         this.recurringRowsContainer.setWidthFull();
 
-        final Button addButton = new Button("Add recurring income", VaadinIcon.PLUS.create(),
+        final Button addButton = new Button(Translations.get("retirement.futInc.addRecurring"), VaadinIcon.PLUS.create(),
                 event -> addRecurringRow(new RecurringIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        return wrapInCard("Recurring", intro, this.recurringRowsContainer, addButton);
+        return wrapInCard(Translations.get("section.retirement.recurring"), intro, this.recurringRowsContainer, addButton);
     }
 
     private static Component wrapInCard(String title, Component... children) {
@@ -217,16 +211,16 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
     }
 
     private static final class FutureIncomeRow extends HorizontalLayout {
-        private final IntegerField yearField = yearField("Year");
-        private final TextField descriptionField = new TextField("Description");
+        private final IntegerField yearField = yearField(Translations.get("field.year"));
+        private final TextField descriptionField = new TextField(Translations.get("field.description"));
         private final MoneyField amountField;
-        private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+        private final NumberField taxField = withPercentageSuffix(percentageField(Translations.get("field.taxRate")));
         private final Binder<FutureIncome> binder = new Binder<>(FutureIncome.class);
 
         FutureIncomeRow(UserPreferences prefs, FutureIncome initial,
                         java.util.function.Consumer<FutureIncomeRow> onRemove,
                         Runnable onChanged) {
-            this.amountField = new MoneyField("Amount", prefs);
+            this.amountField = new MoneyField(Translations.get("field.amount"), prefs);
 
             this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
             this.descriptionField.setWidthFull();
@@ -252,9 +246,9 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
 
             // A future income needs a target year and an amount; validating now
             // flags a freshly added blank row immediately.
-            this.binder.forField(this.yearField).asRequired("Enter a year")
+            this.binder.forField(this.yearField).asRequired(Translations.get("retirement.validation.enterYear"))
                     .bind(FutureIncome::getYear, FutureIncome::setYear);
-            this.binder.forField(this.amountField).asRequired("Enter an amount")
+            this.binder.forField(this.amountField).asRequired(Translations.get("retirement.validation.enterAmount"))
                     .bind(FutureIncome::getAmount, FutureIncome::setAmount);
             this.binder.validate();
             // Re-publish on validity changes so the tab indicator refreshes once
@@ -278,25 +272,25 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
     }
 
     private static final class RecurringIncomeRow extends HorizontalLayout {
-        private final IntegerField yearField = yearField("Start Year");
+        private final IntegerField yearField = yearField(Translations.get("field.startYear"));
         private final IntegerField stopYearField = optionalStopYearField();
-        private final TextField descriptionField = new TextField("Description");
+        private final TextField descriptionField = new TextField(Translations.get("field.description"));
         private final Select<Frequency> frequencyField = new Select<>();
         private final MoneyField amountField;
-        private final NumberField taxField = withPercentageSuffix(percentageField("Tax Rate"));
+        private final NumberField taxField = withPercentageSuffix(percentageField(Translations.get("field.taxRate")));
         private final Binder<RecurringIncome> binder = new Binder<>(RecurringIncome.class);
 
         RecurringIncomeRow(UserPreferences prefs, RecurringIncome initial,
                            java.util.function.Consumer<RecurringIncomeRow> onRemove,
                            Runnable onChanged) {
-            this.amountField = new MoneyField("Amount", prefs);
+            this.amountField = new MoneyField(Translations.get("field.amount"), prefs);
 
             this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
             this.descriptionField.setWidthFull();
 
-            this.frequencyField.setLabel("Frequency");
+            this.frequencyField.setLabel(Translations.get("field.frequency"));
             this.frequencyField.setItems(Frequency.values());
-            this.frequencyField.setItemLabelGenerator(Frequency::displayName);
+            this.frequencyField.setItemLabelGenerator(freq -> Translations.get(freq == Frequency.MONTHLY ? "frequency.monthly" : "frequency.yearly"));
             this.frequencyField.setValue(initial.getFrequency() == null
                     ? Frequency.MONTHLY : initial.getFrequency());
 
@@ -325,9 +319,9 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
 
             // A recurring income needs a start year and an amount; validating now
             // flags a freshly added blank row immediately.
-            this.binder.forField(this.yearField).asRequired("Enter a start year")
+            this.binder.forField(this.yearField).asRequired(Translations.get("retirement.validation.enterStartYear"))
                     .bind(RecurringIncome::getYear, RecurringIncome::setYear);
-            this.binder.forField(this.amountField).asRequired("Enter an amount")
+            this.binder.forField(this.amountField).asRequired(Translations.get("retirement.validation.enterAmount"))
                     .bind(RecurringIncome::getAmount, RecurringIncome::setAmount);
             this.binder.validate();
             // Re-publish on validity changes so the tab indicator refreshes once
@@ -353,13 +347,13 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
     }
 
     private static IntegerField optionalStopYearField() {
-        final IntegerField field = new IntegerField("Stop Year");
+        final IntegerField field = new IntegerField(Translations.get("field.stopYear"));
         field.setMin(Year.now().getValue());
         field.setMax(Year.now().getValue() + 100);
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
-        field.setPlaceholder("Forever");
-        field.setHelperText("Leave blank for no end");
+        field.setPlaceholder(Translations.get("retirement.futExp.foreverPlaceholder"));
+        field.setHelperText(Translations.get("retirement.futExp.noEndHelper"));
         field.setClearButtonVisible(true);
         return field;
     }

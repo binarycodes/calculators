@@ -6,6 +6,7 @@ import com.vaadin.flow.component.charts.model.Configuration;
 import com.vaadin.flow.component.charts.model.ListSeries;
 import com.vaadin.flow.component.charts.model.PlotOptionsColumn;
 import com.vaadin.flow.component.dependency.CssImport;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -31,9 +32,9 @@ public class WithdrawalVsReturnsChart extends Chart {
         setHeight("340px");
 
         final Configuration cfg = getConfiguration();
-        cfg.setTitle("Withdrawal vs Returns");
+        cfg.setTitle(Translations.get("chart.retirement.withdrawalVsReturns"));
         cfg.getChart().setStyledMode(true);
-        cfg.getxAxis().setTitle("Age");
+        cfg.getxAxis().setTitle(Translations.get("chart.axis.age"));
         cfg.getLegend().setEnabled(true);
     }
 
@@ -56,10 +57,10 @@ public class WithdrawalVsReturnsChart extends Chart {
         }
 
         // Series order fixes the palette index the CSS recolours: 0 = returns, 1 = withdrawal.
-        final ListSeries returnsSeries = new ListSeries("Returns", returnsValues);
+        final ListSeries returnsSeries = new ListSeries(Translations.get("chart.series.returns"), returnsValues);
         returnsSeries.setPlotOptions(new PlotOptionsColumn());
 
-        final ListSeries withdrawalSeries = new ListSeries("Withdrawal", withdrawalValues);
+        final ListSeries withdrawalSeries = new ListSeries(Translations.get("chart.series.withdrawal"), withdrawalValues);
         withdrawalSeries.setPlotOptions(new PlotOptionsColumn());
 
         final Configuration cfg = getConfiguration();
