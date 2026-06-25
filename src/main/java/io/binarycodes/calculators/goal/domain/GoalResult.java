@@ -23,6 +23,9 @@ import java.util.List;
  * @param monthlySnapshots         per-month snapshots populated only when the horizon is short
  *                                 enough that a yearly chart would be too sparse to be useful
  *                                 ({@code totalMonths < 36}); empty list otherwise
+ * @param investmentSeries         one per investment bucket (input order): its corpus
+ *                                 build-up over time, aligned to {@code rows} and
+ *                                 {@code monthlySnapshots}. Drives the by-investment chart.
  */
 public record GoalResult(
         BigDecimal monthlyInvestment,
@@ -36,7 +39,8 @@ public record GoalResult(
         BigDecimal netAtExit,
         boolean goalAlreadyCovered,
         List<GoalProjectionRow> rows,
-        List<MonthSnapshot> monthlySnapshots
+        List<MonthSnapshot> monthlySnapshots,
+        List<InvestmentSeries> investmentSeries
 ) {
     public int yearsToGoal() {
         return totalMonths / 12;

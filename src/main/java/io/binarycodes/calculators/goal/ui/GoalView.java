@@ -5,6 +5,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
@@ -26,6 +27,7 @@ import io.binarycodes.calculators.goal.service.GoalInputsStore;
  *
  * @see GoalCalculatorForm
  * @see GoalGrowthChart
+ * @see GoalPerInvestmentChart
  * @see GoalProjectionGrid
  */
 @Route("goal")
@@ -37,8 +39,9 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
     private final SummaryCard finalCorpus         = new SummaryCard(getTranslation("summary.goal.finalCorpusGross"), VaadinIcon.FLAG_CHECKERED.create());
     private final SummaryCard taxAtExit           = new SummaryCard(getTranslation("summary.goal.taxAtExit"), VaadinIcon.INVOICE.create());
 
-    private final GoalGrowthChart    growthChart    = new GoalGrowthChart();
-    private final GoalProjectionGrid projectionGrid;
+    private final GoalGrowthChart        growthChart         = new GoalGrowthChart();
+    private final GoalPerInvestmentChart perInvestmentChart  = new GoalPerInvestmentChart();
+    private final GoalProjectionGrid     projectionGrid;
 
     private final VerticalLayout chartCard;
     private final VerticalLayout projectionCard;
@@ -99,6 +102,7 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
         this.chartCard.setVisible(true);
         this.projectionCard.setVisible(true);
         this.growthChart.update(result, currency);
+        this.perInvestmentChart.update(result, currency);
         this.projectionGrid.update(result.rows());
     }
 
@@ -116,7 +120,12 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
     }
 
     private VerticalLayout buildChartCard() {
-        final VerticalLayout card = new VerticalLayout(this.growthChart);
+        final TabSheet charts = new TabSheet();
+        charts.setWidthFull();
+        charts.add(getTranslation("tab.goal.total"), this.growthChart);
+        charts.add(getTranslation("tab.goal.byInvestment"), this.perInvestmentChart);
+
+        final VerticalLayout card = new VerticalLayout(charts);
         card.addClassName("chart-card");
         card.setPadding(false);
         card.setSpacing(false);

@@ -5,6 +5,7 @@ import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.GoalProjectionRow;
 import io.binarycodes.calculators.goal.domain.GoalResult;
 import io.binarycodes.calculators.goal.domain.Investment;
+import io.binarycodes.calculators.goal.domain.InvestmentSeries;
 import io.binarycodes.calculators.goal.domain.MonthSnapshot;
 import io.binarycodes.calculators.base.common.TimeHorizon;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
@@ -108,8 +109,8 @@ public final class GoalCalculator {
                 alpha = alpha.add(stepFactor, MC);
                 beta = beta.add(stepFactor.multiply(growthFactor, MC), MC);
             }
-            buckets.add(new Bucket(corpus, monthlyGrowth, taxRate, allocation, stepUp,
-                    grossFv, alpha, beta));
+            buckets.add(new Bucket(investment.getLabel(), corpus, monthlyGrowth, taxRate,
+                    allocation, stepUp, grossFv, alpha, beta));
         }
 
         BigDecimal netCorpusFvSum = BigDecimal.ZERO;
@@ -138,7 +139,8 @@ public final class GoalCalculator {
                     grossCorpusFvSum, sumPrincipal(buckets),
                     grossCorpusFvSum.subtract(sumPrincipal(buckets), MC),
                     taxAtExit, netCorpusFvSum,
-                    true, coveredProjection.rows(), coveredProjection.monthlySnapshots());
+                    true, coveredProjection.rows(), coveredProjection.monthlySnapshots(),
+                    coveredProjection.investmentSeries());
         }
 
         if (sumWeightedNetPerM.signum() <= 0) {
@@ -160,10 +162,11 @@ public final class GoalCalculator {
                 finalRow.balance(), finalRow.principal(), finalRow.gains(),
                 taxAtExit, netAtExit,
                 false,
-                projection.rows(), projection.monthlySnapshots());
+                projection.rows(), projection.monthlySnapshots(), projection.investmentSeries());
     }
 
-    private record Projection(List<GoalProjectionRow> rows, List<MonthSnapshot> monthlySnapshots) {
+    private record Projection(List<GoalProjectionRow> rows, List<MonthSnapshot> monthlySnapshots,
+                              List<InvestmentSeries> investmentSeries) {
     }
 
     private static BigDecimal computeTaxAtExit(List<Bucket> buckets) {
@@ -222,6 +225,15 @@ public final class GoalCalculator {
         final List<GoalProjectionRow> rows = new ArrayList<>();
         final List<MonthSnapshot> monthlySnapshots = new ArrayList<>();
 
+        // Per-bucket balance trails, aligned to rows (yearly) and snapshots (monthly),
+        // so the by-investment chart can plot one line per bucket.
+        final List<List<BigDecimal>> yearlyByBucket = new ArrayList<>();
+        final List<List<BigDecimal>> monthlyByBucket = new ArrayList<>();
+        for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++) {
+            yearlyByBucket.add(new ArrayList<>());
+            monthlyByBucket.add(new ArrayList<>());
+        }
+
         BigDecimal yearContribution = BigDecimal.ZERO;
         int monthsInCurrentYear = 0;
         int yearIndex = 0;
@@ -253,6 +265,9 @@ public final class GoalCalculator {
                         monthlyBalance,
                         monthlyPrincipal,
                         monthlyBalance.subtract(monthlyPrincipal, MC)));
+                for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++) {
+                    monthlyByBucket.get(bucketIndex).add(buckets.get(bucketIndex).balance);
+                }
             }
 
             final boolean isYearBoundary = monthsInCurrentYear == 12;
@@ -277,12 +292,23 @@ public final class GoalCalculator {
                         monthsInCurrentYear,
                         yearContribution, totalBalance, totalPrincipal, gains,
                         taxIfWithdrawn));
+                for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++) {
+                    yearlyByBucket.get(bucketIndex).add(buckets.get(bucketIndex).balance);
+                }
                 yearIndex++;
                 yearContribution = BigDecimal.ZERO;
                 monthsInCurrentYear = 0;
             }
         }
-        return new Projection(rows, monthlySnapshots);
+
+        final List<InvestmentSeries> investmentSeries = new ArrayList<>(buckets.size());
+        for (int bucketIndex = 0; bucketIndex < buckets.size(); bucketIndex++) {
+            investmentSeries.add(new InvestmentSeries(
+                    buckets.get(bucketIndex).label,
+                    yearlyByBucket.get(bucketIndex),
+                    monthlyByBucket.get(bucketIndex)));
+        }
+        return new Projection(rows, monthlySnapshots, investmentSeries);
     }
 
     private static Integer ageBaseFor(GoalInputs inputs) {
@@ -306,6 +332,7 @@ public final class GoalCalculator {
      * solver coefficients for this bucket.
      */
     private static final class Bucket {
+        final String label;
         final BigDecimal corpus;
         final BigDecimal monthlyGrowth;
         final BigDecimal taxRate;
@@ -317,9 +344,10 @@ public final class GoalCalculator {
         BigDecimal balance;
         BigDecimal principal;
 
-        Bucket(BigDecimal corpus, BigDecimal monthlyGrowth, BigDecimal taxRate,
+        Bucket(String label, BigDecimal corpus, BigDecimal monthlyGrowth, BigDecimal taxRate,
                BigDecimal allocation, BigDecimal stepUp, BigDecimal grossFv,
                BigDecimal alpha, BigDecimal beta) {
+            this.label = label;
             this.corpus = corpus;
             this.monthlyGrowth = monthlyGrowth;
             this.taxRate = taxRate;

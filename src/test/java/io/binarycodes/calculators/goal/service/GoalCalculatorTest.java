@@ -116,6 +116,50 @@ class GoalCalculatorTest {
     }
 
     @Test
+    void investment_series_one_per_bucket_aligned_and_sums_to_total() {
+        final GoalInputs inputs = base(20);
+        final List<Investment> investments = new ArrayList<>();
+        investments.add(new Investment("Equity",
+                new BigDecimal("30000"), BigDecimal.valueOf(10), new BigDecimal("12.5"),
+                BigDecimal.valueOf(70), BigDecimal.ZERO));
+        investments.add(new Investment("Debt",
+                new BigDecimal("10000"), BigDecimal.valueOf(6), new BigDecimal("30"),
+                BigDecimal.valueOf(30), BigDecimal.ZERO));
+        inputs.setInvestments(investments);
+
+        final GoalResult result = GoalCalculator.calculate(inputs);
+
+        // One series per bucket, in input order, labelled from the investment.
+        assertEquals(2, result.investmentSeries().size());
+        assertEquals("Equity", result.investmentSeries().get(0).label());
+        assertEquals("Debt", result.investmentSeries().get(1).label());
+
+        // Each series' yearly trail aligns 1:1 with the projection rows.
+        for (final var series : result.investmentSeries()) {
+            assertEquals(result.rows().size(), series.yearlyBalances().size());
+        }
+
+        // Per-bucket balances at each year sum to that row's total balance.
+        for (int rowIndex = 0; rowIndex < result.rows().size(); rowIndex++) {
+            BigDecimal sum = BigDecimal.ZERO;
+            for (final var series : result.investmentSeries()) {
+                sum = sum.add(series.yearlyBalances().get(rowIndex), MC);
+            }
+            assertEquals(0, sum.compareTo(result.rows().get(rowIndex).balance()),
+                    "per-bucket balances should sum to the row total at year " + rowIndex);
+        }
+    }
+
+    @Test
+    void investment_series_carry_monthly_trail_for_short_horizon() {
+        final GoalResult result = GoalCalculator.calculate(base(2)); // 24 months
+        assertEquals(1, result.investmentSeries().size());
+        assertEquals(result.monthlySnapshots().size(),
+                result.investmentSeries().get(0).monthlyBalances().size());
+        assertFalse(result.investmentSeries().get(0).monthlyBalances().isEmpty());
+    }
+
+    @Test
     void allocations_not_summing_to_100_rejected() {
         final GoalInputs inputs = base(20);
         final List<Investment> investments = new ArrayList<>();

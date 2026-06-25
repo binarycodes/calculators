@@ -433,10 +433,18 @@ Edges:
 `Final Corpus (gross)`, `Tax at Exit` (`= gains × tax rate`). The "goal
 already covered" banner takes over the first two cards when `M = 0`.
 
-### 3.2 Growth chart
+### 3.2 Growth charts
 
-Area-spline of corpus build-up across the *N* projected years, with two
-series: total balance and cumulative principal (so the gains stack is visible).
+Two tabs:
+
+- **Corpus Build-Up** — stacked column of corpus build-up across the *N*
+  projected years (or per month for horizons under 36 months): principal at the
+  bottom, gains stacked on top.
+- **By Investment** — one line per investment bucket, showing each bucket's
+  end-of-period balance over the same timeline. Lines are labelled by the
+  bucket's label (falling back to "Investment *n*" when blank). Backed by
+  `GoalResult.investmentSeries` (per-bucket balances aligned to the yearly rows
+  and, for short horizons, the monthly snapshots).
 
 ### 3.3 Projection grid
 
