@@ -30,6 +30,7 @@ jobs:
   docker:
     name: build and publish docker image
     needs: verify
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/docker.yml
     secrets: inherit
     with:
