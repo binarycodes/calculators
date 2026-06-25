@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.buyrent.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -34,11 +35,11 @@ import io.binarycodes.calculators.buyrent.service.BuyRentInputsStore;
 @PageTitle("Buy vs Rent Calculator")
 public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalculatorForm> {
 
-    private final SummaryCard monthlyCostBuyCard = new SummaryCard("Monthly Cost: Buy");
-    private final SummaryCard monthlyCostRentCard = new SummaryCard("Monthly Cost: Rent");
-    private final SummaryCard breakEvenCard = new SummaryCard("Break-Even");
-    private final SummaryCard netWorthBuyCard = new SummaryCard("Net Worth: Buy");
-    private final SummaryCard netWorthRentCard = new SummaryCard("Net Worth: Rent");
+    private final SummaryCard monthlyCostBuyCard = new SummaryCard("Monthly Cost: Buy", VaadinIcon.HOME.create());
+    private final SummaryCard monthlyCostRentCard = new SummaryCard("Monthly Cost: Rent", VaadinIcon.KEY_O.create());
+    private final SummaryCard breakEvenCard = new SummaryCard("Break-Even", VaadinIcon.SCALE.create());
+    private final SummaryCard netWorthBuyCard = new SummaryCard("Net Worth: Buy", VaadinIcon.HOME_O.create());
+    private final SummaryCard netWorthRentCard = new SummaryCard("Net Worth: Rent", VaadinIcon.CHART_LINE.create());
 
     private final BuyRentComparisonChart comparisonChart = new BuyRentComparisonChart();
     private final BuyRentProjectionGrid projectionGrid;

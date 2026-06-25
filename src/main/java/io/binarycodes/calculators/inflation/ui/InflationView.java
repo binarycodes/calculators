@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.inflation.ui;
 
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
@@ -28,8 +29,8 @@ import java.math.BigDecimal;
 @PageTitle("Inflation Projection")
 public class InflationView extends BaseCalculatorView<InflationInputs, InflationCalculatorForm> {
 
-    private final SummaryCard enteredCard = new SummaryCard("Amount Today");
-    private final SummaryCard resultCard = new SummaryCard("Amount After Time Period");
+    private final SummaryCard enteredCard = new SummaryCard("Amount Today", VaadinIcon.MONEY.create());
+    private final SummaryCard resultCard = new SummaryCard("Amount After Time Period", VaadinIcon.TIME_FORWARD.create());
     private final InflationChart chart = new InflationChart();
     private final VerticalLayout chartCard;
 

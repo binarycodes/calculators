@@ -4,6 +4,34 @@ vaadin-card {
         --vaadin-card-title-font-weight: 700;
     }
 
+    /* Leading label icon. Slotted into the header-prefix (light DOM), so it is
+       reachable without ::part. A soft tinted chip echoes the landing tiles;
+       tinted (status) cards recolour the chip to match their accent. */
+    &.summary-card .summary-card-icon {
+        box-sizing: border-box;
+        width: 1.75rem;
+        height: 1.75rem;
+        padding: 0.35rem;
+        border-radius: 8px;
+        color: var(--color-primary);
+        background-color: var(--color-primary-soft);
+    }
+
+    &[status~="success"] .summary-card-icon {
+        color: var(--color-success-text);
+        background-color: var(--color-success-bg);
+    }
+
+    &[status~="warning"] .summary-card-icon {
+        color: var(--color-warning-text);
+        background-color: var(--color-warning-bg);
+    }
+
+    &[status~="danger"] .summary-card-icon {
+        color: var(--color-danger-text);
+        background-color: var(--color-danger-bg);
+    }
+
     &::part(content) {
         color: var(--vaadin-text-color);
         font-weight: 500;

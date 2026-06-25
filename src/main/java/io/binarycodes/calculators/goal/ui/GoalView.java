@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.goal.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -33,10 +34,10 @@ import io.binarycodes.calculators.goal.service.GoalInputsStore;
 @PageTitle("Goal Planner")
 public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm> {
 
-    private final SummaryCard monthlyInvestment   = new SummaryCard("Monthly Investment");
-    private final SummaryCard yearlyInvestment    = new SummaryCard("First-Year Investment");
-    private final SummaryCard finalCorpus         = new SummaryCard("Final Corpus (gross)");
-    private final SummaryCard taxAtExit           = new SummaryCard("Tax at Exit");
+    private final SummaryCard monthlyInvestment   = new SummaryCard("Monthly Investment", VaadinIcon.CALENDAR.create());
+    private final SummaryCard yearlyInvestment    = new SummaryCard("First-Year Investment", VaadinIcon.COIN_PILES.create());
+    private final SummaryCard finalCorpus         = new SummaryCard("Final Corpus (gross)", VaadinIcon.FLAG_CHECKERED.create());
+    private final SummaryCard taxAtExit           = new SummaryCard("Tax at Exit", VaadinIcon.INVOICE.create());
 
     private final GoalGrowthChart    growthChart    = new GoalGrowthChart();
     private final GoalProjectionGrid projectionGrid;

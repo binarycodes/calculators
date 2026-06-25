@@ -2,6 +2,7 @@ package io.binarycodes.calculators.base.ui;
 
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import io.binarycodes.calculators.base.common.Status;
 
 /**
@@ -17,6 +18,13 @@ public class SummaryCard extends Card {
         addClassName("summary-card");
         setTitle(labelText);
         add(this.value);
+    }
+
+    /** As {@link #SummaryCard(String)}, with a leading icon next to the label. */
+    public SummaryCard(String labelText, Icon icon) {
+        this(labelText);
+        icon.addClassName("summary-card-icon");
+        setHeaderPrefix(icon);
     }
 
     public void setLabel(String text) {

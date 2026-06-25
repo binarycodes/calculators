@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.investment.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -28,10 +29,10 @@ import io.binarycodes.calculators.investment.service.InvestmentInputsStore;
 @PageTitle("Investment Calculator")
 public class InvestmentView extends BaseCalculatorView<InvestmentInputs, InvestmentCalculatorForm> {
 
-    private final SummaryCard investedCard = new SummaryCard("Total Invested");
-    private final SummaryCard maturityCard = new SummaryCard("Maturity Value");
-    private final SummaryCard netCard = new SummaryCard("Net After Tax");
-    private final SummaryCard buyingPowerCard = new SummaryCard("Buying Power Today");
+    private final SummaryCard investedCard = new SummaryCard("Total Invested", VaadinIcon.WALLET.create());
+    private final SummaryCard maturityCard = new SummaryCard("Maturity Value", VaadinIcon.TRENDING_UP.create());
+    private final SummaryCard netCard = new SummaryCard("Net After Tax", VaadinIcon.MONEY.create());
+    private final SummaryCard buyingPowerCard = new SummaryCard("Buying Power Today", VaadinIcon.CART.create());
 
     private final InvestmentGrowthChart chart = new InvestmentGrowthChart();
     private final InvestmentProjectionGrid projectionGrid;

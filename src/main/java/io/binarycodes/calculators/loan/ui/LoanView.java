@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.loan.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -37,12 +38,12 @@ import io.binarycodes.calculators.loan.service.LoanInputsStore;
 @PageTitle("Loan / EMI Calculator")
 public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm> {
 
-    private final SummaryCard emiCard = new SummaryCard("Monthly EMI");
-    private final SummaryCard totalInterestCard = new SummaryCard("Total Interest");
-    private final SummaryCard totalPaymentCard = new SummaryCard("Total Payment");
-    private final SummaryCard interestSavedCard = new SummaryCard("Interest Saved");
-    private final SummaryCard lowerEmiCard = new SummaryCard("Lower EMI");
-    private final SummaryCard realInterestCard = new SummaryCard("Interest (today's money)");
+    private final SummaryCard emiCard = new SummaryCard("Monthly EMI", VaadinIcon.CALENDAR.create());
+    private final SummaryCard totalInterestCard = new SummaryCard("Total Interest", VaadinIcon.CHART_LINE.create());
+    private final SummaryCard totalPaymentCard = new SummaryCard("Total Payment", VaadinIcon.MONEY.create());
+    private final SummaryCard interestSavedCard = new SummaryCard("Interest Saved", VaadinIcon.PIGGY_BANK_COIN.create());
+    private final SummaryCard lowerEmiCard = new SummaryCard("Lower EMI", VaadinIcon.ARROW_DOWN.create());
+    private final SummaryCard realInterestCard = new SummaryCard("Interest (today's money)", VaadinIcon.TIME_FORWARD.create());
 
     private final LoanBalanceChart balanceChart = new LoanBalanceChart();
     private final LoanPaymentSplitChart paymentSplitChart = new LoanPaymentSplitChart();

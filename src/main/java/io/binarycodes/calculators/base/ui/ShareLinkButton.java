@@ -65,6 +65,7 @@ public class ShareLinkButton extends Composite<HorizontalLayout> {
                 Notification.show("Link copied", 2000, Notification.Position.BOTTOM_START));
 
         final HorizontalLayout content = getContent();
+        content.addClassName("share-link-button");
         content.setPadding(false);
         content.setSpacing(false);
         content.add(this.shareUrl, this.shareButton, this.copyButton);

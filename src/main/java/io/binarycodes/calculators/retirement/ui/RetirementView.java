@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.retirement.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -45,10 +46,10 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
 
     private static final BigDecimal HEALTHY_CORPUS_MULTIPLIER = BigDecimal.valueOf(5);
 
-    private final SummaryCard corpusAtRetirement   = new SummaryCard("Corpus at Retirement");
-    private final SummaryCard expensesAtRetirement = new SummaryCard("Annual Expenses at Retirement");
-    private final SummaryCard lastsUntil           = new SummaryCard("Corpus Lasts Until");
-    private final SummaryCard finalCorpus          = new SummaryCard("Final Corpus");
+    private final SummaryCard corpusAtRetirement   = new SummaryCard("Corpus at Retirement", VaadinIcon.WALLET.create());
+    private final SummaryCard expensesAtRetirement = new SummaryCard("Annual Expenses at Retirement", VaadinIcon.CART.create());
+    private final SummaryCard lastsUntil           = new SummaryCard("Corpus Lasts Until", VaadinIcon.HOURGLASS.create());
+    private final SummaryCard finalCorpus          = new SummaryCard("Final Corpus", VaadinIcon.FLAG_CHECKERED.create());
 
     private final CorpusChart                corpusChart                = new CorpusChart();
     private final ExpensesChart              expensesChart              = new ExpensesChart();

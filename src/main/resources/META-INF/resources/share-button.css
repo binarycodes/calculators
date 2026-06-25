@@ -1,0 +1,20 @@
+/*
+ * The share / copy-link control next to a calculator title. The buttons stay
+ * Lumo tertiary (no heavy fill) but get a subtle pill chip so the control reads
+ * as actionable instead of disappearing into the heading.
+ */
+.share-link-button vaadin-button {
+    color: var(--color-text-muted);
+    background-color: var(--color-surface-overlay);
+    border-radius: 999px;
+    transition: color 0.12s ease, background-color 0.12s ease;
+
+    &:hover {
+        color: var(--color-primary);
+        background-color: var(--color-primary-soft);
+    }
+
+    & vaadin-icon {
+        color: inherit;
+    }
+}
