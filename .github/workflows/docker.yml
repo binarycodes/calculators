@@ -1,8 +1,8 @@
 name: create and publish docker container
 
 on:
-  push:
-    branches: [ '*' ]
+  # Only ever runs when called by the CI workflow, after `maven verify`
+  # succeeds — never directly on push.
   workflow_call:
     inputs:
       sha:

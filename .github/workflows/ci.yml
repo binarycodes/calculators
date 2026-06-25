@@ -4,6 +4,10 @@ on:
   push:
     branches: ['**']
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   verify:
     name: maven verify
@@ -22,3 +26,11 @@ jobs:
 
       - name: maven verify
         run: mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${{ secrets.VAADIN_SERVER_LICENSE }} clean verify
+
+  docker:
+    name: build and publish docker image
+    needs: verify
+    uses: ./.github/workflows/docker.yml
+    secrets: inherit
+    with:
+      sha: ${{ github.sha }}
