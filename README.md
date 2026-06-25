@@ -211,3 +211,14 @@ GitHub Actions **CI** workflow: on every push to `main`, the Docker image is
 built and published **only after `mvn verify` passes** (the `docker` job is
 gated on the `verify` job). Images are signed with [cosign](https://github.com/sigstore/cosign)
 and ship with provenance + SBOM attestations.
+
+---
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0** — see
+[`LICENSE`](LICENSE) for the full text.
+
+Note this covers the application's own source code. The commercial Vaadin
+components it builds against (see [Vaadin license](#build-your-own-image)) remain
+governed by their own commercial terms and are not relicensed here.
