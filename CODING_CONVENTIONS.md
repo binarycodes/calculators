@@ -133,6 +133,30 @@ code should follow it without being prompted.
 - **Each CSS file gets a one-paragraph header comment** describing what
   it owns. No section dividers inside files.
 
+## 6b. Internationalization
+
+- **No user-facing string literals in code.** Every label, button, title,
+  tab caption, hint, placeholder, tooltip, validation message, grid column
+  header, chart title/axis/series name, notification, and aria-label is a
+  key in `src/main/resources/vaadin-i18n/translations.properties`
+  (Vaadin's `DefaultI18NProvider` loads this folder automatically — no
+  custom provider). The suffix-less file is the en_GB / fallback bundle;
+  the app pins the locale to en_GB (`base/i18n/AppLocaleConfig`) and does
+  not yet detect or switch languages.
+- **Resolve via `getTranslation(key, args…)`** on a `Component`, or
+  `io.binarycodes.calculators.base.i18n.Translations.get(key, args…)` in a
+  static helper / renderer lambda / factory.
+- **Reuse shared keys and parameterise** rather than duplicating text:
+  `validation.between=Must be between {0} and {1}`, `field.years`,
+  `grid.col.principal`, `frequency.monthly`, `unit.percent`. Calculator-
+  specific text is namespaced (`summary.loan.*`, `chart.retirement.*`).
+- **Annotations can't be translated** — `@PageTitle`/`@Menu(title=…)` take
+  constants. Use `HasDynamicTitle.getPageTitle()` for the page title
+  (`BaseCalculatorView` does this from a title key), and translate menu
+  labels where they render (`MenuTitles` maps `@Menu` paths to `menu.*`).
+- **Never `switch` on a translated display string.** Switch on an enum or
+  tab index instead, so logic survives a locale change.
+
 ## 7. Responsive layout
 
 **Every form and result layout must be responsive** — usable from a phone
