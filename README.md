@@ -90,7 +90,7 @@ Web Share / clipboard features work here too. The frontend is rebuilt on the
 fly in development mode; the first start downloads npm dependencies and takes a
 little longer.
 
-> The charts use Vaadin Charts (commercial). The first time a chart renders in
+> This app uses commercial Vaadin components. The first time one renders in
 > development, Vaadin Dev Tools prompts you to sign in to `vaadin.com` or start a
 > free trial. See [Vaadin license](#build-your-own-image) below.
 
@@ -123,8 +123,8 @@ docker build -t calculators:latest \
 docker buildx bake
 ```
 
-> **Vaadin license:** this app uses **Vaadin Charts**, a commercial Vaadin
-> component, so building it requires one of:
+> **Vaadin license:** this app uses **commercial Vaadin components**, so building
+> it requires one of:
 >
 > - **A valid [Vaadin subscription](https://vaadin.com/pricing)** (no banner).
 >   On a local machine the license is validated through your `vaadin.com` login
@@ -133,8 +133,8 @@ docker buildx bake
 >   mount your `proKey` as a build secret.
 > - **A trial build with the opt-in flag `-Dvaadin.commercialWithBanner`.** A
 >   production build does *not* enable commercial components without a license
->   unless you opt in with this flag, which builds with Charts enabled but shows
->   a persistent banner at the bottom of the page at runtime:
+>   unless you opt in with this flag, which builds them in but shows a persistent
+>   banner at the bottom of the page at runtime:
 >
 >   ```bash
 >   ./mvnw clean package -Dvaadin.commercialWithBanner
