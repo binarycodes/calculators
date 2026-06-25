@@ -4,6 +4,13 @@ A small suite of personal-finance calculators — a [Vaadin](https://vaadin.com)
 (Spring Boot) web app. Pick a calculator, enter your numbers, and get an instant
 year-by-year projection with charts and a shareable link.
 
+### A quick look
+
+The Retirement Planner — live summary cards, an interactive projection chart,
+and a year-by-year breakdown that all recompute as you type:
+
+![Retirement Planner screenshot](docs/screenshots/retirement.png)
+
 **Calculators included:**
 
 | Calculator | What it answers |
