@@ -12,27 +12,31 @@ vaadin-radio-group.segmented-toggle vaadin-radio-button::before {
 
 vaadin-radio-group.segmented-toggle {
     --vaadin-radio-button-gap: 0;
-    --vaadin-gap-xs: 0.25rem;
+    --vaadin-gap-xs: 0.125rem;
 
     background-color: var(--color-surface-overlay);
-    padding: 0.25rem 0.25rem;
-    border-radius: 10px;
+    padding: 0.25rem;
+    border-radius: 999px;
 }
 
 vaadin-radio-group.segmented-toggle::part(group-field) {
     flex-direction: row;
-    gap: 0.25rem 0.25rem;
+    gap: 0.125rem;
 }
 
 vaadin-radio-group.segmented-toggle vaadin-radio-button {
-    background-color: var(--color-surface-overlay);
-    color: var(--color-text);
-    border-radius: 10px;
+    background-color: transparent;
+    color: var(--color-text-muted);
+    border-radius: 999px;
+    transition: color 0.12s ease, background-color 0.12s ease;
+
+    &:hover:not([checked]) {
+        color: var(--color-text);
+    }
 
     &[checked] {
-        background-color: var(--color-surface-raised);
-        color: var(--color-primary-strong);
-        box-shadow: var(--shadow-chip);
+        background-color: var(--color-primary);
+        color: var(--color-on-primary);
     }
 
     label {
