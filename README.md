@@ -90,6 +90,10 @@ Web Share / clipboard features work here too. The frontend is rebuilt on the
 fly in development mode; the first start downloads npm dependencies and takes a
 little longer.
 
+> The charts use Vaadin Charts (commercial). Without a Vaadin subscription the
+> app runs fine but the charts show a trial banner — see
+> [Vaadin license](#build-your-own-image) below.
+
 Run the tests:
 
 ```bash
@@ -119,11 +123,17 @@ docker build -t calculators:latest \
 docker buildx bake
 ```
 
-> **Vaadin license:** this project builds against Vaadin's free, open-source
-> core, so no license is needed for the prebuilt image or a standard build. If
-> you add commercial Vaadin components, pass your server license to the build as
-> the `VAADIN_SERVER_LICENSE` build arg (wired through to `-Dvaadin.offlineKey`),
-> or mount your `proKey` as a Docker build secret.
+> **Vaadin license:** this app uses **Vaadin Charts**, a commercial Vaadin
+> component, so a valid [Vaadin subscription](https://vaadin.com/pricing) is
+> required to build it. Provide your license to the build as the
+> `VAADIN_SERVER_LICENSE` build arg (wired through to `-Dvaadin.offlineKey`), or
+> mount your `proKey` as a Docker build secret. Without a license the app still
+> builds and runs, but the charts render with a **trial / commercial-component
+> banner**.
+>
+> The prebuilt Docker Hub image is built with a license, so **running it needs no
+> key and shows no banner** — the license is checked at build time, not at
+> runtime.
 
 ---
 
