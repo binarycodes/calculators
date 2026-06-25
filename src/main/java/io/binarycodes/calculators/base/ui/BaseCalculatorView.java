@@ -39,7 +39,7 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     private final CalculatorDefaults<I> defaults;
     private final String routeSegment;
 
-    private final ShareLinkButton shareButton = new ShareLinkButton();
+    private final ShareLinkButton shareButton;
 
     /** A {@code ?s=} share token captured on entry, consumed once inputs have loaded. */
     private String pendingShareToken;
@@ -55,6 +55,7 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         this.defaults = defaults;
         this.form = form;
         this.routeSegment = routeSegment;
+        this.shareButton = new ShareLinkButton(title);
 
         addClassName(routeSegment + "-view");
         setWidthFull();
