@@ -1,11 +1,14 @@
 package io.binarycodes.calculators.retirement.ui;
 
 import com.vaadin.flow.component.charts.Chart;
+import com.vaadin.flow.component.charts.model.AxisType;
 import com.vaadin.flow.component.charts.model.ChartType;
 import com.vaadin.flow.component.charts.model.Configuration;
 import com.vaadin.flow.component.charts.model.DataLabels;
 import com.vaadin.flow.component.charts.model.DataSeries;
 import com.vaadin.flow.component.charts.model.DataSeriesItemTimeline;
+import com.vaadin.flow.component.charts.model.Marker;
+import com.vaadin.flow.component.charts.model.MarkerSymbolEnum;
 import com.vaadin.flow.component.charts.model.PlotOptionsTimeline;
 import com.vaadin.flow.component.charts.model.Tooltip;
 import com.vaadin.flow.component.charts.model.XAxis;
@@ -23,9 +26,9 @@ import java.util.List;
  * A {@link ChartType#TIMELINE} chart that tells the plan's story along the age
  * axis: current state, retirement, lump-sum benefits, one-off and recurring
  * cashflows, wealth milestones, the year drawdown begins, and depletion. Events
- * sharing a year are clubbed into one marker (inline label = the event count;
- * the hover tooltip lists them all). Retirement, drawdown and depletion years
- * carry distinct marker colours.
+ * sharing a year are clubbed into one marker whose callout box lists them under
+ * an "Age N · YYYY" header. Retirement, drawdown and depletion years carry
+ * distinct marker colours.
  */
 @CssImport(value = "./shadow/timeline-chart.css", themeFor = "vaadin-chart")
 public class TimelineChart extends Chart {
@@ -48,6 +51,8 @@ public class TimelineChart extends Chart {
 
         final XAxis xAxis = configuration.getxAxis();
         xAxis.setTitle(Translations.get("chart.axis.age"));
+        // Plain age numbers — the timeline series otherwise treats x as a date axis.
+        xAxis.setType(AxisType.LINEAR);
         xAxis.setAllowDecimals(false);
         configuration.getyAxis().setVisible(false);
 
@@ -64,6 +69,15 @@ public class TimelineChart extends Chart {
         // Timeline defaults to one palette colour per point; we colour by event
         // type via per-point CSS classes instead, so turn the rainbow off.
         plotOptions.setColorByPoint(false);
+
+        // The timeline series otherwise stretches each marker to fill its slot
+        // (a wide ellipse); pinning width = height keeps them round dots.
+        final Marker marker = new Marker();
+        marker.setSymbol(MarkerSymbolEnum.CIRCLE);
+        marker.setRadius(6);
+        marker.setWidth(12);
+        marker.setHeight(12);
+        plotOptions.setMarker(marker);
 
         final DataLabels dataLabels = new DataLabels();
         dataLabels.setEnabled(true);
