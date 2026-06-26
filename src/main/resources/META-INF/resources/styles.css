@@ -20,6 +20,7 @@
 @import url('loan-view.css');
 @import url('buyrent-view.css');
 @import url('landing-view.css');
+@import url('drawer-footer.css');
 
 html, body, *, *:before, *:after {
     box-sizing: border-box;

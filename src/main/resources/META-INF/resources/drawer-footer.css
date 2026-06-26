@@ -1,0 +1,22 @@
+/*
+ * Footer pinned to the bottom of the navigation drawer: two small, muted icon
+ * links (Vaadin, GitHub) that brighten to the brand colour on hover.
+ */
+
+.drawer-footer {
+    padding: var(--vaadin-padding-m, 0.75rem);
+    border-top: 1px solid var(--color-border);
+}
+
+.drawer-footer-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-text-subtle);
+    padding: 0.25rem;
+    border-radius: var(--vaadin-radius-m, 0.25rem);
+    transition: color 0.15s ease-in-out;
+}
+
+.drawer-footer-link:hover {
+    color: var(--color-primary);
+}
