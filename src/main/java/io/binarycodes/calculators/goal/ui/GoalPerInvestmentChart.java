@@ -9,6 +9,7 @@ import com.vaadin.flow.component.charts.model.DataSeriesItem;
 import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.PlotOptionsLine;
 import com.vaadin.flow.component.charts.model.XAxis;
+import com.vaadin.flow.component.dependency.CssImport;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -24,11 +25,17 @@ import java.util.List;
  * line each — so the user can see how the individual buckets grow relative to
  * one another. Complements {@link GoalGrowthChart}, which shows the aggregate
  * principal/gains stack. Mirrors that chart's yearly-vs-monthly x-axis choice.
+ *
+ * <p>The host class scopes the categorical line palette in
+ * {@code goal-per-investment-chart.css} so each line gets a distinct colour
+ * instead of styled mode's near-identical default blues.</p>
  */
+@CssImport(value = "./shadow/goal-per-investment-chart.css", themeFor = "vaadin-chart")
 public class GoalPerInvestmentChart extends Chart {
 
     public GoalPerInvestmentChart() {
         super(ChartType.LINE);
+        addClassName("goal-per-investment-chart");
         setWidthFull();
         setHeight("340px");
 

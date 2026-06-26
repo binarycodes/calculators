@@ -53,6 +53,18 @@
     --chart-warning-color: #D8B47A;
     --chart-danger-color: #D79A9A;
 
+    /* Categorical line palette — distinct, saturated hues for charts that draw
+       one line per series (e.g. corpus build-up per investment), where the muted
+       area-chart tones above are too alike to tell thin lines apart. */
+    --chart-cat-1: #2563eb;
+    --chart-cat-2: #16a34a;
+    --chart-cat-3: #ea580c;
+    --chart-cat-4: #9333ea;
+    --chart-cat-5: #dc2626;
+    --chart-cat-6: #0891b2;
+    --chart-cat-7: #ca8a04;
+    --chart-cat-8: #db2777;
+
     /* override vaadin colors */
     --vaadin-text-color: var(--color-text-muted);
 }
@@ -91,6 +103,16 @@ html.dark {
     --chart-success-color: #9FC8A1;
     --chart-warning-color: #DDB678;
     --chart-danger-color: #D89A9A;
+
+    /* Categorical line palette — lighter variants for dark backgrounds. */
+    --chart-cat-1: #60a5fa;
+    --chart-cat-2: #4ade80;
+    --chart-cat-3: #fb923c;
+    --chart-cat-4: #c084fc;
+    --chart-cat-5: #f87171;
+    --chart-cat-6: #22d3ee;
+    --chart-cat-7: #facc15;
+    --chart-cat-8: #f472b6;
 
 
     /* Status backgrounds (tints work in either theme via color-mix) ----- */
