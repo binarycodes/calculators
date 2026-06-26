@@ -42,6 +42,7 @@
     & .highcharts-data-label text {
         fill: var(--color-text);
         font-weight: 400;
+        font-size: 13px;
     }
 
     & .highcharts-data-label-connector {
