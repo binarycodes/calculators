@@ -94,11 +94,16 @@ public final class RetirementTimeline {
         final List<BigDecimal> thresholds = WealthMilestones.thresholdsFor(currency);
         int nextThreshold = 0;
         for (final ProjectionRow row : rows) {
+            // A single year can clear several thresholds at once (e.g. a big
+            // inflow); consume them all but mark only the highest reached.
+            BigDecimal highestReached = null;
             while (nextThreshold < thresholds.size()
                     && row.endCorpus().compareTo(thresholds.get(nextThreshold)) >= 0) {
-                addEvent(byAge, row.age(),
-                        TimelineEvent.of(TimelineEventType.MILESTONE, thresholds.get(nextThreshold)));
+                highestReached = thresholds.get(nextThreshold);
                 nextThreshold++;
+            }
+            if (highestReached != null) {
+                addEvent(byAge, row.age(), TimelineEvent.of(TimelineEventType.MILESTONE, highestReached));
             }
         }
     }

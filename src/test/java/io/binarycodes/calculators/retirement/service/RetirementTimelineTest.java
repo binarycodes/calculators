@@ -29,7 +29,7 @@ class RetirementTimelineTest {
     private static final int BASE_YEAR = 2026;
 
     @Test
-    void milestones_differ_by_currency_and_club_multiple_in_one_year() {
+    void milestones_differ_by_currency_and_keep_only_the_highest_per_year() {
         final List<ProjectionRow> rows = List.of(
                 row(40, 1_500_000, 2_000_000),
                 row(41, 5_500_000, 6_000_000),
@@ -41,15 +41,15 @@ class RetirementTimelineTest {
         // INR thresholds include ₹50L (5e6), so age 41 earns a milestone.
         assertTrue(amounts(inr, 41, TimelineEventType.MILESTONE).contains(bd(5_000_000)),
                 "INR should hit the ₹50L milestone at 41");
-        // ₹1cr (1e7) and ₹5cr (5e7) both cleared in the same year → clubbed.
-        assertEquals(List.of(bd(10_000_000), bd(50_000_000)),
+        // ₹1cr (1e7) and ₹5cr (5e7) both cleared at 42 → keep only the highest.
+        assertEquals(List.of(bd(50_000_000)),
                 amounts(inr, 42, TimelineEventType.MILESTONE));
 
         final List<TimelineYear> usd = RetirementTimeline.build(inputs, result, SupportedCurrency.USD);
         // USD set jumps 1M → 10M, so 6M earns nothing at 41.
         assertTrue(types(usd, 41).stream().noneMatch(t -> t == TimelineEventType.MILESTONE),
                 "USD should have no milestone at 41");
-        assertEquals(List.of(bd(10_000_000), bd(50_000_000)),
+        assertEquals(List.of(bd(50_000_000)),
                 amounts(usd, 42, TimelineEventType.MILESTONE));
     }
 
