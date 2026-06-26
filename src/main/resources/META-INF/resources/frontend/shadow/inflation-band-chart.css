@@ -18,8 +18,18 @@
         stroke-width: 2px;
     }
 
+    /*
+     * Arearange has no Java marker option, so its points render permanently.
+     * Hide them by default and reveal only the hovered point, matching the
+     * other charts (which disable markers via Marker(false)).
+     */
     & .highcharts-point {
         fill: var(--chart-primary-color);
         stroke: var(--chart-primary-color);
+        opacity: 0;
+    }
+
+    & .highcharts-point-hover {
+        opacity: 1;
     }
 }
