@@ -33,8 +33,7 @@ public class LoanPaymentSplitChart extends Chart {
         setHeight("340px");
 
         final Configuration configuration = getConfiguration();
-        // Title omitted — the enclosing tab is labelled "Principal vs Interest".
-        configuration.setTitle("");
+        configuration.setTitle(Translations.get("loan.tab.principalVsInterest"));
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();

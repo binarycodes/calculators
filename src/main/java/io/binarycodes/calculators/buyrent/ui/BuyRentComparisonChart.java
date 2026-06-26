@@ -34,7 +34,7 @@ public class BuyRentComparisonChart extends Chart {
         addClassName("buyrent-chart");
 
         final Configuration configuration = getConfiguration();
-        configuration.setTitle("");
+        configuration.setTitle(Translations.get("chart.buyrent.title"));
         configuration.getChart().setStyledMode(true);
         configuration.getLegend().setEnabled(true);
         final XAxis xAxis = configuration.getxAxis();
