@@ -342,6 +342,28 @@ without recomputing the projection.
 | Return on Investments | Stacked column | Yearly principal + interest until depletion or life expectancy |
 | Withdrawal vs Returns | Grouped column | Post-retirement withdrawal vs. returns by year |
 | Real Corpus | Split-pane area-spline | Nominal vs. inflation-deflated corpus, on independent y-scales |
+| Timeline | Timeline | Major life/financial events along the age axis (see 5.3.1) |
+
+#### 5.3.1 Plan Timeline
+
+A timeline chart marking the plan's major events on the age axis. All events
+falling in the same year are **clubbed into a single marker** whose inline label
+is the event count; the hover tooltip lists every event for that year (with the
+amount where relevant). Retirement, drawdown-begins and depletion years are
+coloured distinctly from ordinary years.
+
+Events marked:
+- **Today** — the current age and starting corpus.
+- **Retirement** — the retirement-age year, plus any retirement benefits received.
+- **One-off future incomes / expenses** — at their year.
+- **Recurring income / expense start and stop** — at the start year and, when set,
+  the stop year.
+- **Wealth milestones** — the first year the **nominal** corpus crosses each
+  threshold. Thresholds are per-currency: INR ₹10L, ₹50L, ₹1cr, ₹5cr, ₹10cr,
+  ₹50cr; USD/EUR $1M, $10M, $50M, $100M, $500M, $1B.
+- **Drawdown begins** — the first year the corpus shrinks year-on-year
+  (`endCorpus < startCorpus`, i.e. outflows exceed returns plus inflows).
+- **Corpus depletion** — the year the corpus is exhausted, if it is.
 
 
 ## 6. Test coverage

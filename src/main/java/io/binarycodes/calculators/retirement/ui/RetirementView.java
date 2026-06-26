@@ -21,6 +21,7 @@ import io.binarycodes.calculators.retirement.domain.RetirementResult;
 import io.binarycodes.calculators.retirement.service.DefaultsProvider;
 import io.binarycodes.calculators.retirement.service.RetirementCalculator;
 import io.binarycodes.calculators.retirement.service.RetirementInputsStore;
+import io.binarycodes.calculators.retirement.service.RetirementTimeline;
 
 import java.math.BigDecimal;
 
@@ -36,6 +37,7 @@ import java.math.BigDecimal;
  * @see ReturnOnInvestmentsChart
  * @see WithdrawalVsReturnsChart
  * @see RealCorpusChart
+ * @see TimelineChart
  * @see ProjectionGrid
  */
 @Route("retirement")
@@ -55,6 +57,7 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
     private final ReturnOnInvestmentsChart   returnOnInvestmentsChart   = new ReturnOnInvestmentsChart();
     private final WithdrawalVsReturnsChart   withdrawalVsReturnsChart   = new WithdrawalVsReturnsChart();
     private final RealCorpusChart            realCorpusChart            = new RealCorpusChart();
+    private final TimelineChart              timelineChart              = new TimelineChart();
 
     private final ProjectionGrid projectionGrid;
 
@@ -104,6 +107,7 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
         this.returnOnInvestmentsChart.update(inputs, result, currency);
         this.withdrawalVsReturnsChart.update(result, currency);
         this.realCorpusChart.update(inputs, result, currency);
+        this.timelineChart.update(RetirementTimeline.build(inputs, result, currency), currency);
     }
 
     private HorizontalLayout buildSummaryRow() {
@@ -126,7 +130,8 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
                 new Tab(getTranslation("tab.retirement.chart.investments")),
                 new Tab(getTranslation("tab.retirement.chart.returnOnInvestments")),
                 new Tab(getTranslation("tab.retirement.chart.withdrawalVsReturns")),
-                new Tab(getTranslation("tab.retirement.chart.realCorpus")));
+                new Tab(getTranslation("tab.retirement.chart.realCorpus")),
+                new Tab(getTranslation("tab.retirement.chart.timeline")));
 
         final VerticalLayout activeChartContainer = new VerticalLayout();
         activeChartContainer.setPadding(false);
@@ -145,6 +150,7 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
                 case 3 -> activeChartContainer.add(this.returnOnInvestmentsChart);
                 case 4 -> activeChartContainer.add(this.withdrawalVsReturnsChart);
                 case 5 -> activeChartContainer.add(this.realCorpusChart);
+                case 6 -> activeChartContainer.add(this.timelineChart);
                 default -> activeChartContainer.add(this.corpusChart);
             }
         });

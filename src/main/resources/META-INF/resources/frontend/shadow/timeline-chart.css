@@ -1,0 +1,42 @@
+/*
+ * Retirement "Plan Timeline" chart. A muted connector line with one marker per
+ * year; ordinary years use the secondary tone, while the key years (retirement,
+ * drawdown, depletion) are coloured from the semantic chart tokens. Scoped to
+ * this chart's host class so nothing leaks to the other charts.
+ */
+
+:host(.timeline-chart) {
+    & .highcharts-graph,
+    & .highcharts-track-line {
+        stroke: var(--color-border-strong);
+    }
+
+    & .highcharts-point {
+        fill: var(--chart-secondary-color);
+        stroke: var(--chart-secondary-color);
+    }
+
+    & .highcharts-point.retirement-year {
+        fill: var(--chart-primary-color);
+        stroke: var(--chart-primary-color);
+    }
+
+    & .highcharts-point.drawdown-year {
+        fill: var(--chart-warning-color);
+        stroke: var(--chart-warning-color);
+    }
+
+    & .highcharts-point.depletion-year {
+        fill: var(--chart-danger-color);
+        stroke: var(--chart-danger-color);
+    }
+
+    & .highcharts-data-label text {
+        fill: var(--color-text);
+        font-weight: 600;
+    }
+
+    & .highcharts-data-label-connector {
+        stroke: var(--color-border-strong);
+    }
+}
