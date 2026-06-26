@@ -31,9 +31,17 @@
         stroke: var(--chart-danger-color);
     }
 
+    /* Boxed callout per event year: a light surface with a subtle border, the
+       date/age header in the text colour, connected to its marker by a line. */
+    & .highcharts-data-label-box {
+        fill: var(--color-surface-raised);
+        stroke: var(--color-border);
+        stroke-width: 1px;
+    }
+
     & .highcharts-data-label text {
         fill: var(--color-text);
-        font-weight: 600;
+        font-weight: 400;
     }
 
     & .highcharts-data-label-connector {

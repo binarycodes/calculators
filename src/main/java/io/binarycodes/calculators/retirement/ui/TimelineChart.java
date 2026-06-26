@@ -64,18 +64,22 @@ public class TimelineChart extends Chart {
         // Timeline defaults to one palette colour per point; we colour by event
         // type via per-point CSS classes instead, so turn the rainbow off.
         plotOptions.setColorByPoint(false);
+
         final DataLabels dataLabels = new DataLabels();
         dataLabels.setEnabled(true);
-        // Inline marker text is just the clubbed event count; the detail lives in
-        // the tooltip so the timeline stays readable when years sit close together.
-        dataLabels.setFormat("{point.name}");
+        dataLabels.setBorderRadius(6);
+        dataLabels.setPadding(8);
+        // The default timeline label format renders {point.name} in bold above
+        // {point.label} — exactly the boxed callout we want, so leave it as is.
         plotOptions.setDataLabels(dataLabels);
         series.setPlotOptions(plotOptions);
 
         for (final TimelineYear year : years) {
-            final String count = countLabel(year.size());
+            final String header = Translations.get("chart.retirement.timeline.yearHeader",
+                    year.age(), String.valueOf(year.year()));
+            final String body = eventLines(year, currency);
             final DataSeriesItemTimeline item = new DataSeriesItemTimeline(
-                    year.age(), count, count, tooltipHtml(year, currency));
+                    year.age(), header, body, tooltipHtml(header, body));
             item.setClassName(markerClass(year.dominantType()));
             series.add(item);
         }
@@ -84,22 +88,16 @@ public class TimelineChart extends Chart {
         drawChart(true);
     }
 
-    private static String countLabel(int size) {
-        return size == 1
-                ? Translations.get("chart.retirement.timeline.eventCount.one", size)
-                : Translations.get("chart.retirement.timeline.eventCount.other", size);
+    /** One event per line, separated by {@code <br>} for the callout box. */
+    private static String eventLines(TimelineYear year, SupportedCurrency currency) {
+        return year.events().stream()
+                .map(event -> eventLine(event, currency))
+                .reduce((left, right) -> left + "<br>" + right)
+                .orElse("");
     }
 
-    private static String tooltipHtml(TimelineYear year, SupportedCurrency currency) {
-        final StringBuilder html = new StringBuilder()
-                .append("<b>")
-                .append(escape(Translations.get("chart.retirement.timeline.yearHeader",
-                        year.age(), String.valueOf(year.year()))))
-                .append("</b><ul style=\"margin:4px 0 0;padding-left:16px\">");
-        for (final TimelineEvent event : year.events()) {
-            html.append("<li>").append(eventLine(event, currency)).append("</li>");
-        }
-        return html.append("</ul>").toString();
+    private static String tooltipHtml(String header, String body) {
+        return "<b>" + escape(header) + "</b><br>" + body;
     }
 
     private static String eventLine(TimelineEvent event, SupportedCurrency currency) {
