@@ -70,6 +70,7 @@ public class RealCorpusChart extends SplitLayout {
 
     private static Chart buildPane(String title, String className) {
         final Chart chart = new Chart(ChartType.AREASPLINE);
+        chart.addClassName("real-corpus-chart");
         chart.setSizeFull();
 
         final Configuration cfg = chart.getConfiguration();

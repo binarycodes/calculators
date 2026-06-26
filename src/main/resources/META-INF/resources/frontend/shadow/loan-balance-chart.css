@@ -3,7 +3,7 @@
  * the primary brand colour; the baseline reference uses the muted secondary.
  */
 
-:host {
+:host(.loan-balance-chart) {
     & .with-prepay > .highcharts-graph {
         stroke: var(--chart-primary-color);
         stroke-width: 3px;

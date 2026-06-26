@@ -1,4 +1,4 @@
-:host {
+:host(.roi-chart) {
     & .investment > path {
         fill: var(--chart-primary-color);
         fill-opacity: 1;

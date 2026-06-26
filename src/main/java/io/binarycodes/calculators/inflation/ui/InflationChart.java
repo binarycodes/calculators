@@ -23,6 +23,7 @@ public class InflationChart extends Chart {
 
     public InflationChart() {
         super(ChartType.AREASPLINE);
+        addClassName("inflation-chart");
         setWidthFull();
         setHeight("340px");
 

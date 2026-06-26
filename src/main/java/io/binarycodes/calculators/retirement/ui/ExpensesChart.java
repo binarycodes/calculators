@@ -20,6 +20,7 @@ public class ExpensesChart extends Chart {
 
     public ExpensesChart() {
         super(ChartType.AREASPLINE);
+        addClassName("expenses-chart");
         setWidthFull();
         setHeight("340px");
 

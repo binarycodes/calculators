@@ -1,4 +1,4 @@
-:host {
+:host(.investments-chart) {
     & .investment {
         fill: var(--chart-primary-color);
         fill-opacity: 1;

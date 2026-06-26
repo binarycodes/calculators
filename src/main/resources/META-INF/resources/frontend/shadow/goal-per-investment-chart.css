@@ -3,29 +3,15 @@
  * investment bucket, so the series need distinct, easily separable colours.
  * Styled mode's default palette renders the lines in near-identical blues;
  * recolour each palette index from the categorical line palette in colors.css.
- *
- * @CssImport(themeFor="vaadin-chart") injects every chart's CSS into ALL charts'
- * shadow DOM, and a couple of single-series charts carry an unscoped
- * `:host .highcharts-graph { stroke: ... }`. That rule ties this chart's
- * per-index stroke on specificity, so the line stroke is qualified with
- * `.highcharts-graph.highcharts-color-N` to outweigh it deterministically. The
- * plain `.highcharts-color-N { fill }` colours the legend symbol + any markers.
- * Indices cycle past 8 buckets (rare).
+ * Setting both stroke (the line) and fill (the legend symbol + markers) keeps
+ * line and legend in sync. Indices cycle past 8 buckets (rare).
  */
 
-:host(.goal-per-investment-chart) .highcharts-color-0 { fill: var(--chart-cat-1); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-0 { stroke: var(--chart-cat-1); }
-:host(.goal-per-investment-chart) .highcharts-color-1 { fill: var(--chart-cat-2); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-1 { stroke: var(--chart-cat-2); }
-:host(.goal-per-investment-chart) .highcharts-color-2 { fill: var(--chart-cat-3); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-2 { stroke: var(--chart-cat-3); }
-:host(.goal-per-investment-chart) .highcharts-color-3 { fill: var(--chart-cat-4); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-3 { stroke: var(--chart-cat-4); }
-:host(.goal-per-investment-chart) .highcharts-color-4 { fill: var(--chart-cat-5); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-4 { stroke: var(--chart-cat-5); }
-:host(.goal-per-investment-chart) .highcharts-color-5 { fill: var(--chart-cat-6); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-5 { stroke: var(--chart-cat-6); }
-:host(.goal-per-investment-chart) .highcharts-color-6 { fill: var(--chart-cat-7); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-6 { stroke: var(--chart-cat-7); }
-:host(.goal-per-investment-chart) .highcharts-color-7 { fill: var(--chart-cat-8); }
-:host(.goal-per-investment-chart) .highcharts-graph.highcharts-color-7 { stroke: var(--chart-cat-8); }
+:host(.goal-per-investment-chart) .highcharts-color-0 { stroke: var(--chart-cat-1); fill: var(--chart-cat-1); }
+:host(.goal-per-investment-chart) .highcharts-color-1 { stroke: var(--chart-cat-2); fill: var(--chart-cat-2); }
+:host(.goal-per-investment-chart) .highcharts-color-2 { stroke: var(--chart-cat-3); fill: var(--chart-cat-3); }
+:host(.goal-per-investment-chart) .highcharts-color-3 { stroke: var(--chart-cat-4); fill: var(--chart-cat-4); }
+:host(.goal-per-investment-chart) .highcharts-color-4 { stroke: var(--chart-cat-5); fill: var(--chart-cat-5); }
+:host(.goal-per-investment-chart) .highcharts-color-5 { stroke: var(--chart-cat-6); fill: var(--chart-cat-6); }
+:host(.goal-per-investment-chart) .highcharts-color-6 { stroke: var(--chart-cat-7); fill: var(--chart-cat-7); }
+:host(.goal-per-investment-chart) .highcharts-color-7 { stroke: var(--chart-cat-8); fill: var(--chart-cat-8); }

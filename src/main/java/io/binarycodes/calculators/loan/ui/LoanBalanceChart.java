@@ -31,6 +31,7 @@ public class LoanBalanceChart extends Chart {
 
     public LoanBalanceChart() {
         super(ChartType.LINE);
+        addClassName("loan-balance-chart");
         setWidthFull();
         setHeight("340px");
 

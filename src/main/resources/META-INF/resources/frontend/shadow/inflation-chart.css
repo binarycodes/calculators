@@ -3,7 +3,7 @@
  * primary brand colour (no success/danger tinting; inflation is just a fact).
  */
 
-:host {
+:host(.inflation-chart) {
     & .highcharts-area {
         fill: var(--chart-primary-color);
         fill-opacity: 0.3;

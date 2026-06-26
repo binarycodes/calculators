@@ -1,4 +1,4 @@
-:host {
+:host(.real-corpus-chart) {
     & .nominal > path {
         fill: var(--chart-primary-color);
         fill-opacity: 1;

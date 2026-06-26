@@ -1,4 +1,4 @@
-:host {
+:host(.expenses-chart) {
     & .highcharts-area {
         fill: var(--chart-primary-color);
         fill-opacity: 1;

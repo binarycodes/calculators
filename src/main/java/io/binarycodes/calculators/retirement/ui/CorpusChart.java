@@ -32,6 +32,7 @@ public class CorpusChart extends Chart {
 
     public CorpusChart() {
         super(ChartType.AREASPLINE);
+        addClassName("corpus-chart");
         setWidthFull();
         setHeight("340px");
 

@@ -30,6 +30,7 @@ public class InvestmentsChart extends Chart {
 
     public InvestmentsChart() {
         super(ChartType.PIE);
+        addClassName("investments-chart");
         setWidthFull();
         setHeight("340px");
 

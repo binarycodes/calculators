@@ -30,6 +30,7 @@ public class ReturnOnInvestmentsChart extends Chart {
 
     public ReturnOnInvestmentsChart() {
         super(ChartType.COLUMN);
+        addClassName("roi-chart");
         setWidthFull();
         setHeight("340px");
 
