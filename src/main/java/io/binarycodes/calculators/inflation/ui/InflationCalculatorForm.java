@@ -42,6 +42,7 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
 
     private final MoneyField amount;
     private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
+    private final NumberField inflationVariation = percentageField(Translations.get("field.inflationVariation"));
     private final Checkbox amountIsToday = new Checkbox(Translations.get("field.amountIsToday"));
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
 
@@ -73,6 +74,7 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
         this.inputsSignal = Signal.computed(() -> {
             this.amountSignal.get();
             this.inflationSignal.get();
+            this.inflationVariationSignal.get();
             this.amountIsTodaySignal.get();
             this.horizonModeSignal.get();
             this.yearsSignal.get();
@@ -132,7 +134,8 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
 
     private Component buildCard() {
         final FormLayout topLayout = sectionForm();
-        topLayout.add(this.amount, withPercentageSuffix(this.inflationRate), this.amountIsToday);
+        topLayout.add(this.amount, withPercentageSuffix(this.inflationRate),
+                withPercentageSuffix(this.inflationVariation), this.amountIsToday);
 
         this.horizonFields.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
@@ -178,6 +181,7 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
 
     private Signal<?> amountSignal;
     private Signal<?> inflationSignal;
+    private Signal<?> inflationVariationSignal;
     private Signal<?> amountIsTodaySignal;
     private Signal<?> horizonModeSignal;
     private Signal<?> yearsSignal;
@@ -200,6 +204,12 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
                 .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 100), 0d, 100d))
                 .withConverter(doubleToBigDecimalConverter())
                 .bind(InflationInputs::getInflationRatePct, InflationInputs::setInflationRatePct)
+                .valueSignal();
+
+        this.inflationVariationSignal = this.binder.forField(this.inflationVariation)
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 20), 0d, 20d))
+                .withConverter(doubleToBigDecimalConverter())
+                .bind(InflationInputs::getInflationVariationPct, InflationInputs::setInflationVariationPct)
                 .valueSignal();
 
         this.amountIsTodaySignal = this.binder.forField(this.amountIsToday)

@@ -2,6 +2,7 @@ package io.binarycodes.calculators.inflation.service;
 
 import io.binarycodes.calculators.base.common.TimeHorizon;
 import io.binarycodes.calculators.base.math.Rates;
+import io.binarycodes.calculators.inflation.domain.InflationBand;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
 import io.binarycodes.calculators.inflation.domain.InflationPoint;
 import io.binarycodes.calculators.inflation.domain.InflationResult;
@@ -59,8 +60,39 @@ public final class InflationCalculator {
         final BigDecimal todayValue = inputs.isAmountIsToday() ? amount : resultAmount;
         final List<InflationPoint> progression = buildProgression(todayValue, inflation, totalMonths);
 
+        final BigDecimal variation = Rates.pctToFraction(inputs.getInflationVariationPct());
+        final List<InflationBand> band = buildBand(todayValue,
+                inflation.subtract(variation), inflation.add(variation), totalMonths);
+
         return new InflationResult(totalMonths, amount, resultAmount,
-                inputs.isAmountIsToday(), progression);
+                inputs.isAmountIsToday(), progression, band);
+    }
+
+    /**
+     * Year-by-year low/high values for the uncertainty band: the same trajectory
+     * as {@link #buildProgression} but evaluated at the low and high inflation
+     * rates, so each point brackets the central value. Aligned 1:1 with the
+     * central progression (same years, including any fractional final point).
+     */
+    private static List<InflationBand> buildBand(BigDecimal todayValue, BigDecimal lowRate,
+                                                 BigDecimal highRate, int totalMonths) {
+        final int currentYear = Year.now().getValue();
+        final int wholeYears = totalMonths / 12;
+        final List<InflationBand> points = new ArrayList<>();
+        for (int yearOffset = 0; yearOffset <= wholeYears; yearOffset++) {
+            points.add(new InflationBand(currentYear + yearOffset,
+                    todayValue.multiply(Rates.pow1plus(lowRate, yearOffset), MC),
+                    todayValue.multiply(Rates.pow1plus(highRate, yearOffset), MC)));
+        }
+        if (totalMonths % 12 != 0) {
+            final double years = totalMonths / 12.0;
+            final BigDecimal lowFactor = BigDecimal.valueOf(Math.pow(1.0 + lowRate.doubleValue(), years));
+            final BigDecimal highFactor = BigDecimal.valueOf(Math.pow(1.0 + highRate.doubleValue(), years));
+            points.add(new InflationBand(currentYear + wholeYears + 1,
+                    todayValue.multiply(lowFactor, MC),
+                    todayValue.multiply(highFactor, MC)));
+        }
+        return points;
     }
 
     private static List<InflationPoint> buildProgression(BigDecimal todayValue,

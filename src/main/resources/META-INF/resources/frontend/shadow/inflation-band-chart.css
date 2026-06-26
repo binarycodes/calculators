@@ -1,0 +1,26 @@
+/*
+ * Inflation Projection — "Variation Range" area-range chart. The band (series 0)
+ * is the primary colour at low opacity; the central "Expected" line (series 1)
+ * is the primary colour at full strength. Scoped to this chart's host class so
+ * the styles don't leak to other charts.
+ */
+
+/* Band fill (plot area) + its legend swatch. */
+:host(.inflation-band-chart) .highcharts-area.highcharts-color-0 {
+    fill: var(--chart-primary-color);
+    fill-opacity: 0.18;
+}
+
+:host(.inflation-band-chart) .highcharts-color-0 {
+    fill: var(--chart-primary-color);
+}
+
+/* Central expected line + its legend swatch. */
+:host(.inflation-band-chart) .highcharts-graph.highcharts-color-1 {
+    stroke: var(--chart-primary-color);
+    stroke-width: 2px;
+}
+
+:host(.inflation-band-chart) .highcharts-color-1 {
+    stroke: var(--chart-primary-color);
+}

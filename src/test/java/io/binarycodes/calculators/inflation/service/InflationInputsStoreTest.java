@@ -22,6 +22,7 @@ class InflationInputsStoreTest {
         final var inputs = new InflationInputs();
         inputs.setAmount(new BigDecimal("1000000"));
         inputs.setInflationRatePct(new BigDecimal("6"));
+        inputs.setInflationVariationPct(new BigDecimal("2"));
         inputs.setAmountIsToday(true);
         inputs.setHorizonMode(TimeHorizonMode.AGES);
         inputs.setYearsToGoal(null);
@@ -36,6 +37,7 @@ class InflationInputsStoreTest {
 
         assertEquals(0, inputs.getAmount().compareTo(restored.getAmount()));
         assertEquals(0, inputs.getInflationRatePct().compareTo(restored.getInflationRatePct()));
+        assertEquals(0, inputs.getInflationVariationPct().compareTo(restored.getInflationVariationPct()));
         assertTrue(restored.isAmountIsToday());
         assertEquals(TimeHorizonMode.AGES, restored.getHorizonMode());
         assertEquals(35, restored.getCurrentAge());

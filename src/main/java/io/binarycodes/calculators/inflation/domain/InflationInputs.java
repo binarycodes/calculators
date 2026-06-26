@@ -25,6 +25,13 @@ public class InflationInputs {
 
     private BigDecimal amount;
     private BigDecimal inflationRatePct;
+    /**
+     * Uncertainty band around {@link #inflationRatePct}, in percentage points
+     * ({@code 2} means ±2%). Drives the area-range chart; {@code null}/zero
+     * collapses the band onto the central line. Does not affect the headline
+     * forward/backward result, which uses the central rate.
+     */
+    private BigDecimal inflationVariationPct;
     private boolean amountIsToday;
 
     private TimeHorizonMode horizonMode;

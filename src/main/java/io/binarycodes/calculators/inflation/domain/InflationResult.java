@@ -12,13 +12,18 @@ import java.util.List;
  * @param amountIsToday whether {@link #inputAmount} was today's money (forward
  *                      projection) or a future value (backward projection)
  * @param progression   year-by-year nominal value, growing from today's value
- *                      at the inflation rate — drives the chart
+ *                      at the inflation rate — drives the value-over-time chart
+ * @param band          year-by-year low/high values under the inflation rate
+ *                      ∓/± the variation — drives the area-range chart. Aligned
+ *                      1:1 with {@link #progression}; low == high when the
+ *                      variation is zero
  */
 public record InflationResult(
         int totalMonths,
         BigDecimal inputAmount,
         BigDecimal resultAmount,
         boolean amountIsToday,
-        List<InflationPoint> progression
+        List<InflationPoint> progression,
+        List<InflationBand> band
 ) {
 }

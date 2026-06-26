@@ -477,6 +477,7 @@ A single card.
 | --- | --- |
 | Amount | Money, ≥ 0. Interpreted as today's money or a future value per the toggle below. |
 | Inflation Rate (%) | Annual rate, 0–100. |
+| Inflation Variation (±%) | Optional, 0–20. Uncertainty band around the rate (e.g. 2 ⇒ ±2%). Drives the area-range chart only; does not affect the headline result. |
 | Amount is in today's money | Checkbox. Checked ⇒ forward projection; unchecked ⇒ backward (discount to today). |
 | Time horizon | Shared Years (+ months) / Ages / Target Year (+ month) selector. |
 
@@ -497,6 +498,14 @@ Two summary cards. Forward: "Amount Today" → "Value at Horizon". Backward:
 "Amount at Horizon" → "Value in Today's Money". The projected card is
 success-tinted.
 
+Two chart tabs:
+
+- **Value Over Time** — area-spline of the central projection year by year.
+- **Variation Range** — area-range band between the low (rate − variation) and
+  high (rate + variation) trajectories, with the central "Expected" line on top.
+  Computed from the same anchor value as the central line; collapses onto the
+  line when the variation is zero. Backed by `InflationResult.band`.
+
 ## 4. Persistence
 
 | Storage | Contents |
@@ -508,7 +517,7 @@ success-tinted.
 
 | Suite | Purpose |
 | --- | --- |
-| `InflationCalculatorTest` | Forward/backward correctness, inverse round-trip, zero-inflation no-op, fractional-year compounding, horizon-mode resolution, validation rejections. |
+| `InflationCalculatorTest` | Forward/backward correctness, inverse round-trip, zero-inflation no-op, fractional-year compounding, horizon-mode resolution, validation rejections, variation band brackets the central line and collapses at zero variation. |
 | `InflationDefaultsJsonTest` | `inflation-defaults.json` parses, every currency has every required field, projection round-trips. |
 
 # Investment

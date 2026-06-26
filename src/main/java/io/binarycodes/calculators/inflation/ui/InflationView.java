@@ -3,6 +3,7 @@ package io.binarycodes.calculators.inflation.ui;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -21,7 +22,8 @@ import java.math.BigDecimal;
 /**
  * The inflation-projection screen. {@link BaseCalculatorView} owns the header,
  * form, action row, and the persistence + share-link lifecycle; this class adds
- * the two summary cards (amount today / after the time period) and the chart.
+ * the two summary cards (amount today / after the time period) and the charts:
+ * the value-over-time line and the ±variation area-range band.
  */
 @Route("inflation")
 @Menu(title = "Inflation Projection", icon = "vaadin:trending-up", order = 3)
@@ -30,6 +32,7 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
     private final SummaryCard enteredCard = new SummaryCard(getTranslation("summary.inflation.amountToday"), VaadinIcon.MONEY.create());
     private final SummaryCard resultCard = new SummaryCard(getTranslation("summary.inflation.amountAfter"), VaadinIcon.TIME_FORWARD.create());
     private final InflationChart chart = new InflationChart();
+    private final InflationBandChart bandChart = new InflationBandChart();
     private final VerticalLayout chartCard;
 
     public InflationView(UserPreferences preferences,
@@ -79,6 +82,7 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
 
         this.chartCard.setVisible(true);
         this.chart.update(result, currency);
+        this.bandChart.update(result, currency, inputs.getInflationVariationPct());
     }
 
     private HorizontalLayout buildSummaryRow() {
@@ -91,7 +95,12 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
     }
 
     private VerticalLayout buildChartCard() {
-        final VerticalLayout card = new VerticalLayout(this.chart);
+        final TabSheet charts = new TabSheet();
+        charts.setWidthFull();
+        charts.add(getTranslation("tab.inflation.value"), this.chart);
+        charts.add(getTranslation("tab.inflation.range"), this.bandChart);
+
+        final VerticalLayout card = new VerticalLayout(charts);
         card.addClassName("chart-card");
         card.setPadding(false);
         card.setSpacing(false);

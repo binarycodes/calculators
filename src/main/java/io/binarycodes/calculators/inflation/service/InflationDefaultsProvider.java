@@ -59,6 +59,7 @@ public class InflationDefaultsProvider implements CalculatorDefaults<InflationIn
         final var inputs = new InflationInputs();
         inputs.setAmount(bd(node, "amount"));
         inputs.setInflationRatePct(bd(node, "inflationRate"));
+        inputs.setInflationVariationPct(bd(node, "inflationVariation"));
         inputs.setAmountIsToday(boolField(node, "amountIsToday", true));
         inputs.setHorizonMode(readMode(node.get("horizonMode")));
         inputs.setYearsToGoal(intField(node, "yearsToGoal"));
@@ -109,6 +110,7 @@ public class InflationDefaultsProvider implements CalculatorDefaults<InflationIn
         return new InflationInputs(
                 source.getAmount(),
                 source.getInflationRatePct(),
+                source.getInflationVariationPct(),
                 source.isAmountIsToday(),
                 source.getHorizonMode(),
                 source.getYearsToGoal(),

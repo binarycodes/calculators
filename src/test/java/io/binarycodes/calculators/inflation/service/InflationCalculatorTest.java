@@ -83,6 +83,40 @@ class InflationCalculatorTest {
     }
 
     @Test
+    void variation_band_brackets_the_central_progression() {
+        final InflationInputs inputs = base(10, true);
+        inputs.setInflationVariationPct(BigDecimal.valueOf(2)); // ±2%
+        final InflationResult result = InflationCalculator.calculate(inputs);
+
+        // Band aligns 1:1 with the central progression.
+        assertEquals(result.progression().size(), result.band().size());
+
+        for (int index = 0; index < result.band().size(); index++) {
+            final var band = result.band().get(index);
+            final BigDecimal central = result.progression().get(index).value();
+            assertTrue(band.low().compareTo(central) <= 0,
+                    "low must not exceed the central value at index " + index);
+            assertTrue(band.high().compareTo(central) >= 0,
+                    "high must not be below the central value at index " + index);
+        }
+        // The band widens over time: at year 0 it's a point, later low < high.
+        assertEquals(0, result.band().getFirst().low().compareTo(result.band().getFirst().high()));
+        final var last = result.band().getLast();
+        assertTrue(last.low().compareTo(last.high()) < 0, "band should widen across the horizon");
+    }
+
+    @Test
+    void zero_variation_collapses_band_onto_the_line() {
+        final InflationResult result = InflationCalculator.calculate(base(10, true)); // no variation set
+        for (int index = 0; index < result.band().size(); index++) {
+            final var band = result.band().get(index);
+            final BigDecimal central = result.progression().get(index).value();
+            assertEquals(0, band.low().compareTo(central), "low == central when variation is zero");
+            assertEquals(0, band.high().compareTo(central), "high == central when variation is zero");
+        }
+    }
+
+    @Test
     void zero_inflation_leaves_amount_unchanged() {
         final InflationInputs inputs = base(20, true);
         inputs.setInflationRatePct(BigDecimal.ZERO);

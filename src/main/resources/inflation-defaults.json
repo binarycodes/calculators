@@ -2,6 +2,7 @@
   "INR": {
     "amount": "1000000",
     "inflationRate": "6",
+    "inflationVariation": "2",
     "amountIsToday": "true",
     "horizonMode": "YEARS",
     "yearsToGoal": "10",
@@ -14,6 +15,7 @@
   "EUR": {
     "amount": "100000",
     "inflationRate": "2.5",
+    "inflationVariation": "1",
     "amountIsToday": "true",
     "horizonMode": "YEARS",
     "yearsToGoal": "10",
@@ -26,6 +28,7 @@
   "USD": {
     "amount": "100000",
     "inflationRate": "3",
+    "inflationVariation": "1",
     "amountIsToday": "true",
     "horizonMode": "YEARS",
     "yearsToGoal": "10",

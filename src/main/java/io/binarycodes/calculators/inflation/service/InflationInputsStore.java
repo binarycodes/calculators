@@ -78,6 +78,7 @@ public class InflationInputsStore implements InputsStore<InflationInputs> {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("amount", plain(inputs.getAmount()));
         node.put("inflationRate", plain(inputs.getInflationRatePct()));
+        node.put("inflationVariation", plain(inputs.getInflationVariationPct()));
         node.put("amountIsToday", Boolean.toString(inputs.isAmountIsToday()));
         node.put("horizonMode", inputs.getHorizonMode() == null
                 ? TimeHorizonMode.YEARS.name()
@@ -96,6 +97,7 @@ public class InflationInputsStore implements InputsStore<InflationInputs> {
         final var inputs = new InflationInputs();
         inputs.setAmount(bd(node, "amount"));
         inputs.setInflationRatePct(bd(node, "inflationRate"));
+        inputs.setInflationVariationPct(bd(node, "inflationVariation"));
         inputs.setAmountIsToday(boolField(node, "amountIsToday"));
         inputs.setHorizonMode(readMode(node.get("horizonMode")));
         inputs.setYearsToGoal(intField(node, "yearsToGoal"));

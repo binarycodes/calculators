@@ -29,7 +29,7 @@ class InflationDefaultsJsonTest {
 
     private static final List<String> MONEY_FIELDS = List.of("amount");
 
-    private static final List<String> PERCENTAGE_FIELDS = List.of("inflationRate");
+    private static final List<String> PERCENTAGE_FIELDS = List.of("inflationRate", "inflationVariation");
 
     @Test
     void file_parses_as_valid_json() {
