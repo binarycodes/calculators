@@ -17,6 +17,7 @@ import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
+import io.binarycodes.calculators.base.config.AppLinks;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 
 /**
@@ -29,10 +30,10 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-custom-field")
 public class MainLayout extends AppLayout {
 
-    private static final String VAADIN_URL = "https://vaadin.com";
-    private static final String GITHUB_URL = "https://github.com/binarycodes/calculators";
+    private final AppLinks links;
 
-    public MainLayout(UserPreferences prefs) {
+    public MainLayout(UserPreferences prefs, AppLinks links) {
+        this.links = links;
         setPrimarySection(Section.DRAWER);
 
         // The Scroller grows to fill the drawer so the footer is pinned to the bottom.
@@ -90,12 +91,14 @@ public class MainLayout extends AppLayout {
     }
 
     private HorizontalLayout buildDrawerFooter() {
-        final Anchor vaadin = footerLink(VAADIN_URL, getTranslation("footer.vaadin"), VaadinIcon.VAADIN_H.create());
-        final Anchor github = footerLink(GITHUB_URL, getTranslation("footer.github"), githubIcon());
+        final Anchor vaadin = footerLink(links.vaadin(), getTranslation("footer.vaadin"), VaadinIcon.VAADIN_H.create());
+        final Anchor github = footerLink(links.github(), getTranslation("footer.github"), githubIcon());
 
         final HorizontalLayout footer = new HorizontalLayout(vaadin, github);
         footer.addClassName("drawer-footer");
+        footer.setWidthFull();
         footer.setAlignItems(FlexComponent.Alignment.CENTER);
+        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         return footer;
     }
 
