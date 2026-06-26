@@ -10,7 +10,6 @@ import com.vaadin.flow.component.charts.model.DataSeriesItemTimeline;
 import com.vaadin.flow.component.charts.model.Marker;
 import com.vaadin.flow.component.charts.model.MarkerSymbolEnum;
 import com.vaadin.flow.component.charts.model.PlotOptionsTimeline;
-import com.vaadin.flow.component.charts.model.Tooltip;
 import com.vaadin.flow.component.charts.model.XAxis;
 import com.vaadin.flow.component.dependency.CssImport;
 import io.binarycodes.calculators.base.i18n.Translations;
@@ -56,10 +55,8 @@ public class TimelineChart extends Chart {
         xAxis.setAllowDecimals(false);
         configuration.getyAxis().setVisible(false);
 
-        final Tooltip tooltip = configuration.getTooltip();
-        tooltip.setUseHTML(true);
-        tooltip.setHeaderFormat("");
-        tooltip.setPointFormat("{point.description}");
+        // No tooltip — each event's detail is already shown in its callout box.
+        configuration.getTooltip().setEnabled(false);
     }
 
     public void update(List<TimelineYear> years, SupportedCurrency currency) {
@@ -94,8 +91,7 @@ public class TimelineChart extends Chart {
             final String header = Translations.get("chart.retirement.timeline.yearHeader",
                     year.age(), String.valueOf(year.year()));
             final String body = eventLines(year, currency);
-            final DataSeriesItemTimeline item = new DataSeriesItemTimeline(
-                    year.age(), header, body, tooltipHtml(header, body));
+            final DataSeriesItemTimeline item = new DataSeriesItemTimeline(year.age(), header, body, null);
             item.setClassName(markerClass(year.dominantType()));
             series.add(item);
         }
@@ -110,10 +106,6 @@ public class TimelineChart extends Chart {
                 .map(event -> eventLine(event, currency))
                 .reduce((left, right) -> left + "<br>" + right)
                 .orElse("");
-    }
-
-    private static String tooltipHtml(String header, String body) {
-        return "<b>" + escape(header) + "</b><br>" + body;
     }
 
     private static String eventLine(TimelineEvent event, SupportedCurrency currency) {
