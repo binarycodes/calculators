@@ -205,8 +205,8 @@ code should follow it without being prompted.
 - **Commit messages follow Conventional Commits:**
   `<type>[(scope)][!]: <description>`, with `type` one of `feat`, `fix`,
   `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`,
-  `revert`. Keep the subject within 100 characters and do **not** add
-  `Co-Authored-By` trailers.
+  `revert`. Keep the subject within 100 characters, write the message as a
+  **single line with no body**, and do **not** add `Co-Authored-By` trailers.
 - **A `commit-msg` hook enforces the above.** It lives in `.githooks/`
   (version-controlled). Enable it once per clone with:
 

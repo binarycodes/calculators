@@ -3,6 +3,7 @@
 # commit-msg hook — enforce the repository's commit-message conventions:
 #   * Conventional Commits subject: "<type>[(scope)][!]: <description>"
 #   * subject no longer than 100 characters
+#   * single line only — no body
 #   * no Co-Authored-By trailers
 #
 # Enabled via:  git config core.hooksPath .githooks
@@ -38,6 +39,13 @@ fi
 subject_length=$(printf '%s' "$subject" | wc -c | tr -d ' ')
 if [ "$subject_length" -gt 100 ]; then
     fail "subject is $subject_length characters; keep it within 100."
+fi
+
+# Commit messages must be a single line: count the content (non-comment,
+# non-blank) lines and reject anything with a body.
+content_line_count=$(grep -vE '^[[:space:]]*#' "$message_file" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+if [ "$content_line_count" -gt 1 ]; then
+    fail "commit message must be a single line (no body); got $content_line_count lines."
 fi
 
 if grep -qiE '^[[:space:]]*Co-Authored-By:' "$message_file"; then
