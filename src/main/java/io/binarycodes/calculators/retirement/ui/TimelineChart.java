@@ -83,8 +83,10 @@ public class TimelineChart extends Chart {
         dataLabels.setEnabled(true);
         dataLabels.setBorderRadius(6);
         dataLabels.setPadding(8);
-        // The default timeline label format renders {point.name} in bold above
-        // {point.label} — exactly the boxed callout we want, so leave it as is.
+        // Drop the default leading bullet: in styled mode it takes the palette
+        // colour, not the per-point class colour, so it never matches the marker
+        // dot on the axis. The marker already carries the colour cue.
+        dataLabels.setFormat("<span style=\"font-weight: bold\">{point.name}</span><br>{point.label}");
         plotOptions.setDataLabels(dataLabels);
         series.setPlotOptions(plotOptions);
 
