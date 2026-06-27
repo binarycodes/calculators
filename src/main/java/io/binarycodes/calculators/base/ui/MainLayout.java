@@ -28,6 +28,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-number-field")
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-integer-field")
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-custom-field")
+@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-date-picker")
 public class MainLayout extends AppLayout {
 
     private final AppLinks links;

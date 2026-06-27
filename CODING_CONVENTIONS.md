@@ -52,6 +52,13 @@ code should follow it without being prompted.
   `Grid<T>`, `Chart`, `VerticalLayout`) and expose a focused public API —
   typically `setX(...)` / `update(...)` / `getInputs()` /
   `addXChangeListener(...)`.
+- **Result/projection grids extend `ColumnChooserGrid<T>`** (in `base/ui`),
+  never a raw `Grid`. Register each column as you add it with
+  `track(header, addColumn(...))` so the chooser lists them in render order,
+  and have the view place `createColumnChooser()` (a cog menu) in the grid-card
+  header — an `H2` plus the menu in a `HorizontalLayout` with
+  `JustifyContentMode.BETWEEN`. This gives every grid the same column-toggle
+  affordance.
 - **Helpers belong with the thing they help.** Don't park column formatters
   or part-name generators inside the view if they only exist to support the
   grid — move them into the grid class.
@@ -110,6 +117,15 @@ code should follow it without being prompted.
 - **Composite widgets**: when a component visually contains other Vaadin
   primitives, extend `CustomField<T>` if it has a single value, or
   `Composite<Card>` / a plain `Card` subclass otherwise.
+- **Field error messages** hide Lumo's prepended warning icon (the red
+  required-indicator already signals the state) via
+  `frontend/shadow/input-error-message.css`, registered **per component type**
+  with `@CssImport(value=…, themeFor="vaadin-…")` in `MainLayout`. When you
+  introduce a **new input component type** (the first `vaadin-date-picker`,
+  `vaadin-select`, etc.) that can show a validation message, add a matching
+  `@CssImport(themeFor=…)` line — otherwise that field's error shows a stray
+  warning icon the other fields don't have. Re-bundle after adding it
+  (`./run.sh bundle`).
 
 ## 6. CSS
 
@@ -196,6 +212,13 @@ code should follow it without being prompted.
 
 ## 9. Build & CI
 
+- **Run build / test / frontend tasks through `./run.sh <task>`** rather than
+  ad-hoc `mvn`: `compile`, `bundle`, `styles`, `test`, `run`, `package`,
+  `clean`. It pins **JDK 21** (a bare `mvn` on this machine picks JDK 25, under
+  which Lombok silently fails with bogus "cannot find symbol" errors) and
+  encodes the cache-busting steps — after a `@CssImport(themeFor=…)` /
+  `@JsModule` change run `./run.sh bundle`; after editing an `@import`-ed CSS
+  partial run `./run.sh styles`.
 - **Maven** with the project's `mvnw` wrapper checked in; build with
   Java 21.
 - **CI runs `mvn verify` on push to any branch** via GitHub Actions —
