@@ -5,13 +5,24 @@
  */
 
 .xirr-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
     width: 100%;
     box-sizing: border-box;
     padding: var(--vaadin-padding-m, 0.75rem 1rem);
     border-radius: var(--vaadin-input-field-border-radius, 0.5rem);
     border: 1px solid transparent;
-    font-size: var(--lumo-font-size-s, 0.875rem);
-    line-height: 1.4;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.xirr-banner-icon {
+    flex-shrink: 0;
+    width: 1.4em;
+    height: 1.4em;
+    color: var(--color-warning-text);
 }
 
 .xirr-banner.warning {

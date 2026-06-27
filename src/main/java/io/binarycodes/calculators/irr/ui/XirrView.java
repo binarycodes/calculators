@@ -2,6 +2,8 @@ package io.binarycodes.calculators.irr.ui;
 
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -50,7 +52,8 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
     private final SummaryCard withdrawnCard = new SummaryCard(getTranslation("summary.xirr.withdrawn"), VaadinIcon.MONEY_WITHDRAW.create());
     private final SummaryCard netCard = new SummaryCard(getTranslation("summary.xirr.net"), VaadinIcon.SCALE.create());
 
-    private final Div warningBanner = new Div();
+    private final Span warningMessage = new Span();
+    private final Div warningBanner = new Div(warningIcon(), this.warningMessage);
 
     private final CashflowTimelineChart timelineChart = new CashflowTimelineChart();
     private final NpvVsRateChart npvChart = new NpvVsRateChart();
@@ -70,8 +73,8 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
         this.warningBanner.addClassNames("xirr-banner", "warning");
         this.warningBanner.setVisible(false);
 
-        add(buildSummaryRow());
         add(this.warningBanner);
+        add(buildSummaryRow());
         this.chartsCard = buildChartsCard();
         add(this.chartsCard);
         this.gridCard = buildGridCard();
@@ -188,12 +191,18 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
     }
 
     private void showWarning(String message) {
-        this.warningBanner.setText(message);
+        this.warningMessage.setText(message);
         this.warningBanner.setVisible(true);
     }
 
     private void hideBanner() {
         this.warningBanner.setVisible(false);
+    }
+
+    private static Icon warningIcon() {
+        final Icon icon = VaadinIcon.WARNING.create();
+        icon.addClassName("xirr-banner-icon");
+        return icon;
     }
 
     private static String formatPercent(BigDecimal fraction) {
