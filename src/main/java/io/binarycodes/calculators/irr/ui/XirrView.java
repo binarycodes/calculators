@@ -11,6 +11,7 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import io.binarycodes.calculators.base.common.Status;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -66,7 +67,7 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
         super(preferences, inputsStore, defaultsProvider,
                 new XirrCalculatorForm(preferences), "xirr", "page.xirr");
 
-        this.warningBanner.addClassName("xirr-banner");
+        this.warningBanner.addClassNames("xirr-banner", "warning");
         this.warningBanner.setVisible(false);
 
         add(buildSummaryRow());
@@ -91,9 +92,9 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
         try {
             result = XirrCalculator.calculate(inputs);
         } catch (final IllegalArgumentException invalid) {
-            this.form.showValidationMessages(null);
+            this.form.showValidationMessages(getTranslation(invalid.getMessage()));
             showInvalidFormPlaceholders();
-            showError(getTranslation(invalid.getMessage()));
+            hideBanner();
             return;
         }
         this.form.showValidationMessages(null);
@@ -188,15 +189,6 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
 
     private void showWarning(String message) {
         this.warningBanner.setText(message);
-        this.warningBanner.getElement().getClassList().set("error", false);
-        this.warningBanner.getElement().getClassList().set("warning", true);
-        this.warningBanner.setVisible(true);
-    }
-
-    private void showError(String message) {
-        this.warningBanner.setText(message);
-        this.warningBanner.getElement().getClassList().set("warning", false);
-        this.warningBanner.getElement().getClassList().set("error", true);
         this.warningBanner.setVisible(true);
     }
 
@@ -205,7 +197,8 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
     }
 
     private static String formatPercent(BigDecimal fraction) {
-        return fraction.multiply(BigDecimal.valueOf(100)).setScale(2, RoundingMode.HALF_UP).toPlainString() + "%";
+        return fraction.multiply(BigDecimal.valueOf(100)).setScale(2, RoundingMode.HALF_UP).toPlainString()
+                + Translations.get("unit.percent");
     }
 
     private static String formatRoots(List<BigDecimal> roots) {

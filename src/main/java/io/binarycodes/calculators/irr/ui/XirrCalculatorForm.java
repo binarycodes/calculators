@@ -8,6 +8,7 @@ import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
+import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.irr.domain.XirrInputs;
 
@@ -89,6 +90,16 @@ public class XirrCalculatorForm extends VerticalLayout implements CalculatorForm
 
     public boolean isValid() {
         return this.investmentsSection.isValid() && this.withdrawalsSection.isValid();
+    }
+
+    @Override
+    public void showValidationMessages(String calculationError) {
+        FormCard.refreshGenericErrors(this);
+        if (calculationError != null) {
+            FormCard.firstCard(this)
+                    .filter(card -> !card.hasInvalidField())
+                    .ifPresent(card -> card.showError(calculationError));
+        }
     }
 
     private void refreshIndicators() {

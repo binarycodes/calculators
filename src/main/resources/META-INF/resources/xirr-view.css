@@ -1,7 +1,7 @@
 /*
- * IRR/XIRR calculator view. The banner above the charts carries either a
- * non-unique-rate warning or a calculation error, tinted from the semantic
- * warning / danger tokens.
+ * IRR/XIRR calculator view. The banner above the charts carries the
+ * non-unique-rate warning, tinted from the semantic warning tokens.
+ * (Calculation errors are shown on the form card, like the other calculators.)
  */
 
 .xirr-banner {
@@ -18,10 +18,4 @@
     color: var(--color-warning-text);
     background: var(--color-warning-bg);
     border-color: var(--color-warning-text);
-}
-
-.xirr-banner.error {
-    color: var(--color-danger-text);
-    background: var(--color-danger-bg);
-    border-color: var(--color-danger-text);
 }

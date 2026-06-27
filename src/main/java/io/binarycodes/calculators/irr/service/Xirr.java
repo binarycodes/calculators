@@ -3,6 +3,7 @@ package io.binarycodes.calculators.irr.service;
 import io.binarycodes.calculators.irr.domain.Cashflow;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public final class Xirr {
         if (cashflows.isEmpty()) {
             return 0.0;
         }
-        final java.time.LocalDate base = earliestDate(cashflows);
+        final LocalDate base = earliestDate(cashflows);
         double sum = 0.0;
         for (final Cashflow cashflow : cashflows) {
             final double years = ChronoUnit.DAYS.between(base, cashflow.date()) / DAYS_PER_YEAR;
@@ -128,8 +129,8 @@ public final class Xirr {
         return midpoint;
     }
 
-    private static java.time.LocalDate earliestDate(List<Cashflow> cashflows) {
-        java.time.LocalDate earliest = cashflows.get(0).date();
+    private static LocalDate earliestDate(List<Cashflow> cashflows) {
+        LocalDate earliest = cashflows.get(0).date();
         for (final Cashflow cashflow : cashflows) {
             if (cashflow.date().isBefore(earliest)) {
                 earliest = cashflow.date();
