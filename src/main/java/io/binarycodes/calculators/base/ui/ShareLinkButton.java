@@ -23,20 +23,19 @@ import com.vaadin.flow.component.webshare.WebShareSupport;
  * </ul>
  *
  * <p>Binding visibility to the signal also triggers the browser support
- * handshake. The clipboard write runs inside the click gesture (the Clipboard
- * API rejects async writes), and the shared URL is absolute — iOS WebKit rejects
+ * handshake. The absolute link is assembled on the client from the live
+ * {@code window.location} at click time — a server-captured base goes stale
+ * across single-page navigation (it would point at the previously-viewed
+ * calculator). The clipboard write runs inside the click gesture (the Clipboard
+ * API rejects async writes), and the URL is absolute — iOS WebKit rejects
  * relative URLs in {@code navigator.share}.
  */
 public class ShareLinkButton extends Composite<HorizontalLayout> {
 
-    // Reactive source for the Web Share URL, read on the client within the
-    // gesture; kept in sync with the current scenario link.
     private final TextField shareUrl = new TextField();
     private final Button shareButton = new Button(getTranslation("share.share"), VaadinIcon.CONNECT.create());
     private final Button copyButton = new Button(getTranslation("share.copy"), VaadinIcon.COPY.create());
 
-    private String baseUrl;       // absolute origin + path, resolved on attach
-    private String currentToken;  // latest scenario token
     private boolean visibilityBound;
 
     public ShareLinkButton(String shareTitle) {
@@ -55,11 +54,15 @@ public class ShareLinkButton extends Composite<HorizontalLayout> {
                 .title(shareTitle)
                 .url(this.shareUrl));
 
-        // Copy runs inside the click gesture; the server-side listener confirms.
+        // Copy runs inside the click gesture; the link is built from the live
+        // location and the current token. The server listener confirms.
         this.copyButton.getElement().executeJs(
                 "this.addEventListener('click', () => {"
-                        + "  const url = this.shareAbsoluteUrl;"
-                        + "  if (url && navigator.clipboard) { navigator.clipboard.writeText(url).catch(() => {}); }"
+                        + "  const token = this.shareToken;"
+                        + "  if (token && navigator.clipboard) {"
+                        + "    navigator.clipboard.writeText("
+                        + "      location.origin + location.pathname + '?s=' + token).catch(() => {});"
+                        + "  }"
                         + "});");
         this.copyButton.addClickListener(event ->
                 Notification.show(getTranslation("share.copied"), 2000, Notification.Position.BOTTOM_START));
@@ -85,31 +88,21 @@ public class ShareLinkButton extends Composite<HorizontalLayout> {
             this.copyButton.bindVisible(WebShare.supportSignal()
                     .map(support -> support != WebShareSupport.SUPPORTED));
         }
-
-        // Resolve the page origin + path once so both buttons use an absolute link.
-        attachEvent.getUI().getPage().fetchCurrentURL(url -> {
-            this.baseUrl = url.getProtocol() + "://" + url.getAuthority() + url.getPath();
-            refreshLink();
-        });
     }
 
     /** Update the token a click shares (or copies), keeping the link current. */
     public void setToken(String token) {
-        this.currentToken = token;
-        refreshLink();
+        final String safeToken = token == null ? "" : token;
+        // The copy handler reads this property and assembles the URL on the client.
+        this.copyButton.getElement().setProperty("shareToken", safeToken);
+        // Web Share reads the field value; build the absolute link from the live
+        // location so it points at the current view, not the one captured at attach.
+        this.shareUrl.getElement().executeJs(
+                "this.value = $0 ? location.origin + location.pathname + '?s=' + $0 : '';", safeToken);
     }
 
-    private void refreshLink() {
-        if (this.currentToken == null) {
-            return;
-        }
-        final String link = (this.baseUrl == null ? "" : this.baseUrl) + "?s=" + this.currentToken;
-        this.shareUrl.setValue(link);
-        this.copyButton.getElement().setProperty("shareAbsoluteUrl", link);
-    }
-
-    /** The URL the Web Share content currently points at; for tests. */
-    String shareUrlValue() {
-        return this.shareUrl.getValue();
+    /** The token a click currently copies/shares; for tests. */
+    String shareTokenProperty() {
+        return this.copyButton.getElement().getProperty("shareToken");
     }
 }

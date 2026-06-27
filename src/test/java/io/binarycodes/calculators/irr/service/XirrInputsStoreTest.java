@@ -1,5 +1,7 @@
 package io.binarycodes.calculators.irr.service;
 
+import io.binarycodes.calculators.base.common.ScenarioCodec;
+import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.irr.domain.CashflowFrequency;
 import io.binarycodes.calculators.irr.domain.DatedCashflow;
 import io.binarycodes.calculators.irr.domain.RecurringCashflow;
@@ -57,6 +59,29 @@ class XirrInputsStoreTest {
 
         assertNull(restored.getDate());
         assertNull(restored.getAmount());
+    }
+
+    @Test
+    void survives_a_full_share_link_round_trip() {
+        final var inputs = new XirrInputs();
+        inputs.setRecurringInvestments(List.of(
+                new RecurringCashflow(LocalDate.parse("2023-07-01"), CashflowFrequency.MONTHLY, 36, "SIP",
+                        new BigDecimal("25000"))));
+        inputs.setOneOffWithdrawals(List.of(
+                new DatedCashflow(LocalDate.parse("2026-07-01"), "Current value", new BigDecimal("1100000"))));
+
+        // Param generation: inputs → JSON → encoded token.
+        final String token = ScenarioCodec.encode(SupportedCurrency.INR, store.toJsonNode(inputs));
+        // Param-to-bean: token → decoded JSON → inputs bean.
+        final XirrInputs restored = store.fromJsonNode(ScenarioCodec.decode(token).inputs());
+
+        final RecurringCashflow recurring = restored.getRecurringInvestments().get(0);
+        assertEquals(LocalDate.parse("2023-07-01"), recurring.getStartDate());
+        assertEquals(36, recurring.getCount());
+        assertEquals(0, recurring.getAmount().compareTo(new BigDecimal("25000")));
+        final DatedCashflow withdrawal = restored.getOneOffWithdrawals().get(0);
+        assertEquals(LocalDate.parse("2026-07-01"), withdrawal.getDate());
+        assertEquals(0, withdrawal.getAmount().compareTo(new BigDecimal("1100000")));
     }
 
     @Test

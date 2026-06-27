@@ -5,22 +5,21 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * The Web Share URL must track the latest scenario token: {@link
- * ShareLinkButton#setToken} feeds the reactive field the share sheet reads, so a
- * regression here would silently share a stale link. (Before attach there's no
- * resolved origin, so the link is the relative {@code ?s=…}.)
+ * The copy/share control must track the latest scenario token: {@link
+ * ShareLinkButton#setToken} pushes the token the client reads to assemble the
+ * link, so a regression here would silently copy a stale one.
  */
 class ShareLinkButtonTest {
 
     @Test
-    void set_token_keeps_the_share_url_current() {
+    void set_token_keeps_the_shared_token_current() {
         final ShareLinkButton button = new ShareLinkButton("Buy vs Rent Calculator");
 
         button.setToken("FIRST");
-        assertEquals("?s=FIRST", button.shareUrlValue());
+        assertEquals("FIRST", button.shareTokenProperty());
 
-        // A later recalculation must overwrite the link, not leave the old one.
+        // A later recalculation must overwrite the token, not leave the old one.
         button.setToken("SECOND");
-        assertEquals("?s=SECOND", button.shareUrlValue());
+        assertEquals("SECOND", button.shareTokenProperty());
     }
 }
