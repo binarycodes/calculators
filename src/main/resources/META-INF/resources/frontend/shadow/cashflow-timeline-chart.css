@@ -1,0 +1,19 @@
+/*
+ * IRR/XIRR — Cashflow Timeline. Investments (money out) are tinted with the
+ * danger token, withdrawals (money in) with the success token. Scoping to this
+ * chart's host class and recolouring by palette index keeps the column fills
+ * and their legend swatches in sync. Series order fixes the mapping:
+ *   0 = investments, 1 = withdrawals.
+ */
+
+:host(.cashflow-timeline-chart) .highcharts-color-0 {
+    fill: var(--chart-danger-color);
+    fill-opacity: 1;
+    stroke: var(--chart-danger-color);
+}
+
+:host(.cashflow-timeline-chart) .highcharts-color-1 {
+    fill: var(--chart-success-color);
+    fill-opacity: 1;
+    stroke: var(--chart-success-color);
+}

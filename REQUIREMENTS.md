@@ -15,11 +15,14 @@ input. The app currently ships:
   that shows the impact of paying extra (reduce tenure vs reduce EMI).
 - **Buy vs Rent** — compares buying a home against renting and investing the
   difference; projects net worth for both paths and reports the break-even year.
+- **IRR / XIRR** — computes the annualised internal rate of return across dated
+  cashflows (investments and withdrawals), and flags schedules whose rate is not
+  unique (multiple roots).
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
 owns a route segment (`/retirement`, `/goal`, `/inflation`, `/investment`,
-`/loan`, `/buyrent`).
+`/loan`, `/buyrent`, `/xirr`).
 
 The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
@@ -759,3 +762,119 @@ The break-even row is highlighted with a success background.
 | --- | --- |
 | `buyrent-defaults.json` (classpath) | Per-currency baseline inputs. |
 | `bvr_inputs` (localStorage) | Per-currency snapshot of the user's edited inputs. |
+
+# IRR / XIRR Calculator (`/xirr`)
+
+Computes the money-weighted annualised return (XIRR) over a set of dated
+cashflows, and surfaces the case the calculation cares most about: a
+non-conventional schedule whose rate is **not unique**.
+
+## 1. Inputs
+
+The form has two tabs — **Investments** (money paid in) and **Withdrawals**
+(money received) — each split into a one-off card and a recurring card. Amounts
+are entered as positive magnitudes; the calculator assigns the sign
+(investments negative, withdrawals positive). Every row exposes its list as a
+signal, folded into one inputs signal for live recalculation.
+
+### 1.1 One-off cashflow (per row)
+
+| Field | Notes |
+| --- | --- |
+| Date | Required calendar date the money moves. |
+| Description | Optional label, carried through to the schedule grid. |
+| Amount | Required money in today's currency, > 0. |
+
+### 1.2 Recurring cashflow (per row)
+
+| Field | Notes |
+| --- | --- |
+| Start Date | Required date of the first payment. |
+| Frequency | Monthly / Quarterly / Half-Yearly / Yearly (1 / 3 / 6 / 12 months per period). |
+| Payments | Required count ≥ 1; expands to one cashflow per occurrence at `startDate + n × period`. |
+| Description | Optional label. |
+| Amount | Required per-payment amount, > 0. |
+
+## 2. Calculation Model
+
+`irr.service.XirrCalculator.calculate(inputs)` expands the four lists into a
+signed, date-sorted `List<Cashflow>` and delegates the maths to
+`irr.service.Xirr`.
+
+### 2.1 NPV and the rate
+
+Time is measured in years from the earliest cashflow on an **Actual/365**
+day-count (matching spreadsheet `XIRR`):
+
+```
+NPV(r) = Σ CF_i / (1 + r)^((d_i − d_0) / 365)
+```
+
+The IRR is any rate `r > −100%` with `NPV(r) = 0`.
+
+### 2.2 Finding every root (not just one)
+
+Roots are found by **scanning** NPV across `[−99.9%, +10000%]` in fine steps and
+**bisecting** each sign-change bracket. Bisection is used deliberately over
+Newton-Raphson: it cannot diverge and it returns *all* roots, which is what a
+multiple-IRR schedule needs. Roots within `1e-4` of each other are de-duplicated.
+
+### 2.3 Determinacy
+
+The number of **sign changes** in the date-ordered amounts is reported
+(Descartes' rule of signs). The result status is:
+
+- **`UNIQUE`** — exactly one root; the XIRR is well defined.
+- **`NON_UNIQUE`** — more than one root; no single rate is meaningful. The
+  headline XIRR is the root closest to zero, reported **with a warning** that
+  lists every root and renders the NPV-vs-rate curve so the crossings are
+  visible.
+
+Invalid input is rejected with a message (translation key) shown in the view's
+banner: fewer than two cashflows (`needTwoCashflows`), one-directional cashflows
+that can never break even (`needBothDirections`), or no root in the searched
+range (`noRate`). Blank rows are ignored rather than failing.
+
+### 2.4 Derived figures
+
+| Figure | Meaning |
+| --- | --- |
+| Total Invested | Sum of outflow magnitudes. |
+| Total Withdrawn | Sum of inflows. |
+| Net Cashflow | `Total Withdrawn − Total Invested` (undiscounted). |
+| Payback date | First date the running (undiscounted) total turns non-negative. |
+| NPV curve | NPV sampled across a display range for the chart. |
+
+## 3. Output
+
+- **Summary cards**: XIRR (annualised, tinted as a warning when non-unique),
+  Total Invested, Total Withdrawn, Net Cashflow (tinted by sign).
+- **Warning banner**: shown for a non-unique rate (lists the roots) or an input
+  error.
+- **Charts** (tabbed): Cashflow Timeline (columns by date, investments down /
+  withdrawals up), NPV vs Rate (curve with the zero baseline and a marked line
+  per root), Cumulative Cashflow (running balance with the payback date marked).
+- **Schedule grid**: every expanded cashflow — date, description, signed amount,
+  running cumulative.
+
+## 4. Currency
+
+Amounts and chart axes format via `MoneyFormatter` for the active currency;
+switching currency reloads that currency's persisted/default schedule.
+
+## 5. Persistence & sharing
+
+| Key | Content |
+| --- | --- |
+| `xirr-defaults.json` (classpath) | Per-currency sample schedule (a three-year monthly SIP redeemed at a current value). |
+| `xirr_inputs` (localStorage) | Per-currency snapshot of the user's edited cashflows (dates as ISO-8601 strings). |
+
+Both reuse `XirrInputsStore`'s `toJsonNode` / `fromJsonNode`, which also back the
+shareable-link codec.
+
+## 6. Test coverage
+
+`Xirr` (NPV, root finding, sign changes, multiple roots), `XirrCalculator`
+(expansion, totals, payback, status, validation), `XirrInputsStore` (JSON
+round-trip), and `XirrDefaultsJsonTest` (defaults parse and resolve) — all under
+the `*/service` 80% coverage gate.

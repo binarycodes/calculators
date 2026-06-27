@@ -1,0 +1,32 @@
+{
+  "INR": {
+    "oneOffInvestments": [],
+    "recurringInvestments": [
+      { "startDate": "2023-07-01", "frequency": "MONTHLY", "count": "36", "description": "Monthly SIP", "amount": "25000" }
+    ],
+    "oneOffWithdrawals": [
+      { "date": "2026-07-01", "description": "Current value", "amount": "1100000" }
+    ],
+    "recurringWithdrawals": []
+  },
+  "EUR": {
+    "oneOffInvestments": [],
+    "recurringInvestments": [
+      { "startDate": "2023-07-01", "frequency": "MONTHLY", "count": "36", "description": "Monthly plan", "amount": "300" }
+    ],
+    "oneOffWithdrawals": [
+      { "date": "2026-07-01", "description": "Current value", "amount": "13000" }
+    ],
+    "recurringWithdrawals": []
+  },
+  "USD": {
+    "oneOffInvestments": [],
+    "recurringInvestments": [
+      { "startDate": "2023-07-01", "frequency": "MONTHLY", "count": "36", "description": "Monthly plan", "amount": "500" }
+    ],
+    "oneOffWithdrawals": [
+      { "date": "2026-07-01", "description": "Current value", "amount": "22000" }
+    ],
+    "recurringWithdrawals": []
+  }
+}

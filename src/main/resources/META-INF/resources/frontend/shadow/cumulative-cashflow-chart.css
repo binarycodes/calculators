@@ -1,0 +1,22 @@
+/*
+ * IRR/XIRR — Cumulative Cashflow. A single area in the primary tone tracks the
+ * running balance; the zero baseline is a muted reference line and the payback
+ * date (first non-negative balance) is marked with a success-toned line.
+ */
+
+:host(.cumulative-cashflow-chart) .highcharts-color-0 {
+    fill: var(--chart-primary-color);
+    fill-opacity: 0.25;
+    stroke: var(--chart-primary-color);
+}
+
+:host(.cumulative-cashflow-chart) .highcharts-plot-line.cumulative-zero-line {
+    stroke: var(--color-border-strong);
+    stroke-width: 1px;
+}
+
+:host(.cumulative-cashflow-chart) .highcharts-plot-line.cumulative-payback-line {
+    stroke: var(--chart-success-color);
+    stroke-width: 2px;
+    stroke-dasharray: 4, 3;
+}

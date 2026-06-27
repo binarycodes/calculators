@@ -1,0 +1,20 @@
+/*
+ * IRR/XIRR — NPV vs Discount Rate. The curve uses the primary chart tone; the
+ * NPV = 0 baseline is a muted reference line, and each root (an IRR) is marked
+ * with a dashed line in the warning tone so multiple crossings stand out.
+ */
+
+:host(.npv-rate-chart) .highcharts-color-0 {
+    stroke: var(--chart-primary-color);
+}
+
+:host(.npv-rate-chart) .highcharts-plot-line.npv-zero-line {
+    stroke: var(--color-border-strong);
+    stroke-width: 1px;
+}
+
+:host(.npv-rate-chart) .highcharts-plot-line.npv-root-line {
+    stroke: var(--chart-warning-color);
+    stroke-width: 2px;
+    stroke-dasharray: 4, 3;
+}

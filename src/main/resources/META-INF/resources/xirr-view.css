@@ -1,0 +1,27 @@
+/*
+ * IRR/XIRR calculator view. The banner above the charts carries either a
+ * non-unique-rate warning or a calculation error, tinted from the semantic
+ * warning / danger tokens.
+ */
+
+.xirr-banner {
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--vaadin-padding-m, 0.75rem 1rem);
+    border-radius: var(--vaadin-input-field-border-radius, 0.5rem);
+    border: 1px solid transparent;
+    font-size: var(--lumo-font-size-s, 0.875rem);
+    line-height: 1.4;
+}
+
+.xirr-banner.warning {
+    color: var(--color-warning-text);
+    background: var(--color-warning-bg);
+    border-color: var(--color-warning-text);
+}
+
+.xirr-banner.error {
+    color: var(--color-danger-text);
+    background: var(--color-danger-bg);
+    border-color: var(--color-danger-text);
+}
