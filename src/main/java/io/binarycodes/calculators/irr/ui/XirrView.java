@@ -163,9 +163,10 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
 
     private VerticalLayout buildGridCard() {
         final H2 title = new H2(getTranslation("section.xirr.schedule"));
-        final HorizontalLayout header = new HorizontalLayout(title);
+        final HorizontalLayout header = new HorizontalLayout(title, this.cashflowGrid.createColumnChooser());
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         final VerticalLayout card = new VerticalLayout(header, this.cashflowGrid);
         card.addClassName("grid-card");
