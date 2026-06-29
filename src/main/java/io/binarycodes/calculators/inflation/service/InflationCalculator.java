@@ -61,7 +61,7 @@ public final class InflationCalculator {
         final List<InflationPoint> progression = buildProgression(todayValue, inflation, totalMonths);
 
         final BigDecimal variation = Rates.pctToFraction(inputs.getInflationVariationPct());
-        final List<InflationBand> band = buildBand(todayValue,
+        final List<InflationBand> band = buildBand(amount, inputs.isAmountIsToday(), todayValue,
                 inflation.subtract(variation), inflation.add(variation), totalMonths);
 
         return new InflationResult(totalMonths, amount, resultAmount,
@@ -69,30 +69,66 @@ public final class InflationCalculator {
     }
 
     /**
-     * Year-by-year low/high values for the uncertainty band: the same trajectory
-     * as {@link #buildProgression} but evaluated at the low and high inflation
-     * rates, so each point brackets the central value. Aligned 1:1 with the
-     * central progression (same years, including any fractional final point).
+     * Year-by-year low/high values for the uncertainty band, evaluated at the low
+     * and high inflation rates so each point brackets the central value. Aligned
+     * 1:1 with the central progression (same years, including any fractional final
+     * point). Which end is fixed depends on the direction:
+     *
+     * <ul>
+     *   <li><b>Forward</b>: the entered amount is today's money, so the band starts
+     *       as a point and fans out toward the horizon as the rate compounds.</li>
+     *   <li><b>Backward</b>: the entered amount is the fixed value at the horizon
+     *       end, so the band converges there and fans out toward today — a higher
+     *       inflation rate discounts to a smaller present value, forming the lower
+     *       edge.</li>
+     * </ul>
      */
-    private static List<InflationBand> buildBand(BigDecimal todayValue, BigDecimal lowRate,
+    private static List<InflationBand> buildBand(BigDecimal amount, boolean amountIsToday,
+                                                 BigDecimal todayValue, BigDecimal lowRate,
                                                  BigDecimal highRate, int totalMonths) {
         final int currentYear = Year.now().getValue();
         final int wholeYears = totalMonths / 12;
+        final double totalYears = totalMonths / 12.0;
         final List<InflationBand> points = new ArrayList<>();
+
+        if (amountIsToday) {
+            for (int yearOffset = 0; yearOffset <= wholeYears; yearOffset++) {
+                points.add(new InflationBand(currentYear + yearOffset,
+                        todayValue.multiply(Rates.pow1plus(lowRate, yearOffset), MC),
+                        todayValue.multiply(Rates.pow1plus(highRate, yearOffset), MC)));
+            }
+            if (totalMonths % 12 != 0) {
+                points.add(new InflationBand(currentYear + wholeYears + 1,
+                        todayValue.multiply(powYears(lowRate, totalYears), MC),
+                        todayValue.multiply(powYears(highRate, totalYears), MC)));
+            }
+            return points;
+        }
+
         for (int yearOffset = 0; yearOffset <= wholeYears; yearOffset++) {
-            points.add(new InflationBand(currentYear + yearOffset,
-                    todayValue.multiply(Rates.pow1plus(lowRate, yearOffset), MC),
-                    todayValue.multiply(Rates.pow1plus(highRate, yearOffset), MC)));
+            points.add(discountedBand(amount, lowRate, highRate,
+                    currentYear + yearOffset, yearOffset - totalYears));
         }
         if (totalMonths % 12 != 0) {
-            final double years = totalMonths / 12.0;
-            final BigDecimal lowFactor = BigDecimal.valueOf(Math.pow(1.0 + lowRate.doubleValue(), years));
-            final BigDecimal highFactor = BigDecimal.valueOf(Math.pow(1.0 + highRate.doubleValue(), years));
-            points.add(new InflationBand(currentYear + wholeYears + 1,
-                    todayValue.multiply(lowFactor, MC),
-                    todayValue.multiply(highFactor, MC)));
+            points.add(discountedBand(amount, lowRate, highRate, currentYear + wholeYears + 1, 0.0));
         }
         return points;
+    }
+
+    /**
+     * Backward-mode band point: the fixed future {@code amount} discounted back by
+     * {@code yearsFromEnd} (≤ 0) at each rate. The higher rate discounts more, so it
+     * yields the lower edge; both edges meet the amount at the end ({@code yearsFromEnd == 0}).
+     */
+    private static InflationBand discountedBand(BigDecimal amount, BigDecimal lowRate,
+                                                BigDecimal highRate, int year, double yearsFromEnd) {
+        final BigDecimal atLowRate = amount.multiply(powYears(lowRate, yearsFromEnd), MC);
+        final BigDecimal atHighRate = amount.multiply(powYears(highRate, yearsFromEnd), MC);
+        return new InflationBand(year, atHighRate, atLowRate);
+    }
+
+    private static BigDecimal powYears(BigDecimal rate, double years) {
+        return BigDecimal.valueOf(Math.pow(1.0 + rate.doubleValue(), years));
     }
 
     private static List<InflationPoint> buildProgression(BigDecimal todayValue,

@@ -526,10 +526,13 @@ success-tinted.
 Two chart tabs:
 
 - **Value Over Time** — area-spline of the central projection year by year.
-- **Variation Range** — area-range band between the low (rate − variation) and
-  high (rate + variation) trajectories, with the central "Expected" line on top.
-  Computed from the same anchor value as the central line; collapses onto the
-  line when the variation is zero. Backed by `InflationResult.band`.
+- **Variation Range** — area-range band between the `rate − variation` and
+  `rate + variation` trajectories, with the central "Expected" line on top.
+  Forward: the entered amount is fixed today, so the band starts as a point and
+  fans out toward the horizon. Backward: the entered amount is the fixed value at
+  the horizon end, so the band converges there and fans out toward today (a higher
+  rate discounts to a smaller present value, forming the lower edge). Collapses
+  onto the line when the variation is zero. Backed by `InflationResult.band`.
 
 ## 4. Persistence
 
@@ -542,7 +545,7 @@ Two chart tabs:
 
 | Suite | Purpose |
 | --- | --- |
-| `InflationCalculatorTest` | Forward/backward correctness, inverse round-trip, zero-inflation no-op, fractional-year compounding, horizon-mode resolution, validation rejections, variation band brackets the central line and collapses at zero variation. |
+| `InflationCalculatorTest` | Forward/backward correctness, inverse round-trip, zero-inflation no-op, fractional-year compounding, horizon-mode resolution, validation rejections, variation band brackets the central line, fans out forward but converges at the fixed horizon end when backward, and collapses at zero variation. |
 | `InflationDefaultsJsonTest` | `inflation-defaults.json` parses, every currency has every required field, projection round-trips. |
 
 # Investment

@@ -106,6 +106,38 @@ class InflationCalculatorTest {
     }
 
     @Test
+    void variation_band_converges_at_horizon_end_in_backward_mode() {
+        final InflationInputs inputs = base(10, false); // amount is a fixed future value
+        inputs.setInflationVariationPct(BigDecimal.valueOf(2)); // ±2%
+        final InflationResult result = InflationCalculator.calculate(inputs);
+
+        assertEquals(result.progression().size(), result.band().size());
+
+        // The fixed future amount pins the horizon end: the band collapses there...
+        final var endBand = result.band().getLast();
+        assertEquals(0, endBand.low().compareTo(endBand.high()),
+                "band must converge at the horizon end where the amount is fixed");
+        assertTrue(endBand.high().subtract(result.inputAmount(), MC).abs()
+                        .compareTo(new BigDecimal("0.01")) < 0,
+                "band end must equal the entered future amount");
+
+        // ...and fans out toward today, where the discounted value is uncertain.
+        final var startBand = result.band().getFirst();
+        assertTrue(startBand.low().compareTo(startBand.high()) < 0,
+                "band must be widest at the start in backward mode");
+
+        // The band still brackets the central progression at every point.
+        for (int index = 0; index < result.band().size(); index++) {
+            final var band = result.band().get(index);
+            final BigDecimal central = result.progression().get(index).value();
+            assertTrue(band.low().compareTo(central) <= 0,
+                    "low must not exceed the central value at index " + index);
+            assertTrue(band.high().compareTo(central) >= 0,
+                    "high must not be below the central value at index " + index);
+        }
+    }
+
+    @Test
     void zero_variation_collapses_band_onto_the_line() {
         final InflationResult result = InflationCalculator.calculate(base(10, true)); // no variation set
         for (int index = 0; index < result.band().size(); index++) {
