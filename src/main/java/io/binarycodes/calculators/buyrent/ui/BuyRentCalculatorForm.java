@@ -19,6 +19,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.buyrent.domain.BuyRentInputs;
 
 import java.math.BigDecimal;
@@ -39,24 +40,24 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
     private final Binder<BuyRentInputs> binder = new Binder<>(BuyRentInputs.class);
 
     private final MoneyField homePrice;
-    private final NumberField downPaymentPct = percentageField(Translations.get("field.downPayment"));
+    private final NumberField downPaymentPct = PercentageField.create(Translations.get("field.downPayment"));
     private final IntegerField loanTermYears = yearsField(Translations.get("field.loanTerm"));
-    private final NumberField mortgageRatePct = percentageField(Translations.get("field.mortgageRate"));
+    private final NumberField mortgageRatePct = PercentageField.create(Translations.get("field.mortgageRate"));
 
-    private final NumberField propertyTaxRatePct = percentageField(Translations.get("field.propertyTaxRate"));
-    private final NumberField maintenancePct = percentageField(Translations.get("field.maintenanceRate"));
-    private final NumberField appreciationPct = percentageField(Translations.get("field.homeAppreciation"));
-    private final NumberField buyingCostPct = percentageField(Translations.get("field.buyingCosts"));
-    private final NumberField sellingCostPct = percentageField(Translations.get("field.sellingCosts"));
+    private final NumberField propertyTaxRatePct = PercentageField.create(Translations.get("field.propertyTaxRate"));
+    private final NumberField maintenancePct = PercentageField.create(Translations.get("field.maintenanceRate"));
+    private final NumberField appreciationPct = PercentageField.create(Translations.get("field.homeAppreciation"));
+    private final NumberField buyingCostPct = PercentageField.create(Translations.get("field.buyingCosts"));
+    private final NumberField sellingCostPct = PercentageField.create(Translations.get("field.sellingCosts"));
 
     private final MoneyField monthlyRent;
-    private final NumberField rentIncreasePct = percentageField(Translations.get("field.annualRentIncrease"));
+    private final NumberField rentIncreasePct = PercentageField.create(Translations.get("field.annualRentIncrease"));
 
-    private final NumberField investmentReturnPct = percentageField(Translations.get("field.investmentReturn"));
-    private final NumberField inflationRatePct = percentageField(Translations.get("field.inflationRate"));
+    private final NumberField investmentReturnPct = PercentageField.create(Translations.get("field.investmentReturn"));
+    private final NumberField inflationRatePct = PercentageField.create(Translations.get("field.inflationRate"));
     private final IntegerField analysisYears = yearsField(Translations.get("field.analysisHorizon"));
-    private final NumberField propertyCapitalGainsTaxPct = percentageField(Translations.get("field.propertyCapitalGainsTax"));
-    private final NumberField investmentGainsTaxPct = percentageField(Translations.get("field.investmentGainsTax"));
+    private final NumberField propertyCapitalGainsTaxPct = PercentageField.create(Translations.get("field.propertyCapitalGainsTax"));
+    private final NumberField investmentGainsTaxPct = PercentageField.create(Translations.get("field.investmentGainsTax"));
 
     private FormCard homePurchaseCard;
 
@@ -342,14 +343,6 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("36em", 2));
         return layout;
-    }
-
-    private static NumberField percentageField(String label) {
-        final NumberField field = new NumberField(label);
-        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
-        field.setStepButtonsVisible(false);
-        field.setValueChangeMode(ValueChangeMode.LAZY);
-        return field;
     }
 
     private static IntegerField yearsField(String label) {

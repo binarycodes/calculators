@@ -15,6 +15,7 @@ import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.goal.domain.Investment;
 
@@ -187,10 +188,7 @@ public class InvestmentsCard extends FormCard {
         }
 
         private static NumberField percentage(String label) {
-            final NumberField field = new NumberField(label);
-            // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
-            field.setStepButtonsVisible(false);
-            field.setValueChangeMode(ValueChangeMode.LAZY);
+            final NumberField field = PercentageField.create(label);
             final Span suffix = new Span(Translations.get("unit.percent"));
             suffix.getStyle().setColor("var(--vaadin-secondary-text-color, #71717a)");
             field.setSuffixComponent(suffix);

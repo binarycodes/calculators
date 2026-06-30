@@ -22,6 +22,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 
@@ -48,7 +49,7 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Binder<GoalInputs> binder = new Binder<>(GoalInputs.class);
 
     private final MoneyField goalAmount;
-    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
+    private final NumberField inflationRate = PercentageField.create(Translations.get("field.inflationRate"));
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
 
     private final IntegerField yearsToGoal = yearsField(Translations.get("field.years"));
@@ -401,14 +402,6 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         final IntegerField field = new IntegerField(Translations.get("field.targetYear"));
         field.setMin(Year.now().getValue());
         field.setMax(Year.now().getValue() + 80);
-        field.setStepButtonsVisible(false);
-        field.setValueChangeMode(ValueChangeMode.LAZY);
-        return field;
-    }
-
-    private static NumberField percentageField(String label) {
-        final NumberField field = new NumberField(label);
-        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;

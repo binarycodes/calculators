@@ -1,0 +1,24 @@
+package io.binarycodes.calculators.base.ui;
+
+import com.vaadin.flow.component.textfield.NumberField;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+/**
+ * The shared percentage-field factory feeds every calculator's rate inputs, so
+ * guarding it here covers them all: it must impose no numeric step (a step would
+ * flag valid two-decimal rates like 4.45% invalid as a step mismatch) and hide
+ * the step buttons.
+ */
+class PercentageFieldTest {
+
+    @Test
+    void create_imposes_no_step_so_decimal_rates_are_valid() {
+        final NumberField field = PercentageField.create("Rate");
+        assertNull(field.getElement().getProperty("step"),
+                "percentage fields must not set a step (it would reject decimals like 4.45%)");
+        assertFalse(field.isStepButtonsVisible(), "step buttons should be hidden");
+    }
+}

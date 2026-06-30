@@ -17,6 +17,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.ValueProvider;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.ui.FormCard;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 
 import java.math.BigDecimal;
@@ -46,11 +47,7 @@ final class FormFields {
     }
 
     static NumberField percentageField(String label) {
-        final var field = new NumberField(label);
-        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
-        field.setStepButtonsVisible(false);
-        field.setValueChangeMode(ValueChangeMode.LAZY);
-        return field;
+        return PercentageField.create(label);
     }
 
     static NumberField withPercentageSuffix(NumberField field) {

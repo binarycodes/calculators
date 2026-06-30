@@ -23,6 +23,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
 import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
@@ -39,15 +40,15 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Binder<LoanInputs> binder = new Binder<>(LoanInputs.class);
 
     private final MoneyField loanAmount;
-    private final NumberField annualRate = percentageField(Translations.get("field.interestRate"));
+    private final NumberField annualRate = PercentageField.create(Translations.get("field.interestRate"));
     private final IntegerField tenureYears = yearsField(Translations.get("field.years"));
     private final IntegerField tenureMonths = monthsField(Translations.get("field.months"));
-    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
+    private final NumberField inflationRate = PercentageField.create(Translations.get("field.inflationRate"));
 
     private final MoneyField extraPerPeriod;
     private final RadioButtonGroup<PrepaymentFrequency> extraFrequency = new RadioButtonGroup<>();
     private final IntegerField extraEmisPerYear = countField(Translations.get("field.extraEmisPerYear"));
-    private final NumberField emiStepUp = percentageField(Translations.get("field.emiStepUp"));
+    private final NumberField emiStepUp = PercentageField.create(Translations.get("field.emiStepUp"));
 
     private final Span extraPaymentDot = TabIndicator.dot(Translations.get("loan.dot.extraPayment"));
     private final Span extraEmisDot = TabIndicator.dot(Translations.get("loan.dot.extraEmis"));
@@ -364,14 +365,6 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         final IntegerField field = new IntegerField(label);
         field.setMin(0);
         field.setMax(12);
-        field.setStepButtonsVisible(false);
-        field.setValueChangeMode(ValueChangeMode.LAZY);
-        return field;
-    }
-
-    private static NumberField percentageField(String label) {
-        final NumberField field = new NumberField(label);
-        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;

@@ -23,6 +23,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.investment.domain.ContributionFrequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 
@@ -48,10 +49,10 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private final MoneyField amount;
     private final RadioButtonGroup<ContributionFrequency> frequency = new RadioButtonGroup<>();
-    private final NumberField growthRate = percentageField(Translations.get("field.growthRate"));
-    private final NumberField taxRate = percentageField(Translations.get("field.taxRate"));
-    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
-    private final NumberField stepUp = percentageField(Translations.get("field.stepUpYearly"));
+    private final NumberField growthRate = PercentageField.create(Translations.get("field.growthRate"));
+    private final NumberField taxRate = PercentageField.create(Translations.get("field.taxRate"));
+    private final NumberField inflationRate = PercentageField.create(Translations.get("field.inflationRate"));
+    private final NumberField stepUp = PercentageField.create(Translations.get("field.stepUpYearly"));
 
     private FormCard contributionCard;
 
@@ -480,14 +481,6 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         final IntegerField field = new IntegerField(Translations.get("field.targetYear"));
         field.setMin(Year.now().getValue());
         field.setMax(Year.now().getValue() + 100);
-        field.setStepButtonsVisible(false);
-        field.setValueChangeMode(ValueChangeMode.LAZY);
-        return field;
-    }
-
-    private static NumberField percentageField(String label) {
-        final NumberField field = new NumberField(label);
-        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;

@@ -24,6 +24,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
 import io.binarycodes.calculators.base.ui.MoneyField;
+import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.inflation.domain.InflationInputs;
 
 import java.math.BigDecimal;
@@ -41,8 +42,8 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
     private final Binder<InflationInputs> binder = new Binder<>(InflationInputs.class);
 
     private final MoneyField amount;
-    private final NumberField inflationRate = percentageField(Translations.get("field.inflationRate"));
-    private final NumberField inflationVariation = percentageField(Translations.get("field.inflationVariation"));
+    private final NumberField inflationRate = PercentageField.create(Translations.get("field.inflationRate"));
+    private final NumberField inflationVariation = PercentageField.create(Translations.get("field.inflationVariation"));
     private final Checkbox amountIsToday = new Checkbox(Translations.get("field.amountIsToday"));
     private final RadioButtonGroup<TimeHorizonMode> horizonMode = new RadioButtonGroup<>();
 
@@ -393,14 +394,6 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
         final IntegerField field = new IntegerField(Translations.get("field.targetYear"));
         field.setMin(Year.now().getValue());
         field.setMax(Year.now().getValue() + 100);
-        field.setStepButtonsVisible(false);
-        field.setValueChangeMode(ValueChangeMode.LAZY);
-        return field;
-    }
-
-    private static NumberField percentageField(String label) {
-        final NumberField field = new NumberField(label);
-        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
