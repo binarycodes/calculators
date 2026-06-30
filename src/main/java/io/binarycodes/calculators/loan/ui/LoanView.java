@@ -186,7 +186,7 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
         titleGroup.setAlignItems(FlexComponent.Alignment.CENTER);
 
         final HorizontalLayout header = new HorizontalLayout(titleGroup,
-                this.projectionGrid.createColumnChooser());
+                this.projectionGrid.createControls());
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);

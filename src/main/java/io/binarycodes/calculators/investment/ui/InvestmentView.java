@@ -107,7 +107,7 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
     private VerticalLayout buildProjectionCard() {
         final H2 title = new H2(getTranslation("section.projection"));
         final HorizontalLayout header = new HorizontalLayout(title,
-                this.projectionGrid.createColumnChooser());
+                this.projectionGrid.createControls());
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);

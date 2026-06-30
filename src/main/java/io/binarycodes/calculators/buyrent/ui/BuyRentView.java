@@ -130,7 +130,7 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
 
     private VerticalLayout buildProjectionCard() {
         final H2 title = new H2(getTranslation("section.projectionByYear"));
-        final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createColumnChooser());
+        final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createControls());
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);

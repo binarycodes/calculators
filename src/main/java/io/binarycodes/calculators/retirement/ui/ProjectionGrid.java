@@ -36,6 +36,9 @@ public class ProjectionGrid extends ColumnChooserGrid<ProjectionRow> {
         this.preferences = preferences;
         configureColumns();
         setPartNameGenerator(ProjectionGrid::projectionRowPartName);
+        trackRowLegend("retirement-row", "legend.retirementYear");
+        trackRowLegend("low-row", "legend.lowCorpus");
+        trackRowLegend("depleted-row", "legend.depleted");
         getColumns().forEach(column -> {
             column.setAutoWidth(true);
             column.setFlexGrow(1);

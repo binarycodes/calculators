@@ -55,6 +55,36 @@ vaadin-grid::part(corpus-end-healthy) {
     font-weight: 600;
 }
 
+/* Row-colour legend popover ---------------------------------------------- */
+.row-legend {
+    gap: 0.4rem;
+}
+
+.legend-item {
+    gap: 0.5rem;
+}
+
+.legend-swatch {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    border-radius: 3px;
+    border: 1px solid var(--color-border);
+}
+
+/* Swatches mirror the row tints above, keyed by the same part-name. */
+.legend-swatch.retirement-row {
+    background: var(--color-accent-bg);
+}
+
+.legend-swatch.depleted-row {
+    background: var(--color-danger-bg);
+}
+
+.legend-swatch.low-row {
+    background: var(--color-warning-bg);
+}
+
 /* Dual monthly / yearly money cell --------------------------------------- */
 .money-cell {
     display: flex;

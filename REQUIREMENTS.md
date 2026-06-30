@@ -329,6 +329,13 @@ A column-chooser icon (cog) at the top-right of the grid opens a checkable
 menu listing every column; toggling an item hides or shows that column
 without recomputing the projection.
 
+Because the rows carry status tints, the grid also shows a **row-colour
+legend** — an info icon beside the cog opens a popover mapping each row
+background colour to its meaning (retirement year, low corpus, depleted),
+like a chart legend. This is a general grid affordance (`ColumnChooserGrid`):
+any grid that registers row-colour entries gets the legend icon automatically;
+grids without row tints show only the cog.
+
 ### 5.2 Summary cards
 
 `Corpus at Retirement`, `Annual Expenses at Retirement`,
