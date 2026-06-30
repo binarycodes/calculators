@@ -696,9 +696,9 @@ snapshotted at each year boundary.
 | Buying Costs | Costs & Appreciation | 0–15 % | Upfront transaction costs (stamp duty, registration) as % of home price. |
 | Selling Costs | Costs & Appreciation | 0–10 % | Sale-time costs (agent fees) as % of sale price. |
 | Monthly Rent | Renting | > 0, Required | Starting monthly rent. |
-| Annual Rent Increase | Renting | 0–20 % | Yearly compounding increase to rent. |
+| Annual Rent Increase | Renting | 0–20 % | Step-up applied once per year (rent is flat within a year). |
 | Investment Return | Analysis | 0–30 %, Required | Annual return on the rent-path portfolio. |
-| Inflation Rate | Analysis | 0–20 % | Used to express the net-worth difference in today's money. |
+| Inflation Rate | Analysis | 0–20 % | Intended to express the net-worth difference in today's money. NOTE: the real (deflated) difference is computed but not yet surfaced in any chart/grid/card, so this input currently has no visible effect — see `docs/issues/buyrent-inflation-input-not-surfaced.md`. |
 | Analysis Horizon | Analysis | 1–50 yrs, Required | How many years to project. |
 | Property Capital Gains Tax | Analysis | 0–60 % | Tax rate on the profit when the home is sold (sale proceeds − cost basis). |
 | Investment Gains Tax | Analysis | 0–60 % | Tax rate on the investment portfolio profit at exit (portfolio − net contributions). |
@@ -721,7 +721,8 @@ snapshotted at each year boundary.
   invested immediately at the investment return rate.
 - Each month the **surplus** (buy monthly cost − rent this month) is added to
   the portfolio; if rent exceeds buy costs the deficit is withdrawn.
-- Rent grows each year at the rent-increase rate.
+- Rent is flat within each year and steps up once per completed year at the
+  rent-increase rate (e.g. 5 % ⇒ year 2's monthly rent = year 1 × 1.05).
 - Portfolio net worth (pre-tax) at year Y = investment portfolio balance.
 - Investment capital-gains tax on exit = max(0, portfolio − net contributions) × investment CGT rate,
   where net contributions = initial investment + cumulative monthly surpluses (positive or negative).
@@ -856,7 +857,9 @@ range (`noRate`). Blank rows are ignored rather than failing.
   error.
 - **Charts** (tabbed): Cashflow Timeline (columns by date, investments down /
   withdrawals up), NPV vs Rate (curve with the zero baseline and a marked line
-  per root), Cumulative Cashflow (running balance with the payback date marked).
+  per root; the curve range stretches to enclose every root so each marked line
+  lands on a visible zero-crossing), Cumulative Cashflow (running balance with
+  the payback date marked).
 - **Schedule grid**: every expanded cashflow — date, description, signed amount,
   running cumulative.
 
