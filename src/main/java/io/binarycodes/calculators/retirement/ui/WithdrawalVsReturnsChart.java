@@ -53,7 +53,7 @@ public class WithdrawalVsReturnsChart extends Chart {
             final ProjectionRow row = postRetirementRows.get(index);
             returnsValues[index] = row.returns().doubleValue();
             withdrawalValues[index] = row.withdrawal().doubleValue();
-            categories[index] = Integer.toString(row.age());
+            categories[index] = Integer.toString(RetirementChartAxis.yearEndAge(row.age()));
         }
 
         // Series order fixes the palette index the CSS recolours: 0 = returns, 1 = withdrawal.

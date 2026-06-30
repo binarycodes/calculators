@@ -35,7 +35,7 @@ public class ExpensesChart extends Chart {
         final String[] categories = new String[result.rows().size()];
         for (int i = 0; i < result.rows().size(); i++) {
             ys[i] = result.rows().get(i).annualExp().doubleValue();
-            categories[i] = Integer.toString(result.rows().get(i).age());
+            categories[i] = Integer.toString(RetirementChartAxis.yearEndAge(result.rows().get(i).age()));
         }
 
         final var plotOptions = new PlotOptionsAreaspline();

@@ -347,6 +347,13 @@ without recomputing the projection.
 | Real Corpus | Split-pane area-spline | Nominal vs. inflation-deflated corpus, on independent y-scales |
 | Timeline | Timeline | Major life/financial events along the age axis (see 5.3.1) |
 
+**X-axis convention.** Every per-year value chart (Corpus, Annual Expenses,
+Return on Investments, Withdrawal vs Returns, Real Corpus) shares one rule: a row
+for the year the person is age *N* is plotted at the **year-end age *N* + 1**, so
+reading an age across these tabs always refers to the same year. The Corpus chart
+also seeds a starting-corpus point at the current age. The Timeline is the sole
+exception — it marks events at the age they actually occur.
+
 #### 5.3.1 Plan Timeline
 
 A timeline chart marking the plan's major events on the age axis. All events

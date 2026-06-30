@@ -54,7 +54,7 @@ public class ReturnOnInvestmentsChart extends Chart {
                     : row.investment();
             investmentValues[index] = investmentForYear.doubleValue();
             interestValues[index] = row.returns().doubleValue();
-            categories[index] = Integer.toString(row.age());
+            categories[index] = Integer.toString(RetirementChartAxis.yearEndAge(row.age()));
         }
 
         final PlotOptionsColumn investmentOptions = new PlotOptionsColumn();

@@ -47,7 +47,7 @@ public class CorpusChart extends Chart {
         series.add(new DataSeriesItem(inputs.getCurrentAge(), inputs.getCorpus().doubleValue()));
 
         for (final var row : result.rows()) {
-            series.add(new DataSeriesItem(seriesAge(row.age()), Math.max(row.endCorpus().doubleValue(), 0)));
+            series.add(new DataSeriesItem(RetirementChartAxis.yearEndAge(row.age()), Math.max(row.endCorpus().doubleValue(), 0)));
         }
 
         final var plotOptions = new PlotOptionsAreaspline();
@@ -76,11 +76,11 @@ public class CorpusChart extends Chart {
         result.corpusDepletedAt()
                 .ifPresent(age -> {
                     // The depleting row's (clamped) zero corpus is plotted at
-                    // seriesAge(age), so the marker and the post-depletion zone must
+                    // yearEndAge(age), so the marker and the post-depletion zone must
                     // land there too — not at the raw age, a year to the left.
-                    x.addPlotLine(plotLine(seriesAge(age), DEPLETION_MARKER_CLASSNAME));
+                    x.addPlotLine(plotLine(RetirementChartAxis.yearEndAge(age), DEPLETION_MARKER_CLASSNAME));
 
-                    retirementZone.setValue(seriesAge(age));
+                    retirementZone.setValue(RetirementChartAxis.yearEndAge(age));
 
                     final var postCorpusDepletionZone = new Zones();
                     postCorpusDepletionZone.setClassName(POST_CORPUS_DEPLETION_ZONE);
@@ -89,16 +89,6 @@ public class CorpusChart extends Chart {
                 });
 
         drawChart(true);
-    }
-
-    /**
-     * X-axis position for a row aged {@code rowAge}. Each row carries its
-     * end-of-year corpus, which the person holds at the age they reach at
-     * year-end, so it sits one tick to the right of the row's age. The seed
-     * point (starting corpus) is plotted at the current age directly.
-     */
-    private static int seriesAge(int rowAge) {
-        return rowAge + 1;
     }
 
     private static PlotLine plotLine(int age, String className) {

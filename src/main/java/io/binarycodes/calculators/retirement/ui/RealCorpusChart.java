@@ -61,7 +61,7 @@ public class RealCorpusChart extends SplitLayout {
 
             nominalValues[index] = Math.max(nominal.doubleValue(), 0);
             realValues[index] = Math.max(real.doubleValue(), 0);
-            categories[index] = Integer.toString(row.age() + 1);
+            categories[index] = Integer.toString(RetirementChartAxis.yearEndAge(row.age()));
         }
 
         applySeries(this.nominalChart, Translations.get("chart.series.nominal"), nominalValues, categories, currency, NOMINAL_CLASSNAME);
