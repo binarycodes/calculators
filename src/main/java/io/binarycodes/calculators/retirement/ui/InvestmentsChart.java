@@ -44,12 +44,42 @@ public class InvestmentsChart extends Chart {
         cfg.getLegend().setVerticalAlign(VerticalAlign.MIDDLE);
     }
 
-    public void update(RetirementResult result, SupportedCurrency currency) {
+    /**
+     * Principal/interest split of the corpus at retirement.
+     *
+     * @param principal everything the user contributed by retirement
+     * @param interest  accumulated gains (corpus minus principal)
+     * @param total     the corpus at retirement
+     */
+    public record Breakdown(BigDecimal principal, BigDecimal interest, BigDecimal total) {
+    }
+
+    /**
+     * Splits the corpus at retirement into contributed principal and earned
+     * interest. {@code investedAtRetirement} is captured just before the
+     * retirement-year contribution lands (per the spec), whereas the
+     * {@code startCorpus} snapshot is taken just after it — so the principal
+     * inside that corpus is {@code investedAtRetirement} plus the retirement-year
+     * contribution, and only the remainder is interest.
+     */
+    static Breakdown breakdown(RetirementResult result) {
         final BigDecimal invested = result.investedAtRetirement();
         final ProjectionRow retire = result.rows().stream()
                 .filter(ProjectionRow::isRetireYear).findFirst().orElse(null);
-        final BigDecimal total = retire == null ? invested : retire.startCorpus();
-        final BigDecimal interest = total.subtract(invested).max(BigDecimal.ZERO);
+        if (retire == null) {
+            return new Breakdown(invested, BigDecimal.ZERO, invested);
+        }
+        final BigDecimal total = retire.startCorpus();
+        final BigDecimal principal = invested.add(retire.investment());
+        final BigDecimal interest = total.subtract(principal).max(BigDecimal.ZERO);
+        return new Breakdown(principal, interest, total);
+    }
+
+    public void update(RetirementResult result, SupportedCurrency currency) {
+        final Breakdown breakdown = breakdown(result);
+        final BigDecimal invested = breakdown.principal();
+        final BigDecimal interest = breakdown.interest();
+        final BigDecimal total = breakdown.total();
 
         // Slice names embed the formatted amount so they appear next to each
         // legend swatch (Vaadin Charts builds the legend from series item names).
