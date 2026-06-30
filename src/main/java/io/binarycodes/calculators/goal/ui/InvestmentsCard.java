@@ -188,7 +188,7 @@ public class InvestmentsCard extends FormCard {
 
         private static NumberField percentage(String label) {
             final NumberField field = new NumberField(label);
-            field.setStep(0.1);
+            // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
             field.setStepButtonsVisible(false);
             field.setValueChangeMode(ValueChangeMode.LAZY);
             final Span suffix = new Span(Translations.get("unit.percent"));

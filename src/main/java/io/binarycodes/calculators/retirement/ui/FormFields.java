@@ -47,7 +47,7 @@ final class FormFields {
 
     static NumberField percentageField(String label) {
         final var field = new NumberField(label);
-        field.setStep(0.1);
+        // No fixed step: percentages accept arbitrary decimals (e.g. 4.45%); a step would reject them.
         field.setStepButtonsVisible(false);
         field.setValueChangeMode(ValueChangeMode.LAZY);
         return field;
