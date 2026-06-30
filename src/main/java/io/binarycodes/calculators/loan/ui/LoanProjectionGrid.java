@@ -29,11 +29,11 @@ public class LoanProjectionGrid extends ColumnChooserGrid<LoanYear> {
         this.preferences = preferences;
 
         track(Translations.get("grid.col.year"), addColumn(LoanYear::year).setHeader(Translations.get("grid.col.year")).setAutoWidth(true));
-        track(Translations.get("grid.col.emiPaid"), addColumn(MoneyCells.monthlyAndYearly(LoanYear::emiPaid, this.preferences::currency))
+        track(Translations.get("grid.col.emiPaid"), addColumn(MoneyCells.monthlyAndYearly(LoanYear::emiPaid, LoanYear::monthsInPeriod, this.preferences::currency))
                 .setHeader(Translations.get("grid.col.emiPaid")).setTextAlign(ColumnTextAlign.END));
         track(Translations.get("grid.col.principal"), addMoneyColumn(Translations.get("grid.col.principal"), LoanYear::principalPaid));
         track(Translations.get("grid.col.interest"), addMoneyColumn(Translations.get("grid.col.interest"), LoanYear::interestPaid));
-        track(Translations.get("grid.col.prepayment"), addColumn(MoneyCells.monthlyAndYearly(LoanYear::prepayment, this.preferences::currency))
+        track(Translations.get("grid.col.prepayment"), addColumn(MoneyCells.monthlyAndYearly(LoanYear::prepayment, LoanYear::monthsInPeriod, this.preferences::currency))
                 .setHeader(Translations.get("grid.col.prepayment")).setTextAlign(ColumnTextAlign.END));
         track(Translations.get("grid.col.balance"), addMoneyColumn(Translations.get("grid.col.balance"), LoanYear::endBalance));
 

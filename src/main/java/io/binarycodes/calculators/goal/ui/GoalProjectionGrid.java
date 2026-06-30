@@ -39,7 +39,7 @@ public class GoalProjectionGrid extends ColumnChooserGrid<GoalProjectionRow> {
                 .setAutoWidth(true);
         track(Translations.get("grid.col.age"), this.ageColumn);
         track(Translations.get("grid.col.investment"), addColumn(MoneyCells.monthlyAndYearly(
-                        GoalProjectionRow::yearlyContribution, this.preferences::currency))
+                        GoalProjectionRow::yearlyContribution, GoalProjectionRow::monthsInPeriod, this.preferences::currency))
                 .setHeader(Translations.get("grid.col.investment"))
                 .setTextAlign(ColumnTextAlign.END));
         track(Translations.get("grid.col.balance"),   addMoneyColumn(Translations.get("grid.col.balance"),   GoalProjectionRow::balance));

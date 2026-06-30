@@ -33,7 +33,7 @@ public class InvestmentProjectionGrid extends ColumnChooserGrid<InvestmentYear> 
         track(Translations.get("grid.col.year"), addColumn(InvestmentYear::year).setHeader(Translations.get("grid.col.year")).setAutoWidth(true));
         track(Translations.get("grid.col.phase"), addComponentColumn(InvestmentProjectionGrid::phaseBadge).setHeader(Translations.get("grid.col.phase")));
         track(Translations.get("grid.col.contribution"), addColumn(MoneyCells.monthlyAndYearly(
-                        InvestmentYear::contribution, this.preferences::currency))
+                        InvestmentYear::contribution, InvestmentYear::monthsInPeriod, this.preferences::currency))
                 .setHeader(Translations.get("grid.col.contribution"))
                 .setTextAlign(ColumnTextAlign.END));
         track(Translations.get("grid.col.balance"), addMoneyColumn(Translations.get("grid.col.balance"), InvestmentYear::balance));
