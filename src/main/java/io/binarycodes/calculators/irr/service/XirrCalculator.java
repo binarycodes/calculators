@@ -38,7 +38,7 @@ public final class XirrCalculator {
 
     private static final double CURVE_LOW_RATE = -0.9;
     private static final double CURVE_MIN_HIGH_RATE = 1.0;
-    private static final double CURVE_MAX_HIGH_RATE = 3.0;
+    private static final double CURVE_MIN_RATE = -0.9999; // just shy of the -100% asymptote
     private static final double CURVE_ROOT_HEADROOM = 0.2;
     private static final int CURVE_SAMPLES = 120;
 
@@ -169,14 +169,27 @@ public final class XirrCalculator {
     }
 
     private static List<NpvPoint> npvCurve(List<Cashflow> cashflows, List<BigDecimal> roots) {
+        final double lowRate = curveLowRate(roots);
         final double highRate = curveHighRate(roots);
-        final double step = (highRate - CURVE_LOW_RATE) / CURVE_SAMPLES;
+        final double step = (highRate - lowRate) / CURVE_SAMPLES;
         final List<NpvPoint> curve = new ArrayList<>(CURVE_SAMPLES + 1);
         for (int sample = 0; sample <= CURVE_SAMPLES; sample++) {
-            final double rate = CURVE_LOW_RATE + sample * step;
+            final double rate = lowRate + sample * step;
             curve.add(new NpvPoint(BigDecimal.valueOf(rate), BigDecimal.valueOf(Xirr.npv(cashflows, rate))));
         }
         return curve;
+    }
+
+    // The curve must span every root the banner marks, so each plotted root line
+    // lands on a real zero-crossing. Start from the default window and stretch
+    // either end (with headroom) to enclose the outermost roots; the low end is
+    // floored just above the -100% asymptote where NPV blows up.
+    private static double curveLowRate(List<BigDecimal> roots) {
+        double low = CURVE_LOW_RATE;
+        for (final BigDecimal root : roots) {
+            low = Math.min(low, root.doubleValue() - CURVE_ROOT_HEADROOM);
+        }
+        return Math.max(low, CURVE_MIN_RATE);
     }
 
     private static double curveHighRate(List<BigDecimal> roots) {
@@ -184,6 +197,6 @@ public final class XirrCalculator {
         for (final BigDecimal root : roots) {
             high = Math.max(high, root.doubleValue() + CURVE_ROOT_HEADROOM);
         }
-        return Math.min(high, CURVE_MAX_HIGH_RATE);
+        return high;
     }
 }

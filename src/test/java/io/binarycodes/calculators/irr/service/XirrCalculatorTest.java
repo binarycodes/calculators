@@ -2,6 +2,7 @@ package io.binarycodes.calculators.irr.service;
 
 import io.binarycodes.calculators.irr.domain.CashflowFrequency;
 import io.binarycodes.calculators.irr.domain.DatedCashflow;
+import io.binarycodes.calculators.irr.domain.NpvPoint;
 import io.binarycodes.calculators.irr.domain.RecurringCashflow;
 import io.binarycodes.calculators.irr.domain.XirrInputs;
 import io.binarycodes.calculators.irr.domain.XirrResult;
@@ -114,6 +115,46 @@ class XirrCalculatorTest {
 
         assertEquals(2, result.cashflows().size());
         assertFalse(result.roots().isEmpty());
+    }
+
+    @Test
+    void npv_curve_spans_a_root_beyond_the_old_high_cap() {
+        // -1, +6.05, -5.25 (scaled ×100) has roots near 5% and 400%.
+        final XirrInputs inputs = new XirrInputs();
+        inputs.setOneOffInvestments(List.of(oneOff("2020-01-01", 100), oneOff("2022-01-01", 525)));
+        inputs.setOneOffWithdrawals(List.of(oneOff("2021-01-01", 605)));
+
+        final XirrResult result = XirrCalculator.calculate(inputs);
+
+        final BigDecimal maxRoot = result.roots().get(result.roots().size() - 1);
+        assertTrue(maxRoot.doubleValue() > 3.0,
+                "scenario must exercise a root beyond the old 300% cap; got " + maxRoot);
+        assertCurveSpansEveryRoot(result);
+    }
+
+    @Test
+    void npv_curve_spans_a_deeply_negative_root() {
+        // -1000 then +1 has a single root near -99.9%, left of the old -90% edge.
+        final XirrInputs inputs = new XirrInputs();
+        inputs.setOneOffInvestments(List.of(oneOff("2020-01-01", 1000)));
+        inputs.setOneOffWithdrawals(List.of(oneOff("2021-01-01", 1)));
+
+        final XirrResult result = XirrCalculator.calculate(inputs);
+
+        assertTrue(result.roots().get(0).doubleValue() < -0.9,
+                "scenario must exercise a root left of the old -90% edge; got " + result.roots().get(0));
+        assertCurveSpansEveryRoot(result);
+    }
+
+    private static void assertCurveSpansEveryRoot(XirrResult result) {
+        final List<NpvPoint> curve = result.npvCurve();
+        final double low = curve.get(0).rate().doubleValue();
+        final double high = curve.get(curve.size() - 1).rate().doubleValue();
+        for (final BigDecimal root : result.roots()) {
+            final double rate = root.doubleValue();
+            assertTrue(rate >= low && rate <= high,
+                    "every root must lie within the plotted curve range [" + low + ", " + high + "]; root " + rate);
+        }
     }
 
     private static DatedCashflow oneOff(String date, long amount) {
