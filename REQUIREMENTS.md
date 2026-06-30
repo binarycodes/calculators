@@ -394,7 +394,6 @@ keys: `gp_inputs` (browser localStorage, per currency); defaults from
 | Field | Notes |
 | --- | --- |
 | Goal Amount (post-tax) | Money in today's currency, > 0. The amount the user wants *in hand* after taxes on gains. |
-| Step-Up (%) | Optional. Annual compounding bump on the SIP. Blank reads as zero. |
 
 **Investments card** — repeating rows; user can add or remove buckets.
 
@@ -404,6 +403,7 @@ keys: `gp_inputs` (browser localStorage, per currency); defaults from
 | Current | Money, ≥ 0. Current balance of this bucket (treated as 100% principal). |
 | Growth (%) | Annual return on this bucket. |
 | Tax (%) | Applied to this bucket's gains portion at exit. |
+| Step-Up (%) | Optional. Per-bucket annual compounding bump on this bucket's share of the SIP. Blank reads as zero. |
 | Allocation (%) | Share of every monthly SIP that flows into this bucket. All rows must sum to 100%; the form shows a live total tinted green/red. |
 
 **Time Horizon card**
@@ -417,26 +417,27 @@ keys: `gp_inputs` (browser localStorage, per currency); defaults from
 The required monthly SIP `M` is linear in the goal-vs-corpus gap, so the
 calculator solves it in closed form (no iterative root-find). The corpus
 compounds monthly; contributions land at the start of each month; step-up
-is applied annually (the year-2 contribution becomes `M · (1+s)`, year 3
-becomes `M · (1+s)^2`, and so on).
+is applied annually and **per bucket** (bucket *i*'s year-2 share becomes
+`M · a_i · (1+s_i)`, year 3 becomes `M · a_i · (1+s_i)^2`, and so on).
 
 With per-bucket monthly rate `g_m,i = (1 + g_i)^(1/12) − 1`, allocation
-fraction `a_i`, exit tax `t_i`, and total months `N_m`:
+fraction `a_i`, exit tax `t_i`, per-bucket step-up `s_i`, and total months `N_m`:
 
 ```
 corpus_FV_i      = C_i · (1 + g_m,i)^N_m
 net_corpus_FV_i  = corpus_FV_i − (corpus_FV_i − C_i) · t_i
 
-α                = Σ_{m=0..N_m-1} (1 + s)^floor(m/12)                     (principal per unit M)
-β_i              = Σ_{m=0..N_m-1} (1 + s)^floor(m/12) · (1 + g_m,i)^(N_m − m)
-netPerM_i        = β_i · (1 − t_i) + α · t_i
+α_i              = Σ_{m=0..N_m-1} (1 + s_i)^floor(m/12)                     (principal per unit M·a_i)
+β_i              = Σ_{m=0..N_m-1} (1 + s_i)^floor(m/12) · (1 + g_m,i)^(N_m − m)
+netPerM_i        = β_i · (1 − t_i) + α_i · t_i
 
 M = max(0, (Goal − Σ_i net_corpus_FV_i) / Σ_i (a_i · netPerM_i))
 ```
 
-The contribution at each month is `M · (1+s)^floor(m/12) · a_i` into bucket
-*i*. Each bucket compounds at its own monthly rate; final balance and gains
-are summed across buckets and each bucket's gains taxed at its own rate.
+The contribution at each month is `M · a_i · (1+s_i)^floor(m/12)` into bucket
+*i*. Each bucket compounds at its own monthly rate and applies its own step-up;
+final balance and gains are summed across buckets and each bucket's gains taxed
+at its own rate.
 
 The projection emits one row per calendar year (`monthsInPeriod = 12`); a
 non-whole-year horizon adds a final row with `monthsInPeriod < 12` covering
@@ -576,7 +577,8 @@ Monthly compounding (`g_m = (1+g)^(1/12) − 1`). For each month:
 - Either way, `balance += balance · g_m`.
 
 At the end: `gains = balance − principal`, `taxAtExit = gains · taxRate`,
-`netValue = balance − taxAtExit`, and `buyingPowerToday = netValue / (1+inflation)^totalYears`.
+`netValue = balance − taxAtExit`, and `buyingPowerToday = netValue / (1+inflation)^totalYears`,
+where `totalYears = totalMonths / 12` is fractional, so a partial-year horizon deflates proportionally.
 Each projection year also carries its balance deflated to today (`realValue`).
 
 ## 3. Output
@@ -637,7 +639,9 @@ Three scenarios are computed:
   fixed EMI, so the loan finishes early. Drives the grid and the chart's
   with-prepayment curve. Headline: interest saved + months saved.
 - **Reduce EMI** — recurring extra + extra-EMIs prepay the principal and the loan
-  is re-amortized to a lower EMI over the *original* tenure (step-up excluded).
+  is re-amortized to a lower EMI over the *remaining* original tenure (step-up
+  excluded). Because the prepayments keep cutting the balance, the loan may still
+  clear before the original tenure ends.
   Headline: interest saved. (The EMI ratchets down a little after every
   prepayment rather than at a single point, so the headline reports the saving,
   not a single lowered installment; the descent is visible in the grid.) An
@@ -818,7 +822,7 @@ The IRR is any rate `r > −100%` with `NPV(r) = 0`.
 
 ### 2.2 Finding every root (not just one)
 
-Roots are found by **scanning** NPV across `[−99.9%, +10000%]` in fine steps and
+Roots are found by **scanning** NPV across `[−99.9999%, +10000%]` in fine steps and
 **bisecting** each sign-change bracket. Bisection is used deliberately over
 Newton-Raphson: it cannot diverge and it returns *all* roots, which is what a
 multiple-IRR schedule needs. Roots within `1e-4` of each other are de-duplicated.
