@@ -118,11 +118,12 @@ public final class BuyRentCalculator {
             final BigDecimal totalBuyCostThisMonth = emiThisMonth.add(monthlyTaxAndMaint, Rates.CONTEXT);
             cumulativeBuyCost = cumulativeBuyCost.add(totalBuyCostThisMonth, Rates.CONTEXT);
 
-            // Rent path — grow portfolio, invest/withdraw surplus.
-            final double yearFraction = (double) (month - 1) / 12.0;
+            // Rent path — grow portfolio, invest/withdraw surplus. Rent steps once
+            // a year (flat within the year), so the increase applies per completed
+            // year rather than compounding every month.
+            final int completedRentYears = (month - 1) / 12;
             final BigDecimal monthlyRentNow = initialMonthlyRent.multiply(
-                    BigDecimal.valueOf(Math.pow(1.0 + rentIncreaseFraction.doubleValue(), yearFraction)),
-                    Rates.CONTEXT);
+                    Rates.pow1plus(rentIncreaseFraction, completedRentYears), Rates.CONTEXT);
             cumulativeRentPaid = cumulativeRentPaid.add(monthlyRentNow, Rates.CONTEXT);
 
             rentPortfolio = rentPortfolio.multiply(

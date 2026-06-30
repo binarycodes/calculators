@@ -80,6 +80,19 @@ class BuyRentCalculatorTest {
     }
 
     @Test
+    void rent_steps_once_per_year_rather_than_escalating_every_month() {
+        // Rent 25,000/mo, +5%/yr. Stepped annually, year 1 is flat at the initial
+        // rate (12 × 25,000) and year 2 jumps to 25,000 × 1.05 (12 × 26,250).
+        final BuyRentResult result = BuyRentCalculator.calculate(base());
+        final BigDecimal yearOneRent = result.rows().get(0).cumulativeRentPaid();
+        final BigDecimal yearTwoRent = result.rows().get(1).cumulativeRentPaid();
+        assertEquals(0, yearOneRent.compareTo(new BigDecimal("300000")),
+                "year-1 rent must be flat at the initial rate, not continuously escalated");
+        assertEquals(0, yearTwoRent.subtract(yearOneRent).compareTo(new BigDecimal("315000")),
+                "year-2 rent must step to 26,250/month (25,000 × 1.05)");
+    }
+
+    @Test
     void mortgage_balance_reaches_zero_by_end_of_loan_term() {
         // 20-year loan, 20-year analysis → balance fully paid by last row.
         final BuyRentYear lastRow = lastRow(BuyRentCalculator.calculate(base()));
