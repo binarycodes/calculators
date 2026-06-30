@@ -5,7 +5,7 @@ import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
-import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
+import io.binarycodes.calculators.base.ui.BaseGrid;
 import io.binarycodes.calculators.buyrent.domain.BuyRentYear;
 
 import java.math.BigDecimal;
@@ -14,9 +14,10 @@ import java.util.function.Function;
 
 /**
  * Year-by-year projection grid. Highlights the break-even row (the first year
- * where buy equity overtakes the rent portfolio) with a success theme variant.
+ * where buy equity overtakes the rent portfolio) with a success tint, explained
+ * by the row-colour legend.
  */
-public class BuyRentProjectionGrid extends ColumnChooserGrid<BuyRentYear> {
+public class BuyRentProjectionGrid extends BaseGrid<BuyRentYear> {
 
     private final UserPreferences preferences;
     private int breakEvenYear = -1;
@@ -43,6 +44,7 @@ public class BuyRentProjectionGrid extends ColumnChooserGrid<BuyRentYear> {
 
         // Highlight the break-even row — the first year buy is ahead.
         setPartNameGenerator(row -> row.year() == this.breakEvenYear ? "break-even" : null);
+        trackRowLegend("break-even", "legend.breakEven");
     }
 
     public void update(List<BuyRentYear> rows, int breakEvenYear) {

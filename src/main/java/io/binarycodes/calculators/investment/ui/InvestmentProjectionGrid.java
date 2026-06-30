@@ -8,7 +8,7 @@ import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
-import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
+import io.binarycodes.calculators.base.ui.BaseGrid;
 import io.binarycodes.calculators.base.ui.MoneyCells;
 import io.binarycodes.calculators.investment.domain.InvestmentYear;
 
@@ -19,10 +19,10 @@ import java.util.function.Function;
 /**
  * Year-by-year investment projection grid. The Phase column shows whether the
  * year is still accumulating or just holding; money cells are right-aligned and
- * carry a words tooltip. {@link #createColumnChooser()} returns a cog-menu the
- * parent view places beside the grid header to toggle columns.
+ * carry a words tooltip. {@link #createControls()} returns the header controls
+ * the parent view places beside the grid title.
  */
-public class InvestmentProjectionGrid extends ColumnChooserGrid<InvestmentYear> {
+public class InvestmentProjectionGrid extends BaseGrid<InvestmentYear> {
 
     private final UserPreferences preferences;
 

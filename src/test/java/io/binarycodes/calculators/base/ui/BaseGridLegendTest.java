@@ -16,9 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * tints rows (registers legend entries); a legend-less grid keeps just the
  * column-chooser cog.
  */
-class ColumnChooserGridLegendTest {
+class BaseGridLegendTest {
 
-    private static final class SampleGrid extends ColumnChooserGrid<String> {
+    private static final class SampleGrid extends BaseGrid<String> {
         SampleGrid(boolean withLegend) {
             super(String.class, false);
             track("Name", addColumn(value -> value).setHeader("Name"));

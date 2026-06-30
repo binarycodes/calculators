@@ -332,7 +332,7 @@ without recomputing the projection.
 Because the rows carry status tints, the grid also shows a **row-colour
 legend** — an info icon beside the cog opens a popover mapping each row
 background colour to its meaning (retirement year, low corpus, depleted),
-like a chart legend. This is a general grid affordance (`ColumnChooserGrid`):
+like a chart legend. This is a general grid affordance (`BaseGrid`):
 any grid that registers row-colour entries gets the legend icon automatically;
 grids without row tints show only the cog.
 
@@ -777,7 +777,8 @@ the analysis horizon. Where they cross is the break-even year.
 | Rent Portfolio | Accumulated investment |
 | Difference (Buy − Rent) | Positive = buy ahead |
 
-The break-even row is highlighted with a success background.
+The break-even row is highlighted with a success background, explained by the
+grid's row-colour legend (the info icon beside the column-chooser cog).
 
 ## 4. Persistence & sharing
 | Key | Content |

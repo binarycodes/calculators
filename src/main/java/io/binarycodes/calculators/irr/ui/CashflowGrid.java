@@ -4,7 +4,7 @@ import com.vaadin.flow.component.grid.ColumnTextAlign;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
+import io.binarycodes.calculators.base.ui.BaseGrid;
 import io.binarycodes.calculators.irr.domain.CashflowRow;
 
 import java.time.format.DateTimeFormatter;
@@ -14,10 +14,10 @@ import java.util.List;
 /**
  * The expanded cashflow schedule: every dated amount, signed, with the running
  * (undiscounted) total beside it. Recurring entries appear here as one row per
- * occurrence. {@link #createColumnChooser()} returns a cog-menu the parent view
- * places beside the grid header to toggle columns.
+ * occurrence. {@link #createControls()} returns the header controls the parent
+ * view places beside the grid title to toggle columns.
  */
-public class CashflowGrid extends ColumnChooserGrid<CashflowRow> {
+public class CashflowGrid extends BaseGrid<CashflowRow> {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
 

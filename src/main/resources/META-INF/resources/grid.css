@@ -39,6 +39,10 @@ vaadin-grid::part(low-row) {
     background: var(--color-warning-bg);
 }
 
+vaadin-grid::part(break-even) {
+    background: var(--color-success-bg);
+}
+
 /* Corpus (End) cell coloring --------------------------------------------- */
 vaadin-grid::part(corpus-end-depleted) {
     color: var(--color-danger-text);
@@ -83,6 +87,10 @@ vaadin-grid::part(corpus-end-healthy) {
 
 .legend-swatch.low-row {
     background: var(--color-warning-bg);
+}
+
+.legend-swatch.break-even {
+    background: var(--color-success-bg);
 }
 
 /* Dual monthly / yearly money cell --------------------------------------- */

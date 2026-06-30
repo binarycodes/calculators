@@ -6,7 +6,7 @@ import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
-import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
+import io.binarycodes.calculators.base.ui.BaseGrid;
 import io.binarycodes.calculators.base.ui.MoneyCells;
 import io.binarycodes.calculators.loan.domain.LoanYear;
 
@@ -17,10 +17,10 @@ import java.util.function.Function;
 /**
  * Year-by-year amortization grid for the reduce-tenure schedule: EMI, interest,
  * principal, any prepayment, and the closing balance. Money cells are
- * right-aligned with a words tooltip. {@link #createColumnChooser()} returns the
- * cog-menu the view places beside the grid header.
+ * right-aligned with a words tooltip. {@link #createControls()} returns the
+ * header controls the view places beside the grid title.
  */
-public class LoanProjectionGrid extends ColumnChooserGrid<LoanYear> {
+public class LoanProjectionGrid extends BaseGrid<LoanYear> {
 
     private final UserPreferences preferences;
 

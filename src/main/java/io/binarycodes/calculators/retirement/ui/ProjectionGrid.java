@@ -9,7 +9,7 @@ import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
-import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
+import io.binarycodes.calculators.base.ui.BaseGrid;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
 
 import java.math.BigDecimal;
@@ -25,7 +25,7 @@ import java.util.function.Function;
  * {@code grid.css} can colour them by lifecycle phase (retirement / low /
  * depleted / healthy).
  */
-public class ProjectionGrid extends ColumnChooserGrid<ProjectionRow> {
+public class ProjectionGrid extends BaseGrid<ProjectionRow> {
 
     private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
 

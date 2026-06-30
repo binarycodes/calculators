@@ -6,7 +6,7 @@ import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
-import io.binarycodes.calculators.base.ui.ColumnChooserGrid;
+import io.binarycodes.calculators.base.ui.BaseGrid;
 import io.binarycodes.calculators.base.ui.MoneyCells;
 import io.binarycodes.calculators.goal.domain.GoalProjectionRow;
 
@@ -20,11 +20,11 @@ import java.util.function.Function;
  * a tooltip on each money cell spells the amount out in words. The Age column
  * is hidden when no age is tracked (only the AGES horizon mode populates it).
  *
- * <p>{@link #createColumnChooser()} returns a cog-menu the parent view can
- * place next to the grid header — toggling items hides or shows columns
+ * <p>{@link #createControls()} returns the header controls the parent view can
+ * place next to the grid title — toggling chooser items hides or shows columns
  * without recomputing the projection.</p>
  */
-public class GoalProjectionGrid extends ColumnChooserGrid<GoalProjectionRow> {
+public class GoalProjectionGrid extends BaseGrid<GoalProjectionRow> {
 
     private final UserPreferences preferences;
     private final Column<GoalProjectionRow> ageColumn;

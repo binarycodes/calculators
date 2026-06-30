@@ -40,7 +40,7 @@ import java.util.Map;
  *
  * <p>The parent view places {@link #createControls()} beside the grid header.</p>
  */
-public abstract class ColumnChooserGrid<T> extends Grid<T> {
+public abstract class BaseGrid<T> extends Grid<T> {
 
     /** One row-background legend entry: a swatch tinted like {@code partName} rows
      *  plus a translated description of what that colour means. */
@@ -50,7 +50,7 @@ public abstract class ColumnChooserGrid<T> extends Grid<T> {
     private final Map<String, Column<T>> columnsByHeader = new LinkedHashMap<>();
     private final List<RowLegendEntry> rowLegend = new ArrayList<>();
 
-    protected ColumnChooserGrid(Class<T> beanType, boolean autoCreateColumns) {
+    protected BaseGrid(Class<T> beanType, boolean autoCreateColumns) {
         super(beanType, autoCreateColumns);
     }
 
