@@ -4,6 +4,7 @@ import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.NumberToWords;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 
@@ -29,6 +30,10 @@ public class MoneyField extends CustomField<BigDecimal> {
 
         this.inner.setStep(1);
         this.inner.setStepButtonsVisible(false);
+        // Without a bad-input message, an unparsable entry leaves the field
+        // invalid with no explanation (bad input is a field-level constraint).
+        this.inner.setI18n(new NumberField.NumberFieldI18n()
+                .setBadInputErrorMessage(Translations.get("validation.number")));
         this.inner.setWidthFull();
         this.inner.setPrefixComponent(this.prefix);
         this.inner.setValueChangeMode(ValueChangeMode.LAZY);
