@@ -19,6 +19,8 @@ public class VersionTag extends Span {
             return;
         }
 
+        add(new Span(getTranslation("footer.version.label") + " "));
+
         final String commitUrl = buildInfo.commitUrl();
         if (commitUrl.isEmpty()) {
             add(new Span(buildInfo.shortSha()));
