@@ -11,6 +11,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
@@ -18,6 +19,7 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import io.binarycodes.calculators.base.config.AppLinks;
+import io.binarycodes.calculators.base.config.BuildInfo;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 
 /**
@@ -32,9 +34,11 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 public class MainLayout extends AppLayout {
 
     private final AppLinks links;
+    private final BuildInfo buildInfo;
 
-    public MainLayout(UserPreferences prefs, AppLinks links) {
+    public MainLayout(UserPreferences prefs, AppLinks links, BuildInfo buildInfo) {
         this.links = links;
+        this.buildInfo = buildInfo;
         setPrimarySection(Section.DRAWER);
 
         // The Scroller grows to fill the drawer so the footer is pinned to the bottom.
@@ -91,15 +95,21 @@ public class MainLayout extends AppLayout {
         return item;
     }
 
-    private HorizontalLayout buildDrawerFooter() {
+    private VerticalLayout buildDrawerFooter() {
         final Anchor vaadin = footerLink(links.vaadin(), getTranslation("footer.vaadin"), VaadinIcon.VAADIN_H.create());
         final Anchor github = footerLink(links.github(), getTranslation("footer.github"), githubIcon());
 
-        final HorizontalLayout footer = new HorizontalLayout(vaadin, github);
+        final HorizontalLayout iconRow = new HorizontalLayout(vaadin, github);
+        iconRow.setWidthFull();
+        iconRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        iconRow.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        final VerticalLayout footer = new VerticalLayout(iconRow, new VersionTag(buildInfo));
         footer.addClassName("drawer-footer");
+        footer.setPadding(false);
+        footer.setSpacing(false);
         footer.setWidthFull();
         footer.setAlignItems(FlexComponent.Alignment.CENTER);
-        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         return footer;
     }
 

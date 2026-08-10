@@ -3,9 +3,13 @@ ARG VAADIN_SERVER_LICENSE=""
 
 FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
 ARG VAADIN_SERVER_LICENSE
+# Commit SHA supplied by the caller (CI passes github.sha). The build context
+# excludes .git (see .dockerignore), so the SHA must come in as a build arg
+# rather than being derived from a repository inside the image.
+ARG GIT_SHA="unknown"
 WORKDIR /app
 COPY . .
-RUN mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${VAADIN_SERVER_LICENSE} clean package
+RUN mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${VAADIN_SERVER_LICENSE} -Dbuild.commit=${GIT_SHA} clean package
 
 
 FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine

@@ -20,3 +20,18 @@
 .drawer-footer-link:hover {
     color: var(--color-primary);
 }
+
+.drawer-footer-version {
+    font-size: var(--vaadin-font-size-xs, 0.75rem);
+    color: var(--color-text-subtle);
+}
+
+.drawer-footer-version-link {
+    color: var(--color-text-subtle);
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+
+.drawer-footer-version-link:hover {
+    color: var(--color-primary);
+}

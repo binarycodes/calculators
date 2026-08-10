@@ -82,7 +82,12 @@ task_run() {
 # watermark when no license is configured.
 task_package() {
     resolve_java_home
-    mvn clean package -Dvaadin.commercialWithBanner
+    # Stamp the built jar with the current commit so the app can show its
+    # deployed version. git reads the working-tree .git here; nothing is copied
+    # into any image (the Docker build gets the SHA via the GIT_SHA build arg).
+    local commit
+    commit=$(git rev-parse HEAD 2>/dev/null || echo unknown)
+    mvn clean package -Dvaadin.commercialWithBanner -Dbuild.commit="${commit}"
 }
 
 task_clean() {

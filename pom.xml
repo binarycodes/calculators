@@ -23,6 +23,8 @@
         <playwright.version>1.59.0</playwright.version>
         <jacoco.version>0.8.13</jacoco.version>
         <headless>true</headless>
+        <!-- Overridden by the build (run.sh / Docker ARG) with the real commit SHA. -->
+        <build.commit>unknown</build.commit>
     </properties>
 
     <parent>
@@ -107,6 +109,18 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                        <configuration>
+                            <additionalProperties>
+                                <commit>${build.commit}</commit>
+                            </additionalProperties>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>com.vaadin</groupId>

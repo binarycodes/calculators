@@ -65,6 +65,7 @@ jobs:
           APP_NAME: ${{ steps.extract_version.outputs.MAVEN_NAME }}
           APP_VERSION: ${{ steps.extract_version.outputs.MAVEN_VERSION }}
           VAADIN_SERVER_LICENSE: ${{ secrets.VAADIN_SERVER_LICENSE }}
+          GIT_SHA: ${{ inputs.sha }}
         with:
           targets: default
           push: true
