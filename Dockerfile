@@ -35,5 +35,8 @@ EXPOSE 8080
 ENV JAVA_TOOL_OPTIONS="-XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=75"
 ENTRYPOINT ["java","-jar","/app/app.jar"]
 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=5 \
-    CMD ["curl", "-fsS", "http://127.0.0.1:8088/actuator/health/readiness"]
+# No Actuator on the classpath, so probe the app's own root: a 200 from GET /
+# means the servlet container is up and the app is serving. Shell form so
+# ${PORT} (the port the app binds to, default 8080) expands at runtime.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 \
+    CMD curl -fsS -o /dev/null "http://127.0.0.1:${PORT:-8080}/" || exit 1
