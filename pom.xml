@@ -23,8 +23,6 @@
         <playwright.version>1.59.0</playwright.version>
         <jacoco.version>0.8.13</jacoco.version>
         <headless>true</headless>
-        <!-- Overridden by the build (run.sh / Docker ARG) with the real commit SHA. -->
-        <build.commit>unknown</build.commit>
     </properties>
 
     <parent>
@@ -106,6 +104,37 @@
     <build>
         <defaultGoal>spring-boot:run</defaultGoal>
         <plugins>
+            <!--
+                The deployed commit SHA is mandatory: every build must be traceable
+                to a commit. build.commit has no default, so a build that fails to
+                supply -Dbuild.commit=<sha> is rejected here at validate rather than
+                silently shipping an unidentifiable build. run.sh supplies it from
+                `git rev-parse HEAD`; the Docker build from the GIT_SHA arg; CI from
+                github.sha.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>require-build-commit</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireProperty>
+                                    <property>build.commit</property>
+                                    <message>build.commit is required: pass -Dbuild.commit=&lt;git sha&gt;. Build through ./run.sh (which sets it automatically) or, for Docker, supply the GIT_SHA build arg.</message>
+                                    <regex>[0-9a-fA-F]{7,40}</regex>
+                                    <regexMessage>build.commit must be a git commit SHA (7-40 hex chars).</regexMessage>
+                                </requireProperty>
+                            </rules>
+                            <failFast>true</failFast>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

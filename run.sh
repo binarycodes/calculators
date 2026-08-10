@@ -28,6 +28,20 @@ resolve_java_home() {
     echo "Using JAVA_HOME=${JAVA_HOME}"
 }
 
+# Every mvn build must carry the deployed commit SHA — the enforcer plugin fails
+# the build without a valid build.commit. Resolve it once from the working tree
+# and pass it to every mvn invocation. A non-repo checkout is a hard error by
+# design: an unidentifiable build should never be produced.
+run_mvn() {
+    local commit
+    if ! commit=$(git rev-parse HEAD 2>/dev/null); then
+        echo "Cannot resolve the git commit (not a git repository?)." >&2
+        echo "build.commit is mandatory; refusing to build." >&2
+        exit 1
+    fi
+    mvn "$@" -Dbuild.commit="${commit}"
+}
+
 # Bump styles.css mtime. styles.css is only @import statements; editing an
 # imported partial (colors.css, grid.css, ...) leaves styles.css unchanged, so
 # the browser serves a 304 and keeps the stale partial. Touching the entry file
@@ -48,7 +62,7 @@ clear_bundles() {
 
 task_compile() {
     resolve_java_home
-    mvn -o -q compile
+    run_mvn -o -q compile
     echo "Compiled. spring-boot-devtools will hot-restart a running app."
 }
 
@@ -58,7 +72,7 @@ task_bundle() {
     resolve_java_home
     clear_bundles
     touch_styles
-    mvn -o -q compile
+    run_mvn -o -q compile
     echo "Bundle cleared and recompiled. Reload the browser to pick up the new bundle."
 }
 
@@ -69,12 +83,12 @@ task_styles() {
 task_test() {
     resolve_java_home
     # JaCoCo enforces an 80% line-coverage gate on the */service packages.
-    mvn -o test
+    run_mvn -o test
 }
 
 task_run() {
     resolve_java_home
-    mvn -o spring-boot:run
+    run_mvn -o spring-boot:run
 }
 
 # Same as `run`, but named for the Claude Code preview pane, which launches the
@@ -90,12 +104,10 @@ task_preview() {
 # watermark when no license is configured.
 task_package() {
     resolve_java_home
-    # Stamp the built jar with the current commit so the app can show its
-    # deployed version. git reads the working-tree .git here; nothing is copied
-    # into any image (the Docker build gets the SHA via the GIT_SHA build arg).
-    local commit
-    commit=$(git rev-parse HEAD 2>/dev/null || echo unknown)
-    mvn clean package -Dvaadin.commercialWithBanner -Dbuild.commit="${commit}"
+    # run_mvn stamps the built jar with the current commit (git reads the
+    # working-tree .git here; nothing is copied into any image — the Docker build
+    # gets the SHA via the GIT_SHA build arg).
+    run_mvn clean package -Dvaadin.commercialWithBanner
 }
 
 task_clean() {

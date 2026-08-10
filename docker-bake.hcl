@@ -5,7 +5,7 @@ variable "APP_VERSION" { default = "0.0.0-SNAPSHOT" }
 
 variable "TAG_NAME" { default = "calculators" }
 variable "VAADIN_SERVER_LICENSE" { default = "" }
-variable "GIT_SHA" { default = "unknown" }
+variable "GIT_SHA" { default = "" }
 
 group "default" {
   targets = ["app"]

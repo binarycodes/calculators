@@ -5,8 +5,10 @@ FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
 ARG VAADIN_SERVER_LICENSE
 # Commit SHA supplied by the caller (CI passes github.sha). The build context
 # excludes .git (see .dockerignore), so the SHA must come in as a build arg
-# rather than being derived from a repository inside the image.
-ARG GIT_SHA="unknown"
+# rather than being derived from a repository inside the image. It is mandatory:
+# the build fails without it (also enforced by maven-enforcer at validate).
+ARG GIT_SHA
+RUN test -n "$GIT_SHA" || (echo "GIT_SHA build arg is required (the deployed commit SHA)" && false)
 WORKDIR /app
 COPY . .
 RUN mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${VAADIN_SERVER_LICENSE} -Dbuild.commit=${GIT_SHA} clean package
