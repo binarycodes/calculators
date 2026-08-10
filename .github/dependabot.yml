@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Workflow actions are pinned to commit SHAs; Dependabot rewrites the SHA and
+  # the trailing version comment together, so the tag can never be re-pointed
+  # under us. Grouped into one PR to keep patch-level churn to a single review.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns: ['*']
