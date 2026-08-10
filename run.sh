@@ -77,6 +77,14 @@ task_run() {
     mvn -o spring-boot:run
 }
 
+# Same as `run`, but named for the Claude Code preview pane, which launches the
+# app through this task (see .claude/launch.json) so the preview goes through
+# run.sh — pinned JDK 21 and the offline/bundle gotchas — like every other task,
+# instead of invoking mvn directly.
+task_preview() {
+    task_run
+}
+
 # Full production build. The production bundle build runs the Vaadin Charts
 # commercial-license check; -Dvaadin.commercialWithBanner lets it build with a
 # watermark when no license is configured.
@@ -107,6 +115,7 @@ Tasks:
   styles     Touch styles.css so the browser reloads @imported CSS partials
   test       Run the test suite (enforces the JaCoCo coverage gate)
   run        Start the app with spring-boot:run (dev mode)
+  preview    Alias of run, launched by the Claude Code preview pane
   package    Full production build (mvn clean package)
   clean      mvn clean + remove cached bundles
   help       Show this message
@@ -121,6 +130,7 @@ main() {
         styles)  task_styles ;;
         test)    task_test ;;
         run)     task_run ;;
+        preview) task_preview ;;
         package) task_package ;;
         clean)   task_clean ;;
         help|-h|--help) usage ;;
