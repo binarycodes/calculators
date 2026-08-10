@@ -20,7 +20,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.sha }}
 
@@ -29,7 +29,7 @@ jobs:
           echo "found sha ${{ inputs.sha }}"
 
       - name: set up jdk
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -42,25 +42,25 @@ jobs:
           echo "MAVEN_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
 
       - name: login to docker hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: set up qemu
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
 
       - name: set up docker buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver: docker-container
 
       - name: build and push
         id: bake
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         env:
           APP_NAME: ${{ steps.extract_version.outputs.MAVEN_NAME }}
           APP_VERSION: ${{ steps.extract_version.outputs.MAVEN_VERSION }}
@@ -76,7 +76,7 @@ jobs:
             *.attest=type=sbom
 
       - name: install cosign
-        uses: sigstore/cosign-installer@v4.0.0
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: sign published image(s) (keyless)
         run: |
