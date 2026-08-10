@@ -3,10 +3,8 @@ ARG VAADIN_SERVER_LICENSE=""
 
 FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
 ARG VAADIN_SERVER_LICENSE
-# Commit SHA supplied by the caller (CI passes github.sha). The build context
-# excludes .git (see .dockerignore), so the SHA must come in as a build arg
-# rather than being derived from a repository inside the image. It is mandatory:
-# the build fails without it (also enforced by maven-enforcer at validate).
+# .git is excluded from the build context (.dockerignore), so the deployed commit
+# can't be read here — the caller passes it in (CI uses github.sha).
 ARG GIT_SHA
 RUN test -n "$GIT_SHA" || (echo "GIT_SHA build arg is required (the deployed commit SHA)" && false)
 WORKDIR /app
@@ -35,8 +33,5 @@ EXPOSE 8080
 ENV JAVA_TOOL_OPTIONS="-XX:+ExitOnOutOfMemoryError -XX:MaxRAMPercentage=75"
 ENTRYPOINT ["java","-jar","/app/app.jar"]
 
-# No Actuator on the classpath, so probe the app's own root: a 200 from GET /
-# means the servlet container is up and the app is serving. Shell form so
-# ${PORT} (the port the app binds to, default 8080) expands at runtime.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 \
     CMD curl -fsS -o /dev/null "http://127.0.0.1:${PORT:-8080}/" || exit 1

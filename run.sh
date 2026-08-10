@@ -104,9 +104,6 @@ task_preview() {
 # watermark when no license is configured.
 task_package() {
     resolve_java_home
-    # run_mvn stamps the built jar with the current commit (git reads the
-    # working-tree .git here; nothing is copied into any image — the Docker build
-    # gets the SHA via the GIT_SHA build arg).
     run_mvn clean package -Dvaadin.commercialWithBanner
 }
 
