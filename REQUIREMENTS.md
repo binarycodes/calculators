@@ -63,6 +63,13 @@ version or currency, and numerically absurd values are rejected, and an invalid
 link falls back to the normal persisted/default load with an "Invalid share
 link" notice.
 
+Rejection covers the envelope *and* the `inputs` object: a structurally valid
+token whose fields are missing or the wrong type (an absent age, an unparseable
+date) takes the same "Invalid share link" path rather than surfacing an error.
+`base.common.SharedScenario.parse` is the single boundary where both failure
+modes collapse into an empty result, so nothing — including the session currency
+— is changed unless the whole token maps cleanly.
+
 ## Form validation messages
 
 Every calculator's inputs are grouped into **form-section cards** (`FormCard`).

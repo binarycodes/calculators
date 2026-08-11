@@ -16,8 +16,11 @@ import com.vaadin.flow.signals.Signal;
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.common.ScenarioCodec;
+import io.binarycodes.calculators.base.common.SharedScenario;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+
+import java.util.Optional;
 
 /**
  * Common scaffolding for every calculator screen: the title header (with the
@@ -188,18 +191,16 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         if (token == null) {
             return false;
         }
-        final ScenarioCodec.Decoded decoded;
-        try {
-            decoded = ScenarioCodec.decode(token);
-        } catch (final IllegalArgumentException invalid) {
+        final Optional<SharedScenario<I>> scenario = SharedScenario.parse(token, this.inputsStore);
+        if (scenario.isEmpty()) {
             Notification.show(getTranslation("share.invalid"), 3000, Notification.Position.MIDDLE);
             return false;
         }
         // Set currency first: it notifies listeners and repopulates the form from
         // store/defaults, but the explicit setInputs below runs after and wins.
-        this.preferences.setCurrency(decoded.currency());
+        this.preferences.setCurrency(scenario.get().currency());
         final SupportedCurrency currency = this.preferences.currency();
-        final I inputs = this.inputsStore.fromJsonNode(decoded.inputs());
+        final I inputs = scenario.get().inputs();
         this.inputsStore.save(currency, inputs);
         this.form.setInputs(inputs);
         getUI().ifPresent(ui -> ui.getPage().getHistory().replaceState(null, this.routeSegment));
