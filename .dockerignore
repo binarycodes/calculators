@@ -2,3 +2,13 @@
 # passed in explicitly via the GIT_SHA build arg, so the image never needs .git
 # (which would only bloat the context and bust the build cache on every commit).
 .git
+
+target/
+node_modules/
+src/main/bundles/
+.claude/
+.githooks/
+.github/
+docs/
+*.md
+.DS_Store
