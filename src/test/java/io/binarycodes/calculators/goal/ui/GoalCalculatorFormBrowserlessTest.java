@@ -7,6 +7,7 @@ import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
+import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.goal.domain.GoalInputs;
 import io.binarycodes.calculators.goal.domain.Investment;
@@ -50,25 +51,27 @@ class GoalCalculatorFormBrowserlessTest extends BrowserlessTest {
         // type and gives back a typed tester that also selects by visible label.
         final var horizonMode = test(find(RadioButtonGroup.class, form).single(), TimeHorizonMode.class);
 
-        horizonMode.selectItem("Years");
-        roundTrip();
-        assertEquals(1, find(IntegerField.class, form).withCaption("Years").all().size());
-        assertEquals(1, find(IntegerField.class, form).withCaption("Months").all().size());
-
-        horizonMode.selectItem("Ages");
-        roundTrip();
-        assertEquals(2, find(IntegerField.class, form)
-                        .withCaption("Current Age").all().size() +
-                        find(IntegerField.class, form)
-                                .withCaption("Goal Age").all().size(),
-                "AGES mode shows Current Age and Goal Age fields");
-
-        horizonMode.selectItem("Target Year");
+        horizonMode.selectItem(Translations.get("timeHorizon.years"));
         roundTrip();
         assertEquals(1, find(IntegerField.class, form)
-                .withCaption("Target Year").all().size());
+                .withCaption(Translations.get("field.years")).all().size());
+        assertEquals(1, find(IntegerField.class, form)
+                .withCaption(Translations.get("field.months")).all().size());
+
+        horizonMode.selectItem(Translations.get("timeHorizon.ages"));
+        roundTrip();
+        assertEquals(2, find(IntegerField.class, form)
+                        .withCaption(Translations.get("field.currentAge")).all().size() +
+                        find(IntegerField.class, form)
+                                .withCaption(Translations.get("field.goalAge")).all().size(),
+                "AGES mode shows Current Age and Goal Age fields");
+
+        horizonMode.selectItem(Translations.get("timeHorizon.targetYear"));
+        roundTrip();
+        assertEquals(1, find(IntegerField.class, form)
+                .withCaption(Translations.get("field.targetYear")).all().size());
         assertEquals(1, find(Select.class, form)
-                .withCaption("Target Month").all().size());
+                .withCaption(Translations.get("field.targetMonth")).all().size());
     }
 
     @Test
