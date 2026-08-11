@@ -6,6 +6,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -26,6 +27,7 @@ import java.math.BigDecimal;
  * the value-over-time line and the ±variation area-range band.
  */
 @Route("inflation")
+@AnonymousAllowed
 @Menu(title = "Inflation Projection", icon = "vaadin:trending-up", order = 3)
 public class InflationView extends BaseCalculatorView<InflationInputs, InflationCalculatorForm> {
 

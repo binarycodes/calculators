@@ -9,6 +9,7 @@ import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -34,6 +35,7 @@ import io.binarycodes.calculators.loan.service.LoanInputsStore;
  * @see LoanProjectionGrid
  */
 @Route("loan")
+@AnonymousAllowed
 @Menu(title = "Loan / EMI", icon = "vaadin:cash", order = 5)
 public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm> {
 

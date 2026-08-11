@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -31,6 +32,7 @@ import io.binarycodes.calculators.buyrent.service.BuyRentInputsStore;
  * @see BuyRentProjectionGrid
  */
 @Route("buyrent")
+@AnonymousAllowed
 @Menu(title = "Buy vs Rent", icon = "vaadin:home", order = 6)
 public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalculatorForm> {
 

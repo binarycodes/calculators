@@ -8,6 +8,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -31,6 +32,7 @@ import io.binarycodes.calculators.goal.service.GoalInputsStore;
  * @see GoalProjectionGrid
  */
 @Route("goal")
+@AnonymousAllowed
 @Menu(title = "Goal Planner", icon = "vaadin:bullseye", order = 2)
 public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm> {
 

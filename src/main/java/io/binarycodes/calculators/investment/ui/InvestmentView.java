@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
@@ -24,6 +25,7 @@ import io.binarycodes.calculators.investment.service.InvestmentInputsStore;
  * the four summary cards, the corpus build-up chart, and the projection grid.
  */
 @Route("investment")
+@AnonymousAllowed
 @Menu(title = "Investment", icon = "vaadin:coin-piles", order = 4)
 public class InvestmentView extends BaseCalculatorView<InvestmentInputs, InvestmentCalculatorForm> {
 

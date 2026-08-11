@@ -9,6 +9,7 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
@@ -41,6 +42,7 @@ import java.math.BigDecimal;
  * @see ProjectionGrid
  */
 @Route("retirement")
+@AnonymousAllowed
 @Menu(title = "Retirement Planner", icon = "vaadin:piggy-bank", order = 1)
 public class RetirementView extends BaseCalculatorView<RetirementInputs, RetirementCalculatorForm> {
 

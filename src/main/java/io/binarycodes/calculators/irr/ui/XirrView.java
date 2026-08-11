@@ -12,6 +12,7 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  * @see CashflowGrid
  */
 @Route("xirr")
+@AnonymousAllowed
 @Menu(title = "IRR / XIRR", icon = "vaadin:chart-line", order = 7)
 public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm> {
 

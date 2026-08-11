@@ -16,6 +16,7 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import io.binarycodes.calculators.base.config.AppLinks;
@@ -27,6 +28,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
  * SideNav populated automatically from {@code @Menu}-annotated views.
  */
 @Layout
+@AnonymousAllowed
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-number-field")
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-integer-field")
 @CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-custom-field")

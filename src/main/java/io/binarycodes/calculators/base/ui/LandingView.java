@@ -12,6 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import io.binarycodes.calculators.base.i18n.Translations;
@@ -23,6 +24,7 @@ import io.binarycodes.calculators.base.i18n.Translations;
  * file required.
  */
 @Route("")
+@AnonymousAllowed
 public class LandingView extends VerticalLayout implements HasDynamicTitle {
 
     public LandingView() {
