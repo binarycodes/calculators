@@ -37,6 +37,10 @@ public class LoanInputsStore implements InputsStore<LoanInputs> {
             return;
         }
         WebStorage.getItem(STORAGE_KEY, raw -> {
+            // The browser is the source of truth. Anything cached from an earlier
+            // request must not outlive it, or a replayed session cookie would hand
+            // back inputs the client no longer holds.
+            this.cache.clear();
             if (raw != null && !raw.isBlank()) {
                 try {
                     final JsonNode root = this.objectMapper.readTree(raw);

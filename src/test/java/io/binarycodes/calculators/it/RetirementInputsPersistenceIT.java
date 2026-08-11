@@ -7,6 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.vaadin.addons.dramafinder.element.NumberFieldElement;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 /**
  * Verifies that the {@code RetirementInputsStore} persists edits to the
  * browser's local storage and that {@code RetirementView.onAttach} restores
@@ -76,5 +78,34 @@ class RetirementInputsPersistenceIT extends SpringPlaywrightIT {
         page.waitForFunction(WAIT_FOR_VAADIN_SCRIPT);
 
         NumberFieldElement.getByLabel(page, "Inflation Rate").assertValue("6.25");
+    }
+
+    @Test
+    @DisplayName("Clearing browser storage doesn't resurrect inputs from the session")
+    void clearedBrowserStorage_doesNotResurrectFromSession() {
+        final NumberFieldElement inflation = NumberFieldElement.getByLabel(page, "Inflation Rate");
+        inflation.setValue("9.75");
+        inflation.assertValue("9.75");
+
+        page.waitForFunction(
+                "() => {"
+                        + "const raw = localStorage.getItem('rc_inputs');"
+                        + "if (!raw) return false;"
+                        + "try {"
+                        + "  const all = JSON.parse(raw);"
+                        + "  return Object.values(all).some(v => v && String(v.inflation) === '9.75');"
+                        + "} catch (e) { return false; }"
+                        + "}");
+
+        // Keep the session cookie but drop the client's copy — this is what an
+        // attacker replaying a stolen JSESSIONID looks like. The browser is the
+        // source of truth, so the server session must not hand the value back.
+        page.evaluate("() => localStorage.clear()");
+        page.reload();
+        page.waitForFunction(WAIT_FOR_VAADIN_SCRIPT);
+
+        final String restored = NumberFieldElement.getByLabel(page, "Inflation Rate").getValue();
+        assertNotEquals("9.75", restored,
+                "session must not resurrect inputs the browser no longer holds");
     }
 }
