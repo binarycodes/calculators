@@ -45,14 +45,17 @@ class GoalCalculatorFormBrowserlessTest extends BrowserlessTest {
         UI.getCurrent().add(form);
         roundTrip();
 
-        final var group = find(RadioButtonGroup.class, form).single();
+        // A class literal can't carry type arguments, so find() hands back a raw
+        // RadioButtonGroup; this test() overload takes the raw group plus the value
+        // type and gives back a typed tester that also selects by visible label.
+        final var horizonMode = test(find(RadioButtonGroup.class, form).single(), TimeHorizonMode.class);
 
-        group.setValue(TimeHorizonMode.YEARS);
+        horizonMode.selectItem("Years");
         roundTrip();
         assertEquals(1, find(IntegerField.class, form).withCaption("Years").all().size());
         assertEquals(1, find(IntegerField.class, form).withCaption("Months").all().size());
 
-        group.setValue(TimeHorizonMode.AGES);
+        horizonMode.selectItem("Ages");
         roundTrip();
         assertEquals(2, find(IntegerField.class, form)
                         .withCaption("Current Age").all().size() +
@@ -60,7 +63,7 @@ class GoalCalculatorFormBrowserlessTest extends BrowserlessTest {
                                 .withCaption("Goal Age").all().size(),
                 "AGES mode shows Current Age and Goal Age fields");
 
-        group.setValue(TimeHorizonMode.TARGET_YEAR);
+        horizonMode.selectItem("Target Year");
         roundTrip();
         assertEquals(1, find(IntegerField.class, form)
                 .withCaption("Target Year").all().size());
