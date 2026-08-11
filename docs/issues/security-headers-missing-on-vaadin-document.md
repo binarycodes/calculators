@@ -2,63 +2,66 @@
 
 ## Summary
 
-Spring Security is now configured (`SecurityConfig`, no authentication), and its
+Spring Security is configured (`SecurityConfig`, no authentication), and its
 default response headers apply to ordinary static requests — but **not** to the
-Vaadin-served HTML document. Measured against the running app:
+Vaadin-served HTML document:
 
 ```
-GET /            → X-Frame-Options: SAMEORIGIN
+GET /            → X-Frame-Options: DENY          (set by Vaadin, not Spring Security)
 GET /colors.css  → X-Frame-Options: DENY, X-Content-Type-Options: nosniff, X-XSS-Protection: 0
 ```
 
-The stylesheet gets Spring Security's defaults. The document does not: it still
-carries Vaadin's own `SAMEORIGIN` and has no `nosniff`. That inverts the useful
-case — framing protection matters on the HTML document and is irrelevant on a
-stylesheet.
+Framing is now handled: `vaadin.frameOptions=DENY` in `application.properties`
+sets it on the application page. What remains is that **`nosniff` is still absent
+from the document**, and more generally that any future header (a
+`Referrer-Policy`, a CSP directive) cannot be added through Spring Security's
+`headers(...)` configuration, because that configuration demonstrably does not
+run on this path.
 
-The intended policy is `DENY` (decided: the calculators should not be framable by
-third parties). Today the document is framable by any same-origin page and
-`SAMEORIGIN` is what third-party browsers actually enforce.
+The cause is now known, and it is not what it first looked like. Vaadin's docs
+are explicit that Vaadin *defers* to an existing header: "Vaadin only sets the
+header if the response doesn't already contain an `X-Frame-Options` header. A
+header set by other means — for example, by Spring Security or a servlet filter —
+isn't overwritten." Since the document previously carried Vaadin's `SAMEORIGIN`
+rather than Spring Security's `DENY`, Spring Security's header writer never ran
+on that request at all. Vaadin was not overwriting anything.
 
-The underlying question is *why* the header writer is bypassed on that path —
-most likely `VaadinSecurityConfigurer` excluding Vaadin's own request handling
-from parts of the chain, or Vaadin's bootstrap handler overwriting the header
-after Spring Security wrote it. That needs establishing before choosing a fix;
-guessing between those two leads to different solutions.
+So the open question is narrower: what excludes the Vaadin request path from
+Spring Security's `HeaderWriterFilter` — most likely `VaadinSecurityConfigurer`
+treating framework requests as ignored rather than permitted — and whether that
+is intended to be configurable.
 
 ## Where
 
+- `src/main/resources/application.properties` — `vaadin.frameOptions=DENY`
+  handles framing; nothing sets `nosniff` on the document.
 - `src/main/java/io/binarycodes/calculators/base/config/SecurityConfig.java` —
   applies `VaadinSecurityConfigurer.vaadin()` with no explicit `headers(...)`
-  configuration, so Spring Security's defaults are in play unmodified.
+  configuration.
 - Reproduce with `curl -sS -D - -o /dev/null http://localhost:8080/` and the same
-  against `/colors.css`.
+  against `/colors.css`. Always check the document, not a static resource — the
+  two paths demonstrably behave differently.
 
 ## Why postponed
 
-Nothing exploitable follows from it here. There is no authentication, so there
-are no privileged actions for a clickjacked frame to trigger — the worst outcome
-is someone embedding a public calculator under their own branding, which is a
-presentation concern rather than a security one. `nosniff` protects against MIME
-confusion on attacker-controlled content, and the app serves only its own
-correctly-typed files.
+The remaining gap — `nosniff` on the document — protects against MIME confusion
+on attacker-controlled content, and the app serves only its own correctly-typed
+files. Nothing exploitable follows from its absence here.
 
-It was also deliberately left out of the commit that introduced Spring Security,
-to keep that change to "the controls are now available, nothing else changes."
-Fixing the header at the same time would have mixed a behavioural change into a
-plumbing one.
+The framing half was worth doing immediately because it turned out to be a
+one-line property. The rest is not: it requires understanding Spring Security's
+filter chain as `VaadinSecurityConfigurer` assembles it, which is a real
+investigation rather than a config tweak.
 
 ## When to revisit
 
-- Alongside the next piece of security-header work, since the mechanism found
-  here (whatever is bypassing the header writer) also determines how
-  `Referrer-Policy` and any future CSP directives would have to be applied.
-- Sooner if the app ever gains authentication or any state-changing action, at
-  which point clickjacking stops being theoretical and `DENY` becomes load-bearing.
-- The fix is expected to be small once the cause is known — either a `headers(...)`
-  block in `SecurityConfig` or letting Vaadin's own configuration set the value —
-  but confirm with `curl` on the document, not on a static resource, since those
-  two paths demonstrably behave differently.
+- Whenever a *second* header becomes wanted on the document — `Referrer-Policy`
+  most likely. One missing header is not worth the investigation; two would be,
+  and at that point the answer benefits everything added afterwards.
+- Sooner if the app gains authentication or any state-changing action.
+- Note that `vaadin.frameOptions` solved framing without touching Spring
+  Security at all. Check whether Vaadin exposes similar properties for other
+  headers before assuming the filter chain has to be the answer.
 
 ## Not part of this issue
 
