@@ -49,6 +49,16 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     /** A {@code ?s=} share token captured on entry, consumed once inputs have loaded. */
     private String pendingShareToken;
 
+    /**
+     * Gate on everything that reads or writes the store, until the async
+     * localStorage read in {@link #onAttach} has landed. {@link UserPreferences}
+     * notifies its listeners as soon as <em>prefs</em> finish loading, which on a
+     * fresh session happens while the inputs store is still empty — populating
+     * from it then would fall back to defaults and persist them over the
+     * visitor's saved values.
+     */
+    private boolean inputsLoaded;
+
     protected BaseCalculatorView(UserPreferences preferences,
                                  InputsStore<I> inputsStore,
                                  CalculatorDefaults<I> defaults,
@@ -104,6 +114,7 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         // inputs before populating the form.
         this.preferences.loadFromBrowser(() ->
                 this.inputsStore.load(unused -> {
+                    this.inputsLoaded = true;
                     if (!applyShareTokenIfPresent()) {
                         populateFromPersistedOrDefault(this.preferences.currency());
                     }
@@ -148,11 +159,17 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     }
 
     private void onInputChanged() {
+        if (!this.inputsLoaded) {
+            return;
+        }
         this.inputsStore.save(this.preferences.currency(), this.form.getInputs());
         recalculate();
     }
 
     private void onPreferencesChanged() {
+        if (!this.inputsLoaded) {
+            return;
+        }
         populateFromPersistedOrDefault(this.preferences.currency());
         recalculate();
     }

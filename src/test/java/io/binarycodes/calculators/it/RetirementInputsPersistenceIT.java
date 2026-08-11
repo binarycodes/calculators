@@ -50,4 +50,31 @@ class RetirementInputsPersistenceIT extends SpringPlaywrightIT {
 
         NumberFieldElement.getByLabel(page, "Inflation Rate").assertValue("7.5");
     }
+
+    @Test
+    @DisplayName("Edited inflation rate survives a brand-new session")
+    void editedInflationRate_survivesNewSession() {
+        final NumberFieldElement inflation = NumberFieldElement.getByLabel(page, "Inflation Rate");
+        inflation.setValue("6.25");
+        inflation.assertValue("6.25");
+
+        page.waitForFunction(
+                "() => {"
+                        + "const raw = localStorage.getItem('rc_inputs');"
+                        + "if (!raw) return false;"
+                        + "try {"
+                        + "  const all = JSON.parse(raw);"
+                        + "  return Object.values(all).some(v => v && String(v.inflation) === '6.25');"
+                        + "} catch (e) { return false; }"
+                        + "}");
+
+        // Dropping the session cookie is what separates this from the reload case
+        // above: the next load builds a session whose in-memory store is empty, so
+        // the value can only survive if localStorage is consulted before defaults.
+        page.context().clearCookies();
+        page.reload();
+        page.waitForFunction(WAIT_FOR_VAADIN_SCRIPT);
+
+        NumberFieldElement.getByLabel(page, "Inflation Rate").assertValue("6.25");
+    }
 }
