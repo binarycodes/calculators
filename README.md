@@ -120,6 +120,12 @@ calc.example.com {
 }
 ```
 
+Behind a TLS-terminating proxy, also set `FORWARD_HEADERS_STRATEGY=native` on the
+container. The app then trusts the proxy's `X-Forwarded-*` headers and marks the
+session cookie `Secure`, which it cannot do on its own because it only ever sees
+plain HTTP from the proxy. Leave it unset when the app is reachable directly —
+those headers are client-supplied and spoofable without a proxy in front.
+
 ---
 
 ## Develop locally
