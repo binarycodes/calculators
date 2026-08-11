@@ -109,6 +109,28 @@
         <defaultGoal>spring-boot:run</defaultGoal>
         <plugins>
             <!--
+                Warnings fail the build. The exclusions are the categories that fire
+                on correct code here, so leaving them on would train everyone to
+                ignore the output:
+                  deprecation - @CssImport(themeFor) is deprecated but is the only
+                                way to reach Highcharts internals in shadow DOM
+                  serial      - Vaadin components are Serializable without serialVersionUID
+                  this-escape - every view calls add()/setWidthFull() from its constructor
+                  path        - non-existent classpath entries, environmental not code
+                  processing  - Lombok is the only processor, so it never claims the
+                                Spring and Vaadin annotations read at runtime
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-deprecation,-serial,-this-escape,-path,-processing</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <!--
                 The deployed commit SHA is mandatory: every build must be traceable
                 to a commit. build.commit has no default, so a build that fails to
                 supply -Dbuild.commit=<sha> is rejected here at validate rather than
