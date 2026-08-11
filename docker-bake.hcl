@@ -4,7 +4,6 @@ variable "APP_NAME" { default = "calculators" }
 variable "APP_VERSION" { default = "0.0.0-SNAPSHOT" }
 
 variable "TAG_NAME" { default = "calculators" }
-variable "VAADIN_SERVER_LICENSE" { default = "" }
 variable "GIT_SHA" { default = "" }
 
 group "default" {
@@ -16,11 +15,12 @@ target "app" {
   dockerfile = "Dockerfile"
 
   args = {
-    APP_NAME              = APP_NAME
-    APP_VERSION           = APP_VERSION
-    VAADIN_SERVER_LICENSE = VAADIN_SERVER_LICENSE
-    GIT_SHA               = GIT_SHA
+    APP_NAME    = APP_NAME
+    APP_VERSION = APP_VERSION
+    GIT_SHA     = GIT_SHA
   }
+
+  secret = ["id=vaadin_license,env=VAADIN_SERVER_LICENSE"]
 
   tags = [
     "${REGISTRY}/${NAMESPACE}/${TAG_NAME}:${APP_VERSION}",

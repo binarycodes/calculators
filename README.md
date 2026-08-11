@@ -172,13 +172,16 @@ Build a container — the repo ships a multi-stage `Dockerfile` and a
 `docker-bake.hcl` for multi-arch builds:
 
 ```bash
-# single-arch, local
+# single-arch, local — offline-key file from vaadin.com/pro/licenses
 docker build -t calculators:latest \
   --build-arg APP_NAME=calculators \
-  --build-arg APP_VERSION=1.0.0-SNAPSHOT .
+  --build-arg APP_VERSION=1.0.0-SNAPSHOT \
+  --build-arg GIT_SHA="$(git rev-parse HEAD)" \
+  --secret id=vaadin_license,src=./offline-key.txt .
 
 # multi-arch (amd64 + arm64) via Buildx Bake
-docker buildx bake
+VAADIN_SERVER_LICENSE="$(cat ./offline-key.txt)" \
+GIT_SHA="$(git rev-parse HEAD)" docker buildx bake
 ```
 
 > **Vaadin license:** this app uses **commercial Vaadin components**, so building
@@ -186,9 +189,13 @@ docker buildx bake
 >
 > - **A valid [Vaadin subscription](https://vaadin.com/pricing)** (no banner).
 >   On a local machine the license is validated through your `vaadin.com` login
->   (stored at `~/.vaadin/proKey`). For a CI / Docker build, pass it as the
->   `VAADIN_SERVER_LICENSE` build arg (wired through to `-Dvaadin.offlineKey`) or
->   mount your `proKey` as a build secret.
+>   (stored at `~/.vaadin/proKey`). A CI / Docker build has no browser login, so
+>   it needs an **offline key** instead — download one from
+>   [vaadin.com/pro/licenses](https://vaadin.com/pro/licenses) and pass it as the
+>   `vaadin_license` **build secret**, which the `Dockerfile` wires through to
+>   `-Dvaadin.offlineKey`. Bake reads that secret from the
+>   `VAADIN_SERVER_LICENSE` environment variable; CI supplies it from the GitHub
+>   secret of the same name.
 > - **A trial build with the opt-in flag `-Dvaadin.commercialWithBanner`.** A
 >   production build does *not* enable commercial components without a license
 >   unless you opt in with this flag, which builds them in but shows a persistent

@@ -1,15 +1,16 @@
 ARG JAVA_VERSION="21"
-ARG VAADIN_SERVER_LICENSE=""
 
 FROM maven:3.9-eclipse-temurin-${JAVA_VERSION} AS build
-ARG VAADIN_SERVER_LICENSE
 # .git is excluded from the build context (.dockerignore), so the deployed commit
 # can't be read here — the caller passes it in (CI uses github.sha).
 ARG GIT_SHA
 RUN test -n "$GIT_SHA" || (echo "GIT_SHA build arg is required (the deployed commit SHA)" && false)
 WORKDIR /app
 COPY . .
-RUN mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${VAADIN_SERVER_LICENSE} -Dbuild.commit=${GIT_SHA} clean package
+RUN --mount=type=secret,id=vaadin_license,required=true \
+    mvn --batch-mode --no-transfer-progress \
+        -Dvaadin.offlineKey="$(cat /run/secrets/vaadin_license)" \
+        -Dbuild.commit=${GIT_SHA} clean package
 
 
 FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine

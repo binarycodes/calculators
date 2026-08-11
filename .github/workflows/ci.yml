@@ -30,7 +30,9 @@ jobs:
           cache: maven
 
       - name: maven verify
-        run: mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey=${{ secrets.VAADIN_SERVER_LICENSE }} -Dbuild.commit=${{ github.sha }} clean verify
+        env:
+          VAADIN_SERVER_LICENSE: ${{ secrets.VAADIN_SERVER_LICENSE }}
+        run: mvn --batch-mode --no-transfer-progress -Dvaadin.offlineKey="$VAADIN_SERVER_LICENSE" -Dbuild.commit=${{ github.sha }} clean verify
 
   docker:
     name: build and publish docker image
