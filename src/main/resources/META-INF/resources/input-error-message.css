@@ -1,0 +1,16 @@
+/*
+ * Validation-message tweaks for every input that exposes these parts, so a new
+ * field type is covered on arrival rather than by remembering to register it.
+ */
+
+/* Hide the warning icon that Lumo prepends to the error message — the red
+ * required indicator (*) already signals the error state visually. */
+*::part(error-message)::before {
+    display: none;
+}
+
+/* Turn the required indicator (*) the same red as the error message text when
+ * the field is invalid. Vaadin 25.2 field-base omits this override. */
+[invalid]::part(required-indicator) {
+    color: var(--vaadin-input-field-error-color, var(--vaadin-text-color));
+}

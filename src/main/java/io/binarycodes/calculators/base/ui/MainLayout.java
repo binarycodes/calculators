@@ -4,7 +4,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -29,10 +28,6 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
  */
 @Layout
 @AnonymousAllowed
-@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-number-field")
-@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-integer-field")
-@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-custom-field")
-@CssImport(value = "./shadow/input-error-message.css", themeFor = "vaadin-date-picker")
 public class MainLayout extends AppLayout {
 
     private final AppLinks links;

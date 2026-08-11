@@ -42,7 +42,6 @@ Project-wide rules. Once a pattern is established here, follow it without prompt
 - `binder.writeBeanAsDraft(target)` for possibly-invalid reads; pair with `isValid()` / `validate()`.
 - Use semantic components: `RadioButtonGroup`, `Badge`, `Card` with the `status` attribute.
 - Composite widgets extend `CustomField<T>` (single value) or a `Card` subclass.
-- A new input component type that can show a validation message must be registered with `frontend/shadow/input-error-message.css` via `@CssImport(themeFor=…)` in `MainLayout`, else its error shows a stray Lumo icon the other fields don't.
 
 ## 6. CSS
 
