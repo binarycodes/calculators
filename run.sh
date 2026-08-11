@@ -99,6 +99,14 @@ task_preview() {
     task_run
 }
 
+# Unit tests plus the Playwright integration tests. Needs the same
+# commercial-license flag as `package`, because the ITs run against a production
+# bundle build.
+task_verify() {
+    resolve_java_home
+    run_mvn clean verify -Dvaadin.commercialWithBanner
+}
+
 # Full production build. The production bundle build runs the Vaadin Charts
 # commercial-license check; -Dvaadin.commercialWithBanner lets it build with a
 # watermark when no license is configured.
@@ -122,7 +130,8 @@ Tasks:
   bundle     Clear cached frontend bundles + touch styles.css + recompile
              (use after changing a @CssImport themeFor / @JsModule)
   styles     Touch styles.css so the browser reloads @imported CSS partials
-  test       Run the test suite (enforces the JaCoCo coverage gate)
+  test       Run the unit tests (enforces the JaCoCo coverage gate)
+  verify     Unit tests + Playwright integration tests (mvn clean verify)
   run        Start the app with spring-boot:run (dev mode)
   preview    Alias of run, launched by the Claude Code preview pane
   package    Full production build (mvn clean package)
@@ -138,6 +147,7 @@ main() {
         bundle)  task_bundle ;;
         styles)  task_styles ;;
         test)    task_test ;;
+        verify)  task_verify ;;
         run)     task_run ;;
         preview) task_preview ;;
         package) task_package ;;
