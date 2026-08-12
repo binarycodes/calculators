@@ -298,10 +298,18 @@ public class BuyRentCalculatorForm extends VerticalLayout implements CalculatorF
                     if (value == null || value < 1 || value > 50) {
                         return com.vaadin.flow.data.binder.ValidationResult.error(Translations.get("validation.between", 1, 50));
                     }
+                    final Integer loanTerm = this.loanTermYears.getValue();
+                    if (loanTerm != null && value < loanTerm) {
+                        return com.vaadin.flow.data.binder.ValidationResult.error(
+                                Translations.get("buyrent.validation.horizonBelowLoanTerm"));
+                    }
                     return com.vaadin.flow.data.binder.ValidationResult.ok();
                 })
                 .bind(BuyRentInputs::getAnalysisYears, BuyRentInputs::setAnalysisYears)
                 .valueSignal();
+        // Re-check the horizon-vs-loan-term rule when the loan term changes, so
+        // shortening the loan clears a stale error and lengthening it flags one.
+        this.loanTermYears.addValueChangeListener(event -> this.binder.validate());
 
         this.propertyCapitalGainsTaxSignal = this.binder.forField(this.propertyCapitalGainsTaxPct)
                 .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 60), 0d, 60d))

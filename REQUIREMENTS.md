@@ -750,7 +750,7 @@ snapshotted at each year boundary.
 | Annual Rent Increase | Renting | 0–20 % | Step-up applied once per year (rent is flat within a year). |
 | Investment Return | Analysis | 0–30 %, Required | Annual return on the rent-path portfolio. |
 | Inflation Rate | Analysis | 0–20 % | Deflates the horizon net worth (both buy and rent) to today's money, shown as a second line under the two Net Worth cards. |
-| Analysis Horizon | Analysis | 1–50 yrs, Required | How many years to project. |
+| Analysis Horizon | Analysis | 1–50 yrs, Required | How many years to project. Must be ≥ the loan term (a horizon shorter than the mortgage is flagged invalid). |
 | Property Capital Gains Tax | Analysis | 0–60 % | Tax rate on the profit when the home is sold (sale proceeds − cost basis). |
 | Investment Gains Tax | Analysis | 0–60 % | Tax rate on the investment portfolio profit at exit (portfolio − net contributions). |
 
