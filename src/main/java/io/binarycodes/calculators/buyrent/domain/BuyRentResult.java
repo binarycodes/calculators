@@ -15,6 +15,7 @@ import java.util.List;
  * @param rentPortfolioAtHorizon        rent-path net worth at horizon, pre-tax
  * @param rentPortfolioAtHorizonAfterTax rent-path net worth after investment capital-gains tax
  * @param breakEvenYear                 first year where after-tax equity ≥ after-tax portfolio; −1 if none
+ * @param cashFlowCrossoverYear         first year rent ≥ monthly buy cost (owning is cheaper to hold); −1 if none
  * @param rows                          year-by-year projection
  */
 public record BuyRentResult(
@@ -27,6 +28,7 @@ public record BuyRentResult(
         BigDecimal rentPortfolioAtHorizon,
         BigDecimal rentPortfolioAtHorizonAfterTax,
         int breakEvenYear,
+        int cashFlowCrossoverYear,
         List<BuyRentYear> rows
 ) {
 }

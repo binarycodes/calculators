@@ -19,3 +19,10 @@
     color: var(--color-success-text);
     font-weight: 600;
 }
+
+/* Highlight the cash-flow crossover row — owning becomes cheaper to hold. */
+.buyrent-view::part(cash-flow-crossover) {
+    background-color: var(--color-primary-bg);
+    color: var(--color-primary);
+    font-weight: 600;
+}

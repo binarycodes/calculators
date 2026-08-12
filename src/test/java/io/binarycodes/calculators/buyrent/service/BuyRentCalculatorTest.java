@@ -186,9 +186,10 @@ class BuyRentCalculatorTest {
     }
 
     @Test
-    void rent_portfolio_shrinks_when_rent_far_exceeds_buy_costs() {
-        // Monthly rent >> buy costs creates a persistent negative surplus (withdrawal).
-        // With a low investment return the portfolio cannot outrun the withdrawals.
+    void rent_portfolio_does_not_shrink_when_rent_exceeds_buy_costs() {
+        // When rent exceeds the buy cost the renter has nothing left to invest,
+        // so contributions stop — but there is no drawdown. Even with a barely
+        // positive return the seeded corpus can only grow, never shrink.
         final BuyRentInputs inputs = base();
         inputs.setMortgageRatePct(new BigDecimal("1")); // low rate → low EMI
         inputs.setLoanTermYears(30);
@@ -201,8 +202,8 @@ class BuyRentCalculatorTest {
         // Initial investment = 5M × 20% down + 5M × 7% buying costs = 1.35M.
         final BigDecimal initialInvestment = new BigDecimal("1350000");
         final BuyRentYear year1 = BuyRentCalculator.calculate(inputs).rows().get(0);
-        assertTrue(year1.rentPortfolio().compareTo(initialInvestment) < 0,
-                "portfolio must shrink when rent far exceeds buy costs each month");
+        assertTrue(year1.rentPortfolio().compareTo(initialInvestment) >= 0,
+                "portfolio must not be drawn down when rent exceeds buy costs — contributions stop, corpus still compounds");
     }
 
     // -------------------------------------------------------------------------
@@ -389,6 +390,54 @@ class BuyRentCalculatorTest {
     // -------------------------------------------------------------------------
     // Result summary fields
     // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // Cash-flow crossover (owning becomes cheaper to hold than renting)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void cash_flow_crossover_is_first_year_rent_exceeds_buy_cost() {
+        // A 5-year loan inside a 20-year horizon: while the loan runs the EMI
+        // dwarfs the rent, but the month the loan clears the buy cost collapses
+        // to just tax + maintenance, well below the risen rent. So owning first
+        // becomes cheaper to hold in year 6 (the first year with no EMI).
+        final BuyRentInputs inputs = base();
+        inputs.setLoanTermYears(5);
+        inputs.setAnalysisYears(20);
+        assertEquals(6, BuyRentCalculator.calculate(inputs).cashFlowCrossoverYear());
+    }
+
+    @Test
+    void no_cash_flow_crossover_returns_minus_one() {
+        // Buy cost (EMI + tax + maintenance) stays well above a low rent for the
+        // whole horizon (loan never clears), so owning never wins on cash flow.
+        final BuyRentInputs inputs = base();
+        inputs.setMonthlyRent(new BigDecimal("5000"));
+        inputs.setLoanTermYears(20);
+        inputs.setAnalysisYears(10);
+        assertEquals(-1, BuyRentCalculator.calculate(inputs).cashFlowCrossoverYear());
+    }
+
+    @Test
+    void contributions_stop_but_corpus_compounds_after_crossover() {
+        // After the crossover the renter adds nothing, so the pre-tax portfolio
+        // simply compounds at the investment return (10% → a 1.10 annual factor).
+        // base() has zero CGT, so the pre-tax portfolio is the clean corpus.
+        final BuyRentInputs inputs = base();
+        inputs.setLoanTermYears(5);
+        inputs.setAnalysisYears(20);
+        final BuyRentResult result = BuyRentCalculator.calculate(inputs);
+
+        final int crossover = result.cashFlowCrossoverYear();
+        assertTrue(crossover > 0 && crossover < 18, "need post-crossover years to inspect");
+
+        // Two years clear of the crossover: growth is purely the return, no new money.
+        final BigDecimal earlier = result.rows().get(crossover + 1).rentPortfolio();
+        final BigDecimal later = result.rows().get(crossover + 2).rentPortfolio();
+        final BigDecimal ratio = later.divide(earlier, java.math.MathContext.DECIMAL64);
+        assertTrue(ratio.subtract(new BigDecimal("1.10")).abs().compareTo(new BigDecimal("0.001")) < 0,
+                "corpus should grow by exactly the investment return once contributions stop; ratio=" + ratio);
+    }
 
     @Test
     void result_horizon_fields_match_last_row() {

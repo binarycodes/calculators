@@ -770,27 +770,39 @@ snapshotted at each year boundary.
 ### Rent path
 - The down payment + buying costs (capital not spent on the purchase) are
   invested immediately at the investment return rate.
-- Each month the **surplus** (buy monthly cost − rent this month) is added to
-  the portfolio; if rent exceeds buy costs the deficit is withdrawn.
+- Each month the **surplus** = max(0, buy monthly cost − rent this month) is
+  added to the portfolio. Once rent overtakes the buy cost the renter has
+  nothing left to invest, so contributions stop — but there is **no drawdown**;
+  the existing corpus keeps compounding. Covering the higher rent from income is
+  an affordability question, deliberately outside the buy-vs-rent comparison.
 - Rent is flat within each year and steps up once per completed year at the
   rent-increase rate (e.g. 5 % ⇒ year 2's monthly rent = year 1 × 1.05).
 - Portfolio net worth (pre-tax) at year Y = investment portfolio balance.
 - Investment capital-gains tax on exit = max(0, portfolio − net contributions) × investment CGT rate,
-  where net contributions = initial investment + cumulative monthly surpluses (positive or negative).
+  where net contributions = initial investment + cumulative monthly surpluses (never negative).
 - Net worth after tax = portfolio − investment capital-gains tax.
 
+### Cash-flow crossover
+The first year the monthly rent ≥ the monthly buy cost (EMI + property tax +
+maintenance) — i.e. owning becomes cheaper to *hold* than renting. This usually
+lands around loan payoff (when the EMI drops away) and is the meaningful,
+near-term signal. Reported as "Not in horizon" if it never happens.
+
 ### Break-even
-The first year where after-tax buy equity ≥ after-tax rent portfolio. Reported as "Not in
-horizon" if buy never catches up within the analysis period.
+The first year where after-tax buy equity ≥ after-tax rent portfolio — the
+*net-worth* crossover. Can sit decades out and be irrelevant to a real horizon,
+so it is shown alongside the cash-flow crossover rather than as the headline.
+Reported as "Not in horizon" if buy never catches up within the analysis period.
 
 ## 3. Outputs
 
-### Summary row (5 cards)
+### Summary row (6 cards)
 | Card | Value |
 | --- | --- |
 | Monthly Cost: Buy | EMI + first-month property tax + maintenance |
 | Monthly Cost: Rent | First month's rent |
-| Break-Even | First year buy is ahead, or "Not in horizon" |
+| Cheaper to Own From | First year owning is cheaper to hold (cash-flow crossover), or "Not in horizon" |
+| Break-Even | First year buy is ahead on net worth, or "Not in horizon" |
 | Net Worth: Buy | After-tax equity at end of horizon |
 | Net Worth: Rent | After-tax portfolio at end of horizon |
 
@@ -810,8 +822,10 @@ the analysis horizon. Where they cross is the break-even year.
 | Rent Portfolio | Accumulated investment |
 | Difference (Buy − Rent) | Positive = buy ahead |
 
-The break-even row is highlighted with a success background, explained by the
-grid's row-colour legend (the info icon beside the column-chooser cog).
+Two rows are highlighted, explained by the grid's row-colour legend (the info
+icon beside the column-chooser cog): the cash-flow crossover row (primary/blue
+tint) and the net-worth break-even row (success/green tint). If both fall on the
+same year the row carries both parts.
 
 ## 4. Persistence & sharing
 | Key | Content |

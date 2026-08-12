@@ -9,13 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * The buy-vs-rent grid tints the break-even row, so its header controls must
- * surface a one-entry row-colour legend explaining that tint.
+ * The buy-vs-rent grid tints two rows — the cash-flow crossover and the
+ * net-worth break-even — so its header controls must surface a two-entry
+ * row-colour legend explaining both tints.
  */
 class BuyRentProjectionGridLegendTest {
 
     @Test
-    void controls_expose_a_break_even_row_legend() {
+    void controls_expose_both_row_legends() {
         final Component controls = new BuyRentProjectionGrid(new UserPreferences()).createControls();
         final Popover popover = controls.getChildren()
                 .filter(Popover.class::isInstance)
@@ -24,6 +25,6 @@ class BuyRentProjectionGridLegendTest {
                 .orElse(null);
         assertNotNull(popover, "buy-vs-rent grid must show a row-colour legend");
         final long legendRows = popover.getChildren().findFirst().orElseThrow().getChildren().count();
-        assertEquals(1, legendRows, "the break-even row tint");
+        assertEquals(2, legendRows, "the cash-flow crossover and break-even row tints");
     }
 }

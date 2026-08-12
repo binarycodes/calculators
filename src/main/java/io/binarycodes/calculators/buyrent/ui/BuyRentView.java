@@ -37,6 +37,7 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
 
     private final SummaryCard monthlyCostBuyCard = new SummaryCard(getTranslation("summary.buyrent.monthlyCostBuy"), VaadinIcon.HOME.create());
     private final SummaryCard monthlyCostRentCard = new SummaryCard(getTranslation("summary.buyrent.monthlyCostRent"), VaadinIcon.KEY_O.create());
+    private final SummaryCard cashFlowCrossoverCard = new SummaryCard(getTranslation("summary.buyrent.cashFlowCrossover"), VaadinIcon.EXCHANGE.create());
     private final SummaryCard breakEvenCard = new SummaryCard(getTranslation("summary.buyrent.breakEven"), VaadinIcon.SCALE.create());
     private final SummaryCard netWorthBuyCard = new SummaryCard(getTranslation("summary.buyrent.netWorthBuy"), VaadinIcon.HOME_O.create());
     private final SummaryCard netWorthRentCard = new SummaryCard(getTranslation("summary.buyrent.netWorthRent"), VaadinIcon.CHART_LINE.create());
@@ -86,6 +87,12 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
         this.monthlyCostBuyCard.setValue(MoneyFormatter.format(result.initialMonthlyCostBuy(), currency), null);
         this.monthlyCostRentCard.setValue(MoneyFormatter.format(result.initialMonthlyCostRent(), currency), null);
 
+        if (result.cashFlowCrossoverYear() > 0) {
+            this.cashFlowCrossoverCard.setValue(getTranslation("buyrent.breakEvenYear", result.cashFlowCrossoverYear()), Status.SUCCESS);
+        } else {
+            this.cashFlowCrossoverCard.setValue(getTranslation("buyrent.notInHorizon"), Status.WARNING);
+        }
+
         if (result.breakEvenYear() > 0) {
             this.breakEvenCard.setValue(getTranslation("buyrent.breakEvenYear", result.breakEvenYear()), Status.SUCCESS);
         } else {
@@ -104,18 +111,18 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
         this.chartCard.setVisible(true);
         this.projectionCard.setVisible(true);
         this.comparisonChart.update(result, currency);
-        this.projectionGrid.update(result.rows(), result.breakEvenYear());
+        this.projectionGrid.update(result.rows(), result.breakEvenYear(), result.cashFlowCrossoverYear());
     }
 
     private HorizontalLayout buildSummaryRow() {
         final HorizontalLayout summaryRow = new HorizontalLayout(
-                this.monthlyCostBuyCard, this.monthlyCostRentCard, this.breakEvenCard,
-                this.netWorthBuyCard, this.netWorthRentCard);
+                this.monthlyCostBuyCard, this.monthlyCostRentCard, this.cashFlowCrossoverCard,
+                this.breakEvenCard, this.netWorthBuyCard, this.netWorthRentCard);
         summaryRow.addClassName("summary-row");
         summaryRow.setWidthFull();
         summaryRow.setFlexGrow(1,
-                this.monthlyCostBuyCard, this.monthlyCostRentCard, this.breakEvenCard,
-                this.netWorthBuyCard, this.netWorthRentCard);
+                this.monthlyCostBuyCard, this.monthlyCostRentCard, this.cashFlowCrossoverCard,
+                this.breakEvenCard, this.netWorthBuyCard, this.netWorthRentCard);
         summaryRow.setSpacing(true);
         return summaryRow;
     }
@@ -147,6 +154,7 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
     private void showInvalidFormPlaceholders() {
         this.monthlyCostBuyCard.setValue(getTranslation("common.dash"), null);
         this.monthlyCostRentCard.setValue(getTranslation("common.dash"), null);
+        this.cashFlowCrossoverCard.setValue(getTranslation("common.dash"), null);
         this.breakEvenCard.setValue(getTranslation("common.dash"), null);
         this.netWorthBuyCard.setValue(getTranslation("common.dash"), null);
         this.netWorthRentCard.setValue(getTranslation("common.dash"), null);

@@ -87,6 +87,7 @@ public final class BuyRentCalculator {
         final int totalMonths = (inputs.getAnalysisYears() == null ? 0 : inputs.getAnalysisYears()) * 12;
         final List<BuyRentYear> rows = new ArrayList<>(inputs.getAnalysisYears() == null ? 0 : inputs.getAnalysisYears());
         int breakEvenYear = -1;
+        int cashFlowCrossoverYear = -1;
 
         for (int month = 1; month <= totalMonths; month++) {
             homeValue = homeValue.multiply(BigDecimal.ONE.add(monthlyAppreciationRate, Rates.CONTEXT), Rates.CONTEXT);
@@ -128,9 +129,20 @@ public final class BuyRentCalculator {
 
             rentPortfolio = rentPortfolio.multiply(
                     BigDecimal.ONE.add(monthlyInvestmentRate, Rates.CONTEXT), Rates.CONTEXT);
-            final BigDecimal surplus = totalBuyCostThisMonth.subtract(monthlyRentNow, Rates.CONTEXT);
+            // The renter invests only what buying would have cost above the rent.
+            // Once rent overtakes the buy cost there is nothing left to invest —
+            // contributions stop, but the existing corpus keeps compounding. We
+            // don't draw the portfolio down: covering the higher rent from income
+            // is an affordability question, separate from the buy-vs-rent tally.
+            final BigDecimal surplus = totalBuyCostThisMonth.subtract(monthlyRentNow, Rates.CONTEXT).max(BigDecimal.ZERO);
             rentPortfolio = rentPortfolio.add(surplus, Rates.CONTEXT);
             netContributions = netContributions.add(surplus, Rates.CONTEXT);
+
+            // First month owning is cheaper to hold than renting — the cash-flow
+            // crossover, usually around loan payoff. Recorded once.
+            if (cashFlowCrossoverYear < 0 && monthlyRentNow.compareTo(totalBuyCostThisMonth) >= 0) {
+                cashFlowCrossoverYear = (month - 1) / 12 + 1;
+            }
 
             // Snapshot at each year boundary.
             if (month % 12 == 0) {
@@ -187,6 +199,7 @@ public final class BuyRentCalculator {
                 lastRow == null ? initialInvestment : lastRow.rentPortfolio(),
                 lastRow == null ? initialInvestment : lastRow.rentPortfolioAfterTax(),
                 breakEvenYear,
+                cashFlowCrossoverYear,
                 rows);
     }
 
