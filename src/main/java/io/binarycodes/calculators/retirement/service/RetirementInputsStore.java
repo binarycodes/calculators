@@ -5,7 +5,7 @@ import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.retirement.domain.Frequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringExpense;

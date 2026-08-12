@@ -1,6 +1,6 @@
 package io.binarycodes.calculators.retirement.service;
 
-import io.binarycodes.calculators.retirement.domain.Frequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -421,6 +421,36 @@ class RetirementCalculatorTest {
         // Monthly contributes 12× the yearly amount.
         assertTrue(monthlyDelta.compareTo(yearlyDelta.multiply(BigDecimal.valueOf(10))) > 0,
                 "MONTHLY income should be >> YEARLY; monthly=" + monthlyDelta + " yearly=" + yearlyDelta);
+    }
+
+    @Test
+    void quarterly_and_half_yearly_income_annualise_by_periods_per_year() {
+        // annualise(amount, f) = amount × (12 / monthsPerPeriod): QUARTERLY ×4,
+        // HALF_YEARLY ×2, against the YEARLY ×1 baseline.
+        final int currentYear = Year.now().getValue();
+        final int targetYear = currentYear + 1;
+
+        final ProjectionRow baseRow = rowForYear(RetirementCalculator.calculate(inrDefaults()), targetYear);
+
+        final BigDecimal quarterlyDelta = incomeDeltaFor(Frequency.QUARTERLY, targetYear, baseRow);
+        assertTrue(quarterlyDelta.subtract(bd(200_000)).abs().compareTo(BigDecimal.ONE) < 0,
+                "QUARTERLY income should contribute 4×50,000; delta=" + quarterlyDelta);
+
+        final BigDecimal halfYearlyDelta = incomeDeltaFor(Frequency.HALF_YEARLY, targetYear, baseRow);
+        assertTrue(halfYearlyDelta.subtract(bd(100_000)).abs().compareTo(BigDecimal.ONE) < 0,
+                "HALF_YEARLY income should contribute 2×50,000; delta=" + halfYearlyDelta);
+    }
+
+    private BigDecimal incomeDeltaFor(Frequency frequency, int targetYear, ProjectionRow baseRow) {
+        final RetirementInputs inputs = inrDefaults();
+        final RecurringIncome income = new RecurringIncome();
+        income.setYear(targetYear);
+        income.setFrequency(frequency);
+        income.setAmount(bd(50_000));
+        income.setTaxRatePct(bd(0));
+        inputs.setRecurringIncomes(List.of(income));
+        final ProjectionRow row = rowForYear(RetirementCalculator.calculate(inputs), targetYear);
+        return row.investment().subtract(baseRow.investment());
     }
 
     @Test

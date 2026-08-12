@@ -3,7 +3,7 @@ package io.binarycodes.calculators.loan.service;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
 import io.binarycodes.calculators.loan.domain.LoanResult;
 import io.binarycodes.calculators.loan.domain.LoanYear;
-import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -65,7 +65,7 @@ class LoanCalculatorTest {
     void recurring_prepayment_shortens_tenure_and_saves_interest() {
         final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
         inputs.setExtraPerPeriod(new BigDecimal("100000")); // 1 lakh extra
-        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        inputs.setExtraFrequency(Frequency.YEARLY);
         final LoanResult result = LoanCalculator.calculate(inputs);
 
         assertTrue(result.hasPrepayments());
@@ -77,10 +77,31 @@ class LoanCalculatorTest {
     }
 
     @Test
+    void half_yearly_prepayment_saves_more_than_yearly() {
+        final LoanInputs halfYearly = loan("2500000", "8.5", 20, 0);
+        halfYearly.setExtraPerPeriod(new BigDecimal("100000"));
+        halfYearly.setExtraFrequency(Frequency.HALF_YEARLY);
+        final LoanResult halfYearlyResult = LoanCalculator.calculate(halfYearly);
+
+        final LoanInputs yearly = loan("2500000", "8.5", 20, 0);
+        yearly.setExtraPerPeriod(new BigDecimal("100000"));
+        yearly.setExtraFrequency(Frequency.YEARLY);
+        final LoanResult yearlyResult = LoanCalculator.calculate(yearly);
+
+        assertTrue(halfYearlyResult.hasPrepayments());
+        // The same 1-lakh paid every 6 months (rather than every 12) reduces
+        // principal more often, so the loan finishes sooner and saves more.
+        assertTrue(halfYearlyResult.reducedMonths() < yearlyResult.reducedMonths(),
+                "half-yearly prepayment finishes earlier than yearly");
+        assertTrue(halfYearlyResult.interestSavedTenure().compareTo(yearlyResult.interestSavedTenure()) > 0,
+                "half-yearly prepayment saves more interest than yearly");
+    }
+
+    @Test
     void reduce_emi_lowers_the_installment_and_keeps_tenure() {
         final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
         inputs.setExtraPerPeriod(new BigDecimal("100000"));
-        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        inputs.setExtraFrequency(Frequency.YEARLY);
         final LoanResult result = LoanCalculator.calculate(inputs);
 
         // The re-amortized EMI ends lower than the original, and still saves interest
@@ -135,7 +156,7 @@ class LoanCalculatorTest {
     void combined_levers_compound_their_savings() {
         final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
         inputs.setExtraPerPeriod(new BigDecimal("100000"));
-        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        inputs.setExtraFrequency(Frequency.YEARLY);
         inputs.setExtraEmisPerYear(1);
         inputs.setEmiStepUpPct(new BigDecimal("10"));
         final LoanResult result = LoanCalculator.calculate(inputs);
@@ -146,7 +167,7 @@ class LoanCalculatorTest {
 
         final LoanInputs extraOnly = loan("2500000", "8.5", 20, 0);
         extraOnly.setExtraPerPeriod(new BigDecimal("100000"));
-        extraOnly.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        extraOnly.setExtraFrequency(Frequency.YEARLY);
         final LoanResult extraOnlyResult = LoanCalculator.calculate(extraOnly);
         assertTrue(result.reducedMonths() < extraOnlyResult.reducedMonths(),
                 "all levers together finish earlier than the recurring extra alone");
@@ -158,7 +179,7 @@ class LoanCalculatorTest {
     void reduce_emi_schedule_clears_to_zero_balance() {
         final LoanInputs inputs = loan("2500000", "8.5", 20, 0);
         inputs.setExtraPerPeriod(new BigDecimal("100000"));
-        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        inputs.setExtraFrequency(Frequency.YEARLY);
         final LoanResult result = LoanCalculator.calculate(inputs);
 
         final LoanYear last = result.reduceEmiRows().get(result.reduceEmiRows().size() - 1);

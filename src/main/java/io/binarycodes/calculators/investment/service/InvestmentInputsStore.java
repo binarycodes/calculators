@@ -6,7 +6,7 @@ import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -83,7 +83,7 @@ public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("amount", plain(inputs.getAmount()));
         node.put("frequency", inputs.getFrequency() == null
-                ? ContributionFrequency.MONTHLY.name()
+                ? Frequency.MONTHLY.name()
                 : inputs.getFrequency().name());
         node.put("growthRate", plain(inputs.getGrowthRatePct()));
         node.put("taxRate", plain(inputs.getTaxRatePct()));
@@ -124,14 +124,14 @@ public class InvestmentInputsStore implements InputsStore<InvestmentInputs> {
         return inputs;
     }
 
-    private static ContributionFrequency readFrequency(JsonNode node) {
+    private static Frequency readFrequency(JsonNode node) {
         if (node == null || node.isNull()) {
-            return ContributionFrequency.MONTHLY;
+            return Frequency.MONTHLY;
         }
         try {
-            return ContributionFrequency.valueOf(node.asString().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
-            return ContributionFrequency.MONTHLY;
+            return Frequency.MONTHLY;
         }
     }
 

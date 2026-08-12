@@ -3,7 +3,7 @@ package io.binarycodes.calculators.investment.service;
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,14 +76,14 @@ public class InvestmentDefaultsProvider implements CalculatorDefaults<Investment
         return inputs;
     }
 
-    private static ContributionFrequency readFrequency(JsonNode node) {
+    private static Frequency readFrequency(JsonNode node) {
         if (node == null || node.isNull()) {
-            return ContributionFrequency.MONTHLY;
+            return Frequency.MONTHLY;
         }
         try {
-            return ContributionFrequency.valueOf(node.asString().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
-            return ContributionFrequency.MONTHLY;
+            return Frequency.MONTHLY;
         }
     }
 
@@ -136,7 +136,7 @@ public class InvestmentDefaultsProvider implements CalculatorDefaults<Investment
     private static InvestmentInputs fallback() {
         final var inputs = new InvestmentInputs();
         inputs.setAmount(BigDecimal.valueOf(25_000));
-        inputs.setFrequency(ContributionFrequency.MONTHLY);
+        inputs.setFrequency(Frequency.MONTHLY);
         inputs.setGrowthRatePct(BigDecimal.valueOf(12));
         inputs.setTaxRatePct(BigDecimal.ZERO);
         inputs.setInflationRatePct(BigDecimal.valueOf(6));

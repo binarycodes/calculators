@@ -5,7 +5,7 @@ import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.irr.domain.CashflowFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.irr.domain.DatedCashflow;
 import io.binarycodes.calculators.irr.domain.RecurringCashflow;
 import io.binarycodes.calculators.irr.domain.XirrInputs;
@@ -168,14 +168,14 @@ public class XirrInputsStore implements InputsStore<XirrInputs> {
         return out;
     }
 
-    private static CashflowFrequency frequency(JsonNode node) {
+    private static Frequency frequency(JsonNode node) {
         if (node == null || node.isNull()) {
-            return CashflowFrequency.MONTHLY;
+            return Frequency.MONTHLY;
         }
         try {
-            return CashflowFrequency.valueOf(node.asString().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
-            return CashflowFrequency.MONTHLY;
+            return Frequency.MONTHLY;
         }
     }
 

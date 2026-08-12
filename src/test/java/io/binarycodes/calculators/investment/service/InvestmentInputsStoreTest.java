@@ -1,7 +1,7 @@
 package io.binarycodes.calculators.investment.service;
 
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -20,7 +20,7 @@ class InvestmentInputsStoreTest {
     void round_trip_preserves_all_fields() {
         final var inputs = new InvestmentInputs();
         inputs.setAmount(new BigDecimal("10000"));
-        inputs.setFrequency(ContributionFrequency.YEARLY);
+        inputs.setFrequency(Frequency.YEARLY);
         inputs.setGrowthRatePct(new BigDecimal("12"));
         inputs.setTaxRatePct(new BigDecimal("15"));
         inputs.setInflationRatePct(new BigDecimal("6"));
@@ -39,7 +39,7 @@ class InvestmentInputsStoreTest {
         final InvestmentInputs restored = store.fromJsonNode(json);
 
         assertEquals(0, inputs.getAmount().compareTo(restored.getAmount()));
-        assertEquals(ContributionFrequency.YEARLY, restored.getFrequency());
+        assertEquals(Frequency.YEARLY, restored.getFrequency());
         assertEquals(0, inputs.getGrowthRatePct().compareTo(restored.getGrowthRatePct()));
         assertEquals(0, inputs.getTaxRatePct().compareTo(restored.getTaxRatePct()));
         assertEquals(TimeHorizonMode.TARGET_YEAR, restored.getHorizonMode());
@@ -52,18 +52,28 @@ class InvestmentInputsStoreTest {
     }
 
     @Test
+    void half_yearly_frequency_round_trips_by_name() {
+        // The shared enum serialises by name, so a newly-offered value survives
+        // a store round-trip (and a share link) unchanged.
+        final var inputs = new InvestmentInputs();
+        inputs.setFrequency(Frequency.HALF_YEARLY);
+        final InvestmentInputs restored = store.fromJsonNode(store.toJsonNode(inputs));
+        assertEquals(Frequency.HALF_YEARLY, restored.getFrequency());
+    }
+
+    @Test
     void null_frequency_defaults_to_monthly() {
         final var inputs = new InvestmentInputs();
         inputs.setFrequency(null);
-        assertEquals(ContributionFrequency.MONTHLY, store.fromJsonNode(store.toJsonNode(inputs)).getFrequency());
+        assertEquals(Frequency.MONTHLY, store.fromJsonNode(store.toJsonNode(inputs)).getFrequency());
     }
 
     @Test
     void invalid_frequency_string_falls_back_to_monthly() {
         final ObjectNode json = JsonMapper.builder().build().createObjectNode();
-        json.put("frequency", "WEEKLY"); // not a valid ContributionFrequency value
+        json.put("frequency", "WEEKLY"); // not a valid Frequency value
         json.put("horizonMode", "YEARS");
-        assertEquals(ContributionFrequency.MONTHLY, store.fromJsonNode(json).getFrequency());
+        assertEquals(Frequency.MONTHLY, store.fromJsonNode(json).getFrequency());
     }
 
     @Test

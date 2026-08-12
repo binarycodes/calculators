@@ -1,7 +1,7 @@
 package io.binarycodes.calculators.investment.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
@@ -92,7 +92,7 @@ class InvestmentDefaultsJsonTest {
         final InvestmentInputs result = provider.forCurrency(SupportedCurrency.EUR);
         assertNotNull(result);
         assertEquals(0, result.getAmount().compareTo(BigDecimal.valueOf(25_000)));
-        assertEquals(ContributionFrequency.MONTHLY, result.getFrequency());
+        assertEquals(Frequency.MONTHLY, result.getFrequency());
         assertEquals(0, result.getGrowthRatePct().compareTo(BigDecimal.valueOf(12)));
     }
 

@@ -2,7 +2,7 @@ package io.binarycodes.calculators.investment.service;
 
 import io.binarycodes.calculators.base.common.TimeHorizon;
 import io.binarycodes.calculators.base.math.Rates;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import io.binarycodes.calculators.investment.domain.InvestmentResult;
 import io.binarycodes.calculators.investment.domain.InvestmentYear;
@@ -54,8 +54,8 @@ public final class InvestmentCalculator {
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("Amount must be non-negative.");
         }
-        final ContributionFrequency frequency = inputs.getFrequency() == null
-                ? ContributionFrequency.MONTHLY
+        final Frequency frequency = inputs.getFrequency() == null
+                ? Frequency.MONTHLY
                 : inputs.getFrequency();
 
         final BigDecimal monthlyGrowth = Rates.monthlyFromAnnual(Rates.pctToFraction(inputs.getGrowthRatePct()));
@@ -76,8 +76,9 @@ public final class InvestmentCalculator {
             final boolean investing = monthIndex < investmentMonths;
             if (investing) {
                 final BigDecimal stepFactor = Rates.pow1plus(stepUp, monthIndex / 12);
-                final boolean contributeThisMonth = frequency == ContributionFrequency.MONTHLY
-                        || monthIndex % 12 == 0;
+                // A contribution lands at the start of each period: every month
+                // when MONTHLY, every 3rd/6th/12th month for the wider cadences.
+                final boolean contributeThisMonth = monthIndex % frequency.monthsPerPeriod() == 0;
                 if (contributeThisMonth) {
                     final BigDecimal contribution = amount.multiply(stepFactor, MC);
                     balance = balance.add(contribution, MC);

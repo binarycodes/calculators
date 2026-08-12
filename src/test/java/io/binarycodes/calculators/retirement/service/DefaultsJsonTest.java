@@ -1,7 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.retirement.domain.Frequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
@@ -160,8 +160,8 @@ class DefaultsJsonTest {
 
         assertNotNull(inputs.getRecurringIncomes());
         assertEquals(1, inputs.getRecurringIncomes().size());
-        assertEquals(Frequency.MONTHLY, inputs.getRecurringIncomes().get(0).getFrequency(),
-                "QUARTERLY must fall back to MONTHLY");
+        assertEquals(Frequency.QUARTERLY, inputs.getRecurringIncomes().get(0).getFrequency(),
+                "QUARTERLY is now a recognised frequency across all calculators");
 
         assertNotNull(inputs.getFutureExpenses());
         assertEquals(1, inputs.getFutureExpenses().size());

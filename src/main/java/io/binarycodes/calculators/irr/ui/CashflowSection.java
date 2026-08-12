@@ -8,20 +8,20 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.FormCard;
+import io.binarycodes.calculators.base.ui.FrequencyField;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.base.ui.TabIndicator;
-import io.binarycodes.calculators.irr.domain.CashflowFrequency;
 import io.binarycodes.calculators.irr.domain.DatedCashflow;
 import io.binarycodes.calculators.irr.domain.RecurringCashflow;
 
@@ -251,7 +251,7 @@ class CashflowSection extends VerticalLayout implements TabIndicator.Source {
 
     private static final class RecurringRow extends HorizontalLayout {
         private final DatePicker startDateField = dateField(Translations.get("field.startDate"));
-        private final Select<CashflowFrequency> frequencyField = new Select<>();
+        private final FrequencyField frequencyField = new FrequencyField(Translations.get("field.frequency"));
         private final IntegerField countField = countField();
         private final TextField descriptionField = new TextField(Translations.get("field.description"));
         private final MoneyField amountField;
@@ -263,10 +263,7 @@ class CashflowSection extends VerticalLayout implements TabIndicator.Source {
             this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
             this.descriptionField.setWidthFull();
 
-            this.frequencyField.setLabel(Translations.get("field.frequency"));
-            this.frequencyField.setItems(CashflowFrequency.values());
-            this.frequencyField.setItemLabelGenerator(CashflowSection::frequencyLabel);
-            this.frequencyField.setValue(initial.getFrequency() == null ? CashflowFrequency.MONTHLY : initial.getFrequency());
+            this.frequencyField.setValue(initial.getFrequency() == null ? Frequency.MONTHLY : initial.getFrequency());
 
             this.startDateField.setValue(initial.getStartDate());
             this.countField.setValue(initial.getCount());
@@ -317,12 +314,4 @@ class CashflowSection extends VerticalLayout implements TabIndicator.Source {
         return field;
     }
 
-    private static String frequencyLabel(CashflowFrequency frequency) {
-        return switch (frequency) {
-            case MONTHLY -> Translations.get("frequency.monthly");
-            case QUARTERLY -> Translations.get("frequency.quarterly");
-            case HALF_YEARLY -> Translations.get("frequency.halfYearly");
-            case YEARLY -> Translations.get("frequency.yearly");
-        };
-    }
 }

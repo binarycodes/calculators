@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.investment.domain;
 
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,7 +27,7 @@ import java.math.BigDecimal;
 public class InvestmentInputs {
 
     private BigDecimal amount;
-    private ContributionFrequency frequency;
+    private Frequency frequency;
     private BigDecimal growthRatePct;
     private BigDecimal taxRatePct;
     private BigDecimal inflationRatePct;

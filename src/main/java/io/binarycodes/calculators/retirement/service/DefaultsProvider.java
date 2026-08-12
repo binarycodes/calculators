@@ -2,7 +2,7 @@ package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
-import io.binarycodes.calculators.retirement.domain.Frequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringExpense;

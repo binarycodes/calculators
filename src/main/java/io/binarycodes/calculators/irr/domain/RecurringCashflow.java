@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.irr.domain;
 
+import io.binarycodes.calculators.base.common.Frequency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,7 @@ import java.time.LocalDate;
 
 /**
  * A repeating cashflow: {@code count} payments of {@code amount}, the first on
- * {@code startDate} and each subsequent one {@link CashflowFrequency} later. The
+ * {@code startDate} and each subsequent one {@link Frequency} later. The
  * {@code amount} is a positive magnitude; the owning section decides its sign.
  */
 @Getter
@@ -19,7 +20,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class RecurringCashflow {
     private LocalDate startDate;
-    private CashflowFrequency frequency;
+    private Frequency frequency;
     private Integer count;
     private String description;
     private BigDecimal amount;

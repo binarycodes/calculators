@@ -17,14 +17,15 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
+import io.binarycodes.calculators.base.ui.FrequencyField;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.PercentageField;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 
 import com.vaadin.flow.data.binder.Setter;
@@ -48,7 +49,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
     private final Binder<InvestmentInputs> binder = new Binder<>(InvestmentInputs.class);
 
     private final MoneyField amount;
-    private final RadioButtonGroup<ContributionFrequency> frequency = new RadioButtonGroup<>();
+    private final FrequencyField frequency = new FrequencyField(Translations.get("investment.contributionFrequency"));
     private final NumberField growthRate = PercentageField.create(Translations.get("field.growthRate"));
     private final NumberField taxRate = PercentageField.create(Translations.get("field.taxRate"));
     private final NumberField inflationRate = PercentageField.create(Translations.get("field.inflationRate"));
@@ -77,7 +78,6 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         setWidthFull();
 
         this.amount = new MoneyField(Translations.get("field.amount"), preferences);
-        configureFrequencyGroup();
         configureHorizonModeGroup();
         configureBindings();
         renderHorizonFieldsFor(this.horizonMode.getValue());
@@ -113,7 +113,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
             inputs.setHorizonMode(TimeHorizonMode.YEARS);
         }
         if (inputs.getFrequency() == null) {
-            inputs.setFrequency(ContributionFrequency.MONTHLY);
+            inputs.setFrequency(Frequency.MONTHLY);
         }
         this.binder.readBean(inputs);
         renderHorizonFieldsFor(inputs.getHorizonMode());
@@ -150,7 +150,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
             target.setHorizonMode(TimeHorizonMode.YEARS);
         }
         if (target.getFrequency() == null) {
-            target.setFrequency(ContributionFrequency.MONTHLY);
+            target.setFrequency(Frequency.MONTHLY);
         }
         return target;
     }
@@ -161,10 +161,7 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                 withPercentageSuffix(this.taxRate), withPercentageSuffix(this.inflationRate),
                 withPercentageSuffix(this.stepUp));
 
-        final Span frequencyLabel = new Span(Translations.get("investment.contributionFrequency"));
-        frequencyLabel.addClassName("subsection-label");
-
-        this.contributionCard = card(Translations.get("section.investment.contribution"), topLayout, frequencyLabel, this.frequency);
+        this.contributionCard = card(Translations.get("section.investment.contribution"), topLayout, this.frequency);
         return this.contributionCard;
     }
 
@@ -204,14 +201,6 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
         card.setWidthFull();
         card.addClassName("form-section");
         return card;
-    }
-
-    private void configureFrequencyGroup() {
-        this.frequency.setItems(ContributionFrequency.values());
-        this.frequency.setItemLabelGenerator(value ->
-                value == ContributionFrequency.MONTHLY ? Translations.get("frequency.monthly") : Translations.get("frequency.yearly"));
-        this.frequency.setValue(ContributionFrequency.MONTHLY);
-        this.frequency.addClassName("segmented-toggle");
     }
 
     private void configureHorizonModeGroup() {

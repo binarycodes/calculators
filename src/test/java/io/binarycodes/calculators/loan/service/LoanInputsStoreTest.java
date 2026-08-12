@@ -1,7 +1,7 @@
 package io.binarycodes.calculators.loan.service;
 
 import io.binarycodes.calculators.loan.domain.LoanInputs;
-import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -24,7 +24,7 @@ class LoanInputsStoreTest {
         inputs.setTenureMonths(0);
         inputs.setInflationRatePct(new BigDecimal("6"));
         inputs.setExtraPerPeriod(new BigDecimal("5000"));
-        inputs.setExtraFrequency(PrepaymentFrequency.MONTHLY);
+        inputs.setExtraFrequency(Frequency.MONTHLY);
         inputs.setExtraEmisPerYear(2);
         inputs.setEmiStepUpPct(new BigDecimal("10"));
 
@@ -37,7 +37,7 @@ class LoanInputsStoreTest {
         assertEquals(inputs.getTenureMonths(), restored.getTenureMonths());
         assertEquals(0, inputs.getInflationRatePct().compareTo(restored.getInflationRatePct()));
         assertEquals(0, inputs.getExtraPerPeriod().compareTo(restored.getExtraPerPeriod()));
-        assertEquals(PrepaymentFrequency.MONTHLY, restored.getExtraFrequency());
+        assertEquals(Frequency.MONTHLY, restored.getExtraFrequency());
         assertEquals(inputs.getExtraEmisPerYear(), restored.getExtraEmisPerYear());
         assertEquals(0, inputs.getEmiStepUpPct().compareTo(restored.getEmiStepUpPct()));
     }
@@ -50,14 +50,14 @@ class LoanInputsStoreTest {
         inputs.setExtraFrequency(null);
 
         final ObjectNode json = store.toJsonNode(inputs);
-        assertEquals(PrepaymentFrequency.YEARLY, store.fromJsonNode(json).getExtraFrequency());
+        assertEquals(Frequency.YEARLY, store.fromJsonNode(json).getExtraFrequency());
     }
 
     @Test
     void invalid_frequency_string_falls_back_to_yearly() {
         final ObjectNode json = JsonMapper.builder().build().createObjectNode();
-        json.put("extraFrequency", "WEEKLY"); // not a valid PrepaymentFrequency value
-        assertEquals(PrepaymentFrequency.YEARLY, store.fromJsonNode(json).getExtraFrequency());
+        json.put("extraFrequency", "WEEKLY"); // not a valid Frequency value
+        assertEquals(Frequency.YEARLY, store.fromJsonNode(json).getExtraFrequency());
     }
 
     @Test

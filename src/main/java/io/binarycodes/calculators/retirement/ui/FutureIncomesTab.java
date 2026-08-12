@@ -7,7 +7,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -17,11 +16,12 @@ import com.vaadin.flow.signals.Signal;
 import com.vaadin.flow.signals.local.ValueSignal;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.i18n.Translations;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.base.ui.FormCard;
+import io.binarycodes.calculators.base.ui.FrequencyField;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.base.ui.TabIndicator;
-import io.binarycodes.calculators.retirement.domain.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringIncome;
 
@@ -275,7 +275,7 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
         private final IntegerField yearField = yearField(Translations.get("field.startYear"));
         private final IntegerField stopYearField = optionalStopYearField();
         private final TextField descriptionField = new TextField(Translations.get("field.description"));
-        private final Select<Frequency> frequencyField = new Select<>();
+        private final FrequencyField frequencyField = new FrequencyField(Translations.get("field.frequency"));
         private final MoneyField amountField;
         private final NumberField taxField = withPercentageSuffix(percentageField(Translations.get("field.taxRate")));
         private final Binder<RecurringIncome> binder = new Binder<>(RecurringIncome.class);
@@ -288,9 +288,6 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
             this.descriptionField.setValueChangeMode(ValueChangeMode.LAZY);
             this.descriptionField.setWidthFull();
 
-            this.frequencyField.setLabel(Translations.get("field.frequency"));
-            this.frequencyField.setItems(Frequency.values());
-            this.frequencyField.setItemLabelGenerator(freq -> Translations.get(freq == Frequency.MONTHLY ? "frequency.monthly" : "frequency.yearly"));
             this.frequencyField.setValue(initial.getFrequency() == null
                     ? Frequency.MONTHLY : initial.getFrequency());
 

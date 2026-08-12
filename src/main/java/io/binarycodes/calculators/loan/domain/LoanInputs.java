@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.loan.domain;
 
+import io.binarycodes.calculators.base.common.Frequency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +39,7 @@ public class LoanInputs {
 
     // Prepayment levers (optional; zero = none).
     private BigDecimal extraPerPeriod;
-    private PrepaymentFrequency extraFrequency;
+    private Frequency extraFrequency;
     private Integer extraEmisPerYear;
     private BigDecimal emiStepUpPct;
 }

@@ -6,7 +6,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.binder.Binder;
@@ -18,15 +17,16 @@ import com.vaadin.flow.data.validator.BigDecimalRangeValidator;
 import com.vaadin.flow.data.validator.DoubleRangeValidator;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.signals.Signal;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.CalculatorForm;
 import io.binarycodes.calculators.base.ui.FormCard;
+import io.binarycodes.calculators.base.ui.FrequencyField;
 import io.binarycodes.calculators.base.ui.MoneyField;
 import io.binarycodes.calculators.base.ui.PercentageField;
 import io.binarycodes.calculators.base.ui.TabIndicator;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
-import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
 
 import java.math.BigDecimal;
 
@@ -46,7 +46,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     private final NumberField inflationRate = PercentageField.create(Translations.get("field.inflationRate"));
 
     private final MoneyField extraPerPeriod;
-    private final RadioButtonGroup<PrepaymentFrequency> extraFrequency = new RadioButtonGroup<>();
+    private final FrequencyField extraFrequency = new FrequencyField(Translations.get("field.frequency"));
     private final IntegerField extraEmisPerYear = countField(Translations.get("field.extraEmisPerYear"));
     private final NumberField emiStepUp = PercentageField.create(Translations.get("field.emiStepUp"));
 
@@ -119,7 +119,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
 
     public void setInputs(LoanInputs inputs) {
         if (inputs.getExtraFrequency() == null) {
-            inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+            inputs.setExtraFrequency(Frequency.YEARLY);
         }
         this.binder.readBean(inputs);
     }
@@ -152,7 +152,7 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         final var target = new LoanInputs();
         this.binder.writeBeanAsDraft(target);
         if (target.getExtraFrequency() == null) {
-            target.setExtraFrequency(PrepaymentFrequency.YEARLY);
+            target.setExtraFrequency(Frequency.YEARLY);
         }
         return target;
     }
@@ -230,11 +230,9 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private void configureFrequencyGroup() {
-        this.extraFrequency.setLabel(Translations.get("field.frequency"));
-        this.extraFrequency.setItems(PrepaymentFrequency.values());
-        this.extraFrequency.setItemLabelGenerator(LoanCalculatorForm::frequencyLabel);
-        this.extraFrequency.setValue(PrepaymentFrequency.YEARLY);
-        this.extraFrequency.addClassName("segmented-toggle");
+        // The loan calculator defaults to a yearly prepayment (the field's own
+        // default is monthly); the seeded inputs otherwise carry the value.
+        this.extraFrequency.setFrequency(Frequency.YEARLY);
     }
 
     private void configureBindings() {
@@ -325,14 +323,6 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
                 new FormLayout.ResponsiveStep("36em", 2),
                 new FormLayout.ResponsiveStep("64em", 3));
         return layout;
-    }
-
-    private static String frequencyLabel(PrepaymentFrequency frequency) {
-        return switch (frequency) {
-            case MONTHLY -> Translations.get("frequency.monthly");
-            case QUARTERLY -> Translations.get("frequency.quarterly");
-            case YEARLY -> Translations.get("frequency.yearly");
-        };
     }
 
     private static Converter<Double, BigDecimal> doubleToBigDecimalConverter() {

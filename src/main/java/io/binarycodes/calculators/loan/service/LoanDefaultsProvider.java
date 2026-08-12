@@ -3,7 +3,7 @@ package io.binarycodes.calculators.loan.service;
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
-import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -70,14 +70,14 @@ public class LoanDefaultsProvider implements CalculatorDefaults<LoanInputs> {
         return inputs;
     }
 
-    private static PrepaymentFrequency readFrequency(JsonNode node) {
+    private static Frequency readFrequency(JsonNode node) {
         if (node == null || node.isNull()) {
-            return PrepaymentFrequency.YEARLY;
+            return Frequency.YEARLY;
         }
         try {
-            return PrepaymentFrequency.valueOf(node.asString().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
-            return PrepaymentFrequency.YEARLY;
+            return Frequency.YEARLY;
         }
     }
 
@@ -118,7 +118,7 @@ public class LoanDefaultsProvider implements CalculatorDefaults<LoanInputs> {
         inputs.setTenureMonths(0);
         inputs.setInflationRatePct(BigDecimal.valueOf(6));
         inputs.setExtraPerPeriod(BigDecimal.ZERO);
-        inputs.setExtraFrequency(PrepaymentFrequency.YEARLY);
+        inputs.setExtraFrequency(Frequency.YEARLY);
         inputs.setExtraEmisPerYear(0);
         inputs.setEmiStepUpPct(BigDecimal.ZERO);
         return inputs;

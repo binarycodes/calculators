@@ -28,6 +28,12 @@ The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
 used by both the Goal Planner and Inflation Projection.
 
+The contribution / prepayment / cashflow frequency selector is likewise shared:
+one `base.common.Frequency` enum (`MONTHLY` / `QUARTERLY` / `HALF_YEARLY` /
+`YEARLY`, each carrying `monthsPerPeriod`) rendered through the reusable
+`base.ui.FrequencyField` dropdown. Every calculator that offers a frequency
+(Investment, Loan, Retirement, IRR) uses the same four options.
+
 ## Deployed version indicator
 
 The drawer footer shows the deployed build's identity beneath the Vaadin /
@@ -152,7 +158,7 @@ Two cards.
 | Start Year | First year the cashflow occurs |
 | Stop Year | Optional — blank means continue indefinitely |
 | Description | Free text |
-| Frequency | `Monthly` or `Yearly` |
+| Frequency | `Monthly` / `Quarterly` / `Half-Yearly` / `Yearly` |
 | Amount (today) | Money in today's currency, per period |
 | Inflation (%) | Optional per-item rate — blank ⇒ use overall inflation |
 
@@ -176,7 +182,7 @@ Two cards mirroring Future Expenses.
 | Start Year | First year the inflow occurs |
 | Stop Year | Optional — blank means continue indefinitely |
 | Description | Free text |
-| Frequency | `Monthly` or `Yearly` |
+| Frequency | `Monthly` / `Quarterly` / `Half-Yearly` / `Yearly` |
 | Amount | Nominal value per period; no inflation projection |
 | Tax Rate (%) | Per-period, applied immediately |
 
@@ -238,8 +244,8 @@ For each `age` from `currentAge` to `lifeExp`:
    investment          = sipContribution + benefitsThisYear + futureIncomeThisYr + recurringIncomeThis
    ```
    `totalInvested += investment`; SIP bucket: `principal += investment`,
-   `balance += investment`. `annualise(x, MONTHLY) = x × 12`,
-   `annualise(x, YEARLY) = x`.
+   `balance += investment`. `annualise(x, f) = x × (12 / monthsPerPeriod(f))`,
+   i.e. MONTHLY ×12, QUARTERLY ×4, HALF_YEARLY ×2, YEARLY ×1.
 
 6. **`startCorpus` snapshot** = `main.balance + sip.balance` *(before*
    this year's growth).
@@ -599,7 +605,7 @@ A single card.
 | Field | Notes |
 | --- | --- |
 | Amount | Money, > 0. Contributed each period during the investment phase. |
-| Contribution frequency | Monthly or Yearly (segmented toggle). Yearly contributions land at the start of each 12-month block. |
+| Contribution frequency | Monthly / Quarterly / Half-Yearly / Yearly (dropdown). A contribution lands at the start of each period — every `monthsPerPeriod` months (monthly every month, yearly at the start of each 12-month block). |
 | Growth Rate (%) | Annual return; compounded monthly. |
 | Tax Rate (%) | Applied to the gains portion once, at the end. |
 | Inflation Rate (%) | Deflates the net maturity value (and each year's balance) to today's money. |
@@ -657,7 +663,7 @@ a plain EMI calculator.
 | Interest Rate (%) | Annual, reducing balance. |
 | Tenure | Years + Months (at least one month total). |
 | Inflation Rate (%) | Used only to express the cost in today's money. |
-| Extra Payment + frequency | Recurring prepayment paid Monthly / Quarterly / Yearly on top of the EMI. |
+| Extra Payment + frequency | Recurring prepayment paid Monthly / Quarterly / Half-Yearly / Yearly on top of the EMI. |
 | Extra EMIs / year | Additional full EMIs paid once a year (e.g. 1 → effectively 13 EMIs/year), each valued at the installment then in force (the re-amortized EMI under reduce-EMI). |
 | EMI Step-Up (%) | Annual increase of the EMI itself — a "pay more" lever, so it only shortens the tenure. |
 

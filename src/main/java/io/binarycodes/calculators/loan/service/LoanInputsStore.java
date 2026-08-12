@@ -6,7 +6,7 @@ import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
-import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -87,7 +87,7 @@ public class LoanInputsStore implements InputsStore<LoanInputs> {
         node.put("inflationRate", plain(inputs.getInflationRatePct()));
         node.put("extraPerPeriod", plain(inputs.getExtraPerPeriod()));
         node.put("extraFrequency", inputs.getExtraFrequency() == null
-                ? PrepaymentFrequency.YEARLY.name()
+                ? Frequency.YEARLY.name()
                 : inputs.getExtraFrequency().name());
         node.put("extraEmisPerYear", intStr(inputs.getExtraEmisPerYear()));
         node.put("emiStepUp", plain(inputs.getEmiStepUpPct()));
@@ -109,14 +109,14 @@ public class LoanInputsStore implements InputsStore<LoanInputs> {
         return inputs;
     }
 
-    private static PrepaymentFrequency readFrequency(JsonNode node) {
+    private static Frequency readFrequency(JsonNode node) {
         if (node == null || node.isNull()) {
-            return PrepaymentFrequency.YEARLY;
+            return Frequency.YEARLY;
         }
         try {
-            return PrepaymentFrequency.valueOf(node.asString().toUpperCase());
+            return Frequency.valueOf(node.asString().toUpperCase());
         } catch (final IllegalArgumentException ignored) {
-            return PrepaymentFrequency.YEARLY;
+            return Frequency.YEARLY;
         }
     }
 

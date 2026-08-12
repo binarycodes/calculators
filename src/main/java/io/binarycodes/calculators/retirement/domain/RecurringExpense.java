@@ -1,5 +1,6 @@
 package io.binarycodes.calculators.retirement.domain;
 
+import io.binarycodes.calculators.base.common.Frequency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

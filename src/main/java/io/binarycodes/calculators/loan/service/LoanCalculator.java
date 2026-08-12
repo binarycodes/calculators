@@ -4,7 +4,7 @@ import io.binarycodes.calculators.base.math.Rates;
 import io.binarycodes.calculators.loan.domain.LoanInputs;
 import io.binarycodes.calculators.loan.domain.LoanResult;
 import io.binarycodes.calculators.loan.domain.LoanYear;
-import io.binarycodes.calculators.loan.domain.PrepaymentFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -243,18 +243,18 @@ public final class LoanCalculator {
     /** Resolved prepayment levers, with the per-month extra computed on demand. */
     private record PrepayConfig(
             BigDecimal extraPerPeriod,
-            PrepaymentFrequency frequency,
+            Frequency frequency,
             int extraEmisPerYear,
             BigDecimal stepUp) {
 
         static final PrepayConfig NONE =
-                new PrepayConfig(BigDecimal.ZERO, PrepaymentFrequency.YEARLY, 0, BigDecimal.ZERO);
+                new PrepayConfig(BigDecimal.ZERO, Frequency.YEARLY, 0, BigDecimal.ZERO);
 
         static PrepayConfig from(LoanInputs inputs) {
             final BigDecimal extra = inputs.getExtraPerPeriod() == null
                     ? BigDecimal.ZERO : inputs.getExtraPerPeriod().max(BigDecimal.ZERO);
-            final PrepaymentFrequency frequency = inputs.getExtraFrequency() == null
-                    ? PrepaymentFrequency.YEARLY : inputs.getExtraFrequency();
+            final Frequency frequency = inputs.getExtraFrequency() == null
+                    ? Frequency.YEARLY : inputs.getExtraFrequency();
             final int extraEmis = inputs.getExtraEmisPerYear() == null
                     ? 0 : Math.max(0, inputs.getExtraEmisPerYear());
             final BigDecimal stepUp = Rates.pctToFraction(inputs.getEmiStepUpPct());
@@ -281,11 +281,7 @@ public final class LoanCalculator {
         }
 
         private boolean isPeriodEnd(int month) {
-            return switch (frequency) {
-                case MONTHLY -> true;
-                case QUARTERLY -> month % 3 == 0;
-                case YEARLY -> month % 12 == 0;
-            };
+            return month % frequency.monthsPerPeriod() == 0;
         }
     }
 }

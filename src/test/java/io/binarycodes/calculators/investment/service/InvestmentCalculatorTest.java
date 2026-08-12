@@ -1,7 +1,7 @@
 package io.binarycodes.calculators.investment.service;
 
 import io.binarycodes.calculators.base.common.TimeHorizonMode;
-import io.binarycodes.calculators.investment.domain.ContributionFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.investment.domain.InvestmentInputs;
 import io.binarycodes.calculators.investment.domain.InvestmentResult;
 import io.binarycodes.calculators.investment.domain.InvestmentYear;
@@ -22,7 +22,7 @@ class InvestmentCalculatorTest {
     private static InvestmentInputs base(int investYears, int holdYears) {
         final var inputs = new InvestmentInputs();
         inputs.setAmount(new BigDecimal("10000"));
-        inputs.setFrequency(ContributionFrequency.MONTHLY);
+        inputs.setFrequency(Frequency.MONTHLY);
         inputs.setGrowthRatePct(BigDecimal.valueOf(12));
         inputs.setTaxRatePct(BigDecimal.ZERO);
         inputs.setInflationRatePct(BigDecimal.ZERO);
@@ -48,13 +48,28 @@ class InvestmentCalculatorTest {
     void yearly_frequency_contributes_twelve_times_less_often() {
         final InvestmentInputs monthly = base(10, 0);
         final InvestmentInputs yearly = base(10, 0);
-        yearly.setFrequency(ContributionFrequency.YEARLY);
+        yearly.setFrequency(Frequency.YEARLY);
         // Yearly invests amount once per year → 10 × 10,000 = 100,000 principal.
         assertEquals(0, InvestmentCalculator.calculate(yearly).totalInvested()
                 .compareTo(new BigDecimal("100000")));
         // Monthly invests 12× as much principal.
         assertTrue(InvestmentCalculator.calculate(monthly).totalInvested()
                 .compareTo(InvestmentCalculator.calculate(yearly).totalInvested()) > 0);
+    }
+
+    @Test
+    void quarterly_and_half_yearly_contribute_on_their_period() {
+        // Over 10 years (120 months) a contribution lands at the start of each
+        // period: 40 quarters, 20 half-years, 10 years, 120 months.
+        final InvestmentInputs quarterly = base(10, 0);
+        quarterly.setFrequency(Frequency.QUARTERLY);
+        assertEquals(0, InvestmentCalculator.calculate(quarterly).totalInvested()
+                .compareTo(new BigDecimal("400000")));
+
+        final InvestmentInputs halfYearly = base(10, 0);
+        halfYearly.setFrequency(Frequency.HALF_YEARLY);
+        assertEquals(0, InvestmentCalculator.calculate(halfYearly).totalInvested()
+                .compareTo(new BigDecimal("200000")));
     }
 
     @Test

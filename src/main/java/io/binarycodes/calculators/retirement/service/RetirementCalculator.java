@@ -1,7 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.math.Rates;
-import io.binarycodes.calculators.retirement.domain.Frequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -342,7 +342,8 @@ public final class RetirementCalculator {
         // Default to monthly if unspecified — matches the form default and is
         // the more conservative (larger) interpretation if a value sneaks
         // through without a frequency tag.
-        return frequency == Frequency.YEARLY ? amount : amount.multiply(TWELVE, MC);
+        final Frequency effective = frequency == null ? Frequency.MONTHLY : frequency;
+        return amount.multiply(BigDecimal.valueOf(effective.periodsPerYear()), MC);
     }
 
     private static BigDecimal inflatedFutureExpensesFor(List<FutureExpense> expenses,

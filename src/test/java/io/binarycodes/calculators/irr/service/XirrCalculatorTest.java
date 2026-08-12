@@ -1,6 +1,6 @@
 package io.binarycodes.calculators.irr.service;
 
-import io.binarycodes.calculators.irr.domain.CashflowFrequency;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.irr.domain.DatedCashflow;
 import io.binarycodes.calculators.irr.domain.NpvPoint;
 import io.binarycodes.calculators.irr.domain.RecurringCashflow;
@@ -43,7 +43,7 @@ class XirrCalculatorTest {
     void recurring_investments_expand_into_one_cashflow_per_occurrence() {
         final XirrInputs inputs = new XirrInputs();
         inputs.setRecurringInvestments(List.of(
-                recurring("2020-01-01", CashflowFrequency.MONTHLY, 12, 100)));
+                recurring("2020-01-01", Frequency.MONTHLY, 12, 100)));
         inputs.setOneOffWithdrawals(List.of(oneOff("2021-01-01", 1300)));
 
         final XirrResult result = XirrCalculator.calculate(inputs);
@@ -161,7 +161,7 @@ class XirrCalculatorTest {
         return new DatedCashflow(LocalDate.parse(date), null, BigDecimal.valueOf(amount));
     }
 
-    private static RecurringCashflow recurring(String startDate, CashflowFrequency frequency, int count, long amount) {
+    private static RecurringCashflow recurring(String startDate, Frequency frequency, int count, long amount) {
         return new RecurringCashflow(LocalDate.parse(startDate), frequency, count, null, BigDecimal.valueOf(amount));
     }
 }
