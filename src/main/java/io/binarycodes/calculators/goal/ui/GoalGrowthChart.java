@@ -96,8 +96,8 @@ public class GoalGrowthChart extends Chart {
         final DataSeries principalSeries = stackedSeries(Translations.get("chart.series.principal"));
         final DataSeries gainsSeries = stackedSeries(Translations.get("chart.series.gains"));
         for (final MonthSnapshot snapshot : monthly) {
-            principalSeries.add(new DataSeriesItem(snapshot.label(), snapshot.principal().doubleValue()));
-            gainsSeries.add(new DataSeriesItem(snapshot.label(), snapshot.gains().doubleValue()));
+            principalSeries.add(new DataSeriesItem("", snapshot.principal().doubleValue()));
+            gainsSeries.add(new DataSeriesItem("", snapshot.gains().doubleValue()));
         }
         configuration.setSeries(principalSeries, gainsSeries);
     }
