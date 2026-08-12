@@ -43,6 +43,15 @@ vaadin-card {
         font-weight: 500;
     }
 
+    /* Muted second line under the value (e.g. the figure in today's money). */
+    &.summary-card .summary-card-subtitle {
+        display: block;
+        margin-top: 0.15rem;
+        font-size: 0.8rem;
+        font-weight: 400;
+        color: var(--color-text-muted);
+    }
+
 
     &[status~="success"] {
         background-color: var(--color-success-bg);

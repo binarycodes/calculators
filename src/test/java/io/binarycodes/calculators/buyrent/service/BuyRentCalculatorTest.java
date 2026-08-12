@@ -451,6 +451,28 @@ class BuyRentCalculatorTest {
     }
 
     @Test
+    void horizon_net_worth_in_todays_money_deflates_by_inflation() {
+        // Zero inflation → today's-money net worth equals the nominal figure.
+        final BuyRentInputs flat = base();
+        flat.setInflationRatePct(BigDecimal.ZERO);
+        final BuyRentResult flatResult = BuyRentCalculator.calculate(flat);
+        assertEquals(0, flatResult.equityAtHorizonAfterTaxToday().compareTo(flatResult.equityAtHorizonAfterTax()),
+                "zero inflation leaves buy net worth unchanged in today's money");
+        assertEquals(0, flatResult.rentPortfolioAtHorizonAfterTaxToday().compareTo(flatResult.rentPortfolioAtHorizonAfterTax()),
+                "zero inflation leaves rent net worth unchanged in today's money");
+
+        // base() = 6% inflation over 20 years → deflator = 1.06^20.
+        final BuyRentResult result = BuyRentCalculator.calculate(base());
+        assertTrue(result.equityAtHorizonAfterTaxToday().compareTo(result.equityAtHorizonAfterTax()) < 0,
+                "positive inflation shrinks the buy net worth in today's money");
+        final double nominal = result.equityAtHorizonAfterTax().doubleValue();
+        final double today = result.equityAtHorizonAfterTaxToday().doubleValue();
+        final double expected = nominal / Math.pow(1.06, 20);
+        assertTrue(Math.abs(today - expected) / expected < 0.01,
+                "buy net worth in today's money should be nominal / 1.06^20; got " + today + " vs " + expected);
+    }
+
+    @Test
     void result_horizon_fields_match_last_row() {
         final BuyRentInputs inputs = base();
         inputs.setPropertyCapitalGainsTaxPct(new BigDecimal("20"));

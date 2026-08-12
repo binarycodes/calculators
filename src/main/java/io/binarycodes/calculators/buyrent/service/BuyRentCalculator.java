@@ -169,7 +169,6 @@ public final class BuyRentCalculator {
                 final BigDecimal rentPortfolioAfterTax = rentPortfolio.subtract(investmentCgt, Rates.CONTEXT);
 
                 final BigDecimal netDiff = equityAfterTax.subtract(rentPortfolioAfterTax, Rates.CONTEXT);
-                final BigDecimal realNetDiff = netDiff.divide(inflationAccumulator, Rates.CONTEXT);
 
                 rows.add(new BuyRentYear(
                         year,
@@ -181,8 +180,7 @@ public final class BuyRentCalculator {
                         rentPortfolioAfterTax,
                         cumulativeRentPaid,
                         cumulativeBuyCost,
-                        netDiff,
-                        realNetDiff));
+                        netDiff));
 
                 if (breakEvenYear < 0 && equityAfterTax.compareTo(rentPortfolioAfterTax) >= 0) {
                     breakEvenYear = year;
@@ -191,15 +189,21 @@ public final class BuyRentCalculator {
         }
 
         final BuyRentYear lastRow = rows.isEmpty() ? null : rows.get(rows.size() - 1);
+        // Deflate the horizon net worths to present value; inflationAccumulator
+        // now holds (1 + monthly inflation) compounded over the whole horizon.
+        final BigDecimal equityAtHorizonAfterTax = lastRow == null ? BigDecimal.ZERO : lastRow.equityAfterTax();
+        final BigDecimal rentPortfolioAtHorizonAfterTax = lastRow == null ? initialInvestment : lastRow.rentPortfolioAfterTax();
         return new BuyRentResult(
                 monthlyEmi,
                 initialMonthlyCostBuy,
                 initialMonthlyRent,
                 lastRow == null ? homePrice : lastRow.homeValue(),
                 lastRow == null ? BigDecimal.ZERO : lastRow.equity(),
-                lastRow == null ? BigDecimal.ZERO : lastRow.equityAfterTax(),
+                equityAtHorizonAfterTax,
                 lastRow == null ? initialInvestment : lastRow.rentPortfolio(),
-                lastRow == null ? initialInvestment : lastRow.rentPortfolioAfterTax(),
+                rentPortfolioAtHorizonAfterTax,
+                equityAtHorizonAfterTax.divide(inflationAccumulator, Rates.CONTEXT),
+                rentPortfolioAtHorizonAfterTax.divide(inflationAccumulator, Rates.CONTEXT),
                 breakEvenYear,
                 cashFlowCrossoverYear,
                 rows);

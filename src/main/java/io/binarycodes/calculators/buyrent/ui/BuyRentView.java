@@ -22,9 +22,10 @@ import io.binarycodes.calculators.buyrent.service.BuyRentInputsStore;
 
 /**
  * The buy-vs-rent screen. {@link BaseCalculatorView} owns the header, form,
- * action row, and the persistence + share-link lifecycle; this class adds five
- * summary cards (monthly costs, break-even year, and net worths at horizon),
- * the net-worth comparison chart, and the year-by-year projection grid.
+ * action row, and the persistence + share-link lifecycle; this class adds six
+ * summary cards (monthly costs, cash-flow crossover, net-worth break-even, and
+ * net worths at horizon — each net worth also shown in today's money), the
+ * net-worth comparison chart, and the year-by-year projection grid.
  *
  * @see BuyRentCalculatorForm
  * @see BuyRentComparisonChart
@@ -104,9 +105,13 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
         this.netWorthBuyCard.setValue(
                 MoneyFormatter.format(result.equityAtHorizonAfterTax(), currency),
                 buyAheadAtHorizon ? Status.SUCCESS : null);
+        this.netWorthBuyCard.setSecondaryText(getTranslation("summary.buyrent.todaysMoney",
+                MoneyFormatter.format(result.equityAtHorizonAfterTaxToday(), currency)));
         this.netWorthRentCard.setValue(
                 MoneyFormatter.format(result.rentPortfolioAtHorizonAfterTax(), currency),
                 buyAheadAtHorizon ? null : Status.SUCCESS);
+        this.netWorthRentCard.setSecondaryText(getTranslation("summary.buyrent.todaysMoney",
+                MoneyFormatter.format(result.rentPortfolioAtHorizonAfterTaxToday(), currency)));
 
         this.chartCard.setVisible(true);
         this.projectionCard.setVisible(true);
@@ -157,7 +162,9 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
         this.cashFlowCrossoverCard.setValue(getTranslation("common.dash"), null);
         this.breakEvenCard.setValue(getTranslation("common.dash"), null);
         this.netWorthBuyCard.setValue(getTranslation("common.dash"), null);
+        this.netWorthBuyCard.setSecondaryText(null);
         this.netWorthRentCard.setValue(getTranslation("common.dash"), null);
+        this.netWorthRentCard.setSecondaryText(null);
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
     }

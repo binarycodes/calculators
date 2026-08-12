@@ -14,11 +14,14 @@ import io.binarycodes.calculators.base.common.Status;
  */
 public class SummaryCard extends Card {
     private final Span value = new Span();
+    private final Span subtitle = new Span();
 
     public SummaryCard(String labelText) {
         addClassName("summary-card");
         setTitle(labelText);
-        add(this.value);
+        this.subtitle.addClassName("summary-card-subtitle");
+        this.subtitle.setVisible(false);
+        add(this.value, this.subtitle);
     }
 
     /**
@@ -46,5 +49,15 @@ public class SummaryCard extends Card {
         } else {
             this.getElement().removeAttribute("status");
         }
+    }
+
+    /**
+     * Optional muted second line under the value (e.g. the same figure in
+     * today's money). Pass {@code null} or blank to hide it.
+     */
+    public void setSecondaryText(String text) {
+        final boolean present = text != null && !text.isBlank();
+        this.subtitle.setText(present ? text : "");
+        this.subtitle.setVisible(present);
     }
 }

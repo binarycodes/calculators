@@ -749,7 +749,7 @@ snapshotted at each year boundary.
 | Monthly Rent | Renting | > 0, Required | Starting monthly rent. |
 | Annual Rent Increase | Renting | 0–20 % | Step-up applied once per year (rent is flat within a year). |
 | Investment Return | Analysis | 0–30 %, Required | Annual return on the rent-path portfolio. |
-| Inflation Rate | Analysis | 0–20 % | Intended to express the net-worth difference in today's money. NOTE: the real (deflated) difference is computed but not yet surfaced in any chart/grid/card, so this input currently has no visible effect — see `docs/issues/buyrent-inflation-input-not-surfaced.md`. |
+| Inflation Rate | Analysis | 0–20 % | Deflates the horizon net worth (both buy and rent) to today's money, shown as a second line under the two Net Worth cards. |
 | Analysis Horizon | Analysis | 1–50 yrs, Required | How many years to project. |
 | Property Capital Gains Tax | Analysis | 0–60 % | Tax rate on the profit when the home is sold (sale proceeds − cost basis). |
 | Investment Gains Tax | Analysis | 0–60 % | Tax rate on the investment portfolio profit at exit (portfolio − net contributions). |
@@ -803,8 +803,8 @@ Reported as "Not in horizon" if buy never catches up within the analysis period.
 | Monthly Cost: Rent | First month's rent |
 | Cheaper to Own From | First year owning is cheaper to hold (cash-flow crossover), or "Not in horizon" |
 | Break-Even | First year buy is ahead on net worth, or "Not in horizon" |
-| Net Worth: Buy | After-tax equity at end of horizon |
-| Net Worth: Rent | After-tax portfolio at end of horizon |
+| Net Worth: Buy | After-tax equity at end of horizon, with an "in today's money" line (deflated at the inflation rate) |
+| Net Worth: Rent | After-tax portfolio at end of horizon, with an "in today's money" line (deflated at the inflation rate) |
 
 All net-worth values are after capital-gains tax. The winning path at the horizon is highlighted in success green.
 
