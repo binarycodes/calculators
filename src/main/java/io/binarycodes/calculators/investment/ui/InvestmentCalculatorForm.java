@@ -157,11 +157,11 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
 
     private Component buildContributionCard() {
         final FormLayout topLayout = sectionForm();
-        topLayout.add(this.amount, withPercentageSuffix(this.growthRate),
+        topLayout.add(this.amount, this.frequency, withPercentageSuffix(this.growthRate),
                 withPercentageSuffix(this.taxRate), withPercentageSuffix(this.inflationRate),
                 withPercentageSuffix(this.stepUp));
 
-        this.contributionCard = card(Translations.get("section.investment.contribution"), topLayout, this.frequency);
+        this.contributionCard = card(Translations.get("section.investment.contribution"), topLayout);
         return this.contributionCard;
     }
 
