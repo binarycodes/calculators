@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.common.Frequency;
+import io.binarycodes.calculators.retirement.domain.Contribution;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringExpense;
@@ -33,20 +34,21 @@ class RetirementInputsStoreTest {
         inputs.setGrowthPrePct(new BigDecimal("12"));
         inputs.setGrowthPostPct(new BigDecimal("8"));
         inputs.setCorpusTaxRatePct(new BigDecimal("10"));
-        inputs.setMonthlyInvPre(new BigDecimal("30000"));
-        inputs.setSipGrowthPrePct(new BigDecimal("12"));
-        inputs.setSipStepUpPrePct(new BigDecimal("5"));
-        inputs.setTaxRatePrePct(new BigDecimal("15"));
-        inputs.setMonthlyInvPost(BigDecimal.ZERO);
-        inputs.setSipGrowthPostPct(BigDecimal.ZERO);
-        inputs.setSipStepUpPostPct(BigDecimal.ZERO);
-        inputs.setTaxRatePostPct(BigDecimal.ZERO);
+        inputs.setPreRetirementContributions(List.of(
+                contribution("30000", Frequency.MONTHLY, "12", "5", "15")));
+        inputs.setPostRetirementContributions(List.of());
         inputs.setFutureExpenses(List.of());
         inputs.setRetirementBenefits(List.of());
         inputs.setFutureIncomes(List.of());
         inputs.setRecurringExpenses(List.of());
         inputs.setRecurringIncomes(List.of());
         return inputs;
+    }
+
+    private static Contribution contribution(String amount, Frequency frequency,
+                                             String growth, String stepUp, String tax) {
+        return new Contribution(new BigDecimal(amount), frequency,
+                new BigDecimal(growth), new BigDecimal(stepUp), new BigDecimal(tax));
     }
 
     @Test
@@ -63,7 +65,40 @@ class RetirementInputsStoreTest {
         assertEquals(0, inputs.getInflationPct().compareTo(restored.getInflationPct()));
         assertEquals(0, inputs.getGrowthPrePct().compareTo(restored.getGrowthPrePct()));
         assertEquals(0, inputs.getCorpusTaxRatePct().compareTo(restored.getCorpusTaxRatePct()));
-        assertEquals(0, inputs.getTaxRatePrePct().compareTo(restored.getTaxRatePrePct()));
+    }
+
+    @Test
+    void round_trip_preserves_contributions() {
+        final RetirementInputs inputs = baseInputs();
+        inputs.setPreRetirementContributions(List.of(
+                contribution("30000", Frequency.MONTHLY, "12", "5", "15")));
+        inputs.setPostRetirementContributions(List.of(
+                contribution("10000", Frequency.QUARTERLY, "6", "0", "20")));
+
+        final ObjectNode json = store.toJsonNode(inputs);
+        final RetirementInputs restored = store.fromJsonNode(json);
+
+        final Contribution pre = restored.getPreRetirementContributions().getFirst();
+        assertEquals(0, new BigDecimal("30000").compareTo(pre.getAmount()));
+        assertEquals(Frequency.MONTHLY, pre.getFrequency());
+        assertEquals(0, new BigDecimal("12").compareTo(pre.getGrowthPct()));
+        assertEquals(0, new BigDecimal("5").compareTo(pre.getStepUpPct()));
+        assertEquals(0, new BigDecimal("15").compareTo(pre.getTaxRatePct()));
+
+        final Contribution post = restored.getPostRetirementContributions().getFirst();
+        assertEquals(0, new BigDecimal("10000").compareTo(post.getAmount()));
+        assertEquals(Frequency.QUARTERLY, post.getFrequency());
+    }
+
+    @Test
+    void contribution_null_frequency_defaults_to_monthly() {
+        final RetirementInputs inputs = baseInputs();
+        inputs.setPreRetirementContributions(List.of(new Contribution(
+                BigDecimal.valueOf(10_000), null, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO)));
+
+        final ObjectNode json = store.toJsonNode(inputs);
+        assertEquals(Frequency.MONTHLY,
+                store.fromJsonNode(json).getPreRetirementContributions().getFirst().getFrequency());
     }
 
     @Test
@@ -173,6 +208,8 @@ class RetirementInputsStoreTest {
     @Test
     void null_list_fields_serialize_as_empty_arrays_and_restore_as_empty_lists() {
         final RetirementInputs inputs = baseInputs();
+        inputs.setPreRetirementContributions(null);
+        inputs.setPostRetirementContributions(null);
         inputs.setFutureExpenses(null);
         inputs.setRetirementBenefits(null);
         inputs.setFutureIncomes(null);
@@ -182,6 +219,10 @@ class RetirementInputsStoreTest {
         final ObjectNode json = store.toJsonNode(inputs);
         final RetirementInputs restored = store.fromJsonNode(json);
 
+        assertNotNull(restored.getPreRetirementContributions());
+        assertTrue(restored.getPreRetirementContributions().isEmpty());
+        assertNotNull(restored.getPostRetirementContributions());
+        assertTrue(restored.getPostRetirementContributions().isEmpty());
         assertNotNull(restored.getFutureExpenses());
         assertTrue(restored.getFutureExpenses().isEmpty());
         assertNotNull(restored.getRetirementBenefits());

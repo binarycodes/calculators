@@ -32,14 +32,11 @@ public class RetirementInputs {
     private BigDecimal growthPostPct;
     private BigDecimal corpusTaxRatePct;
 
-    private BigDecimal monthlyInvPre;
-    private BigDecimal sipGrowthPrePct;
-    private BigDecimal sipStepUpPrePct;
-    private BigDecimal taxRatePrePct;
-    private BigDecimal monthlyInvPost;
-    private BigDecimal sipGrowthPostPct;
-    private BigDecimal sipStepUpPostPct;
-    private BigDecimal taxRatePostPct;
+    // Investment contributions, each an independent accumulating stream.
+    // Pre-retirement streams run through the working years; post-retirement
+    // streams run through retirement.
+    private List<Contribution> preRetirementContributions = new ArrayList<>();
+    private List<Contribution> postRetirementContributions = new ArrayList<>();
 
     private List<FutureExpense> futureExpenses = new ArrayList<>();
     private List<RetirementBenefit> retirementBenefits = new ArrayList<>();

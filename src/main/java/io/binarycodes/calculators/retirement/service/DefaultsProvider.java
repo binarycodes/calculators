@@ -3,6 +3,7 @@ package io.binarycodes.calculators.retirement.service;
 import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.common.Frequency;
+import io.binarycodes.calculators.retirement.domain.Contribution;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringExpense;
@@ -75,20 +76,31 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
         inputs.setGrowthPrePct(bd(n, "growthPre"));
         inputs.setGrowthPostPct(bd(n, "growthPost"));
         inputs.setCorpusTaxRatePct(bd(n, "corpusTaxRate"));
-        inputs.setMonthlyInvPre(bd(n, "monthlyInvPre"));
-        inputs.setSipGrowthPrePct(bd(n, "sipGrowthPre"));
-        inputs.setSipStepUpPrePct(bd(n, "sipStepUpPre"));
-        inputs.setTaxRatePrePct(bd(n, "taxRatePre"));
-        inputs.setMonthlyInvPost(bd(n, "monthlyInvPost"));
-        inputs.setSipGrowthPostPct(bd(n, "sipGrowthPost"));
-        inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
-        inputs.setTaxRatePostPct(bd(n, "taxRatePost"));
+        inputs.setPreRetirementContributions(readContributions(n.get("preRetirementContributions")));
+        inputs.setPostRetirementContributions(readContributions(n.get("postRetirementContributions")));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
         inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
         inputs.setFutureIncomes(readFutureIncomes(n.get("futureIncomes")));
         inputs.setRecurringExpenses(readRecurringExpenses(n.get("recurringExpenses")));
         inputs.setRecurringIncomes(readRecurringIncomes(n.get("recurringIncomes")));
         return inputs;
+    }
+
+    private static List<Contribution> readContributions(JsonNode arrayNode) {
+        final List<Contribution> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var contribution = new Contribution();
+            contribution.setAmount(bd(entry, "amount"));
+            contribution.setFrequency(readFrequency(entry.get("frequency")));
+            contribution.setGrowthPct(bd(entry, "growth"));
+            contribution.setStepUpPct(bd(entry, "stepUp"));
+            contribution.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(contribution);
+        }
+        return out;
     }
 
     private static List<RecurringExpense> readRecurringExpenses(JsonNode arrayNode) {
@@ -234,14 +246,10 @@ public class DefaultsProvider implements CalculatorDefaults<RetirementInputs> {
         inputs.setGrowthPrePct(BigDecimal.valueOf(12));
         inputs.setGrowthPostPct(BigDecimal.valueOf(8));
         inputs.setCorpusTaxRatePct(BigDecimal.ZERO);
-        inputs.setMonthlyInvPre(BigDecimal.valueOf(25_000));
-        inputs.setSipGrowthPrePct(BigDecimal.valueOf(12));
-        inputs.setSipStepUpPrePct(BigDecimal.ZERO);
-        inputs.setTaxRatePrePct(BigDecimal.ZERO);
-        inputs.setMonthlyInvPost(BigDecimal.ZERO);
-        inputs.setSipGrowthPostPct(BigDecimal.ZERO);
-        inputs.setSipStepUpPostPct(BigDecimal.ZERO);
-        inputs.setTaxRatePostPct(BigDecimal.ZERO);
+        inputs.setPreRetirementContributions(new ArrayList<>(List.of(new Contribution(
+                BigDecimal.valueOf(25_000), Frequency.MONTHLY,
+                BigDecimal.valueOf(12), BigDecimal.ZERO, BigDecimal.ZERO))));
+        inputs.setPostRetirementContributions(new ArrayList<>());
         return inputs;
     }
 }

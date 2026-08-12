@@ -9,14 +9,10 @@
     "growthPre": "10",
     "growthPost": "8",
     "corpusTaxRate": "12.5",
-    "monthlyInvPre": "150000",
-    "sipGrowthPre": "10",
-    "sipStepUpPre": "0",
-    "taxRatePre": "12.5",
-    "monthlyInvPost": "0",
-    "sipGrowthPost": "0",
-    "sipStepUpPost": "0",
-    "taxRatePost": "12.5"
+    "preRetirementContributions": [
+      { "amount": "150000", "frequency": "MONTHLY", "growth": "10", "stepUp": "0", "taxRate": "12.5" }
+    ],
+    "postRetirementContributions": []
   },
   "EUR": {
     "currentAge": "38",
@@ -28,14 +24,10 @@
     "growthPre": "9",
     "growthPost": "4",
     "corpusTaxRate": "30",
-    "monthlyInvPre": "1500",
-    "sipGrowthPre": "9",
-    "sipStepUpPre": "0",
-    "taxRatePre": "30",
-    "monthlyInvPost": "0",
-    "sipGrowthPost": "4",
-    "sipStepUpPost": "0",
-    "taxRatePost": "30"
+    "preRetirementContributions": [
+      { "amount": "1500", "frequency": "MONTHLY", "growth": "9", "stepUp": "0", "taxRate": "30" }
+    ],
+    "postRetirementContributions": []
   },
   "USD": {
     "currentAge": "38",
@@ -47,13 +39,9 @@
     "growthPre": "8",
     "growthPost": "5",
     "corpusTaxRate": "30",
-    "monthlyInvPre": "500",
-    "sipGrowthPre": "8",
-    "sipStepUpPre": "0",
-    "taxRatePre": "30",
-    "monthlyInvPost": "0",
-    "sipGrowthPost": "5",
-    "sipStepUpPost": "0",
-    "taxRatePost": "30"
+    "preRetirementContributions": [
+      { "amount": "500", "frequency": "MONTHLY", "growth": "8", "stepUp": "0", "taxRate": "30" }
+    ],
+    "postRetirementContributions": []
   }
 }

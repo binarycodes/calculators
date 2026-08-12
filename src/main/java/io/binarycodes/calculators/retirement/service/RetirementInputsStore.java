@@ -6,6 +6,7 @@ import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.common.Frequency;
+import io.binarycodes.calculators.retirement.domain.Contribution;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.RecurringExpense;
@@ -115,20 +116,31 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         n.put("growthPre",      plain(in.getGrowthPrePct()));
         n.put("growthPost",     plain(in.getGrowthPostPct()));
         n.put("corpusTaxRate",  plain(in.getCorpusTaxRatePct()));
-        n.put("monthlyInvPre",  plain(in.getMonthlyInvPre()));
-        n.put("sipGrowthPre",   plain(in.getSipGrowthPrePct()));
-        n.put("sipStepUpPre",   plain(in.getSipStepUpPrePct()));
-        n.put("taxRatePre",     plain(in.getTaxRatePrePct()));
-        n.put("monthlyInvPost", plain(in.getMonthlyInvPost()));
-        n.put("sipGrowthPost",  plain(in.getSipGrowthPostPct()));
-        n.put("sipStepUpPost",  plain(in.getSipStepUpPostPct()));
-        n.put("taxRatePost",    plain(in.getTaxRatePostPct()));
+        n.set("preRetirementContributions", contributionsToJson(in.getPreRetirementContributions()));
+        n.set("postRetirementContributions", contributionsToJson(in.getPostRetirementContributions()));
         n.set("futureExpenses", futureExpensesToJson(in.getFutureExpenses()));
         n.set("retirementBenefits", retirementBenefitsToJson(in.getRetirementBenefits()));
         n.set("futureIncomes", futureIncomesToJson(in.getFutureIncomes()));
         n.set("recurringExpenses", recurringExpensesToJson(in.getRecurringExpenses()));
         n.set("recurringIncomes", recurringIncomesToJson(in.getRecurringIncomes()));
         return n;
+    }
+
+    private ArrayNode contributionsToJson(List<Contribution> contributions) {
+        final ArrayNode arr = this.om.createArrayNode();
+        if (contributions == null) {
+            return arr;
+        }
+        for (final Contribution contribution : contributions) {
+            final ObjectNode node = this.om.createObjectNode();
+            node.put("amount", plain(contribution.getAmount()));
+            node.put("frequency", contribution.getFrequency() == null ? null : contribution.getFrequency().name());
+            node.put("growth", plain(contribution.getGrowthPct()));
+            node.put("stepUp", plain(contribution.getStepUpPct()));
+            node.put("taxRate", plain(contribution.getTaxRatePct()));
+            arr.add(node);
+        }
+        return arr;
     }
 
     private ArrayNode recurringExpensesToJson(List<RecurringExpense> expenses) {
@@ -230,20 +242,31 @@ public class RetirementInputsStore implements InputsStore<RetirementInputs> {
         inputs.setGrowthPrePct(bd(n, "growthPre"));
         inputs.setGrowthPostPct(bd(n, "growthPost"));
         inputs.setCorpusTaxRatePct(bd(n, "corpusTaxRate"));
-        inputs.setMonthlyInvPre(bd(n, "monthlyInvPre"));
-        inputs.setSipGrowthPrePct(bd(n, "sipGrowthPre"));
-        inputs.setSipStepUpPrePct(bd(n, "sipStepUpPre"));
-        inputs.setTaxRatePrePct(bd(n, "taxRatePre"));
-        inputs.setMonthlyInvPost(bd(n, "monthlyInvPost"));
-        inputs.setSipGrowthPostPct(bd(n, "sipGrowthPost"));
-        inputs.setSipStepUpPostPct(bd(n, "sipStepUpPost"));
-        inputs.setTaxRatePostPct(bd(n, "taxRatePost"));
+        inputs.setPreRetirementContributions(readContributions(n.get("preRetirementContributions")));
+        inputs.setPostRetirementContributions(readContributions(n.get("postRetirementContributions")));
         inputs.setFutureExpenses(readFutureExpenses(n.get("futureExpenses")));
         inputs.setRetirementBenefits(readRetirementBenefits(n.get("retirementBenefits")));
         inputs.setFutureIncomes(readFutureIncomes(n.get("futureIncomes")));
         inputs.setRecurringExpenses(readRecurringExpenses(n.get("recurringExpenses")));
         inputs.setRecurringIncomes(readRecurringIncomes(n.get("recurringIncomes")));
         return inputs;
+    }
+
+    private static List<Contribution> readContributions(JsonNode arrayNode) {
+        final List<Contribution> out = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return out;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final var contribution = new Contribution();
+            contribution.setAmount(bd(entry, "amount"));
+            contribution.setFrequency(readFrequency(entry.get("frequency")));
+            contribution.setGrowthPct(bd(entry, "growth"));
+            contribution.setStepUpPct(bd(entry, "stepUp"));
+            contribution.setTaxRatePct(bd(entry, "taxRate"));
+            out.add(contribution);
+        }
+        return out;
     }
 
     private static List<RecurringExpense> readRecurringExpenses(JsonNode arrayNode) {

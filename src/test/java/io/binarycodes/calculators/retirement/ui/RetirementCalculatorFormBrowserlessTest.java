@@ -5,7 +5,9 @@ import com.vaadin.browserless.BrowserlessTest;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.NumberField;
+import io.binarycodes.calculators.base.common.Frequency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
+import io.binarycodes.calculators.retirement.domain.Contribution;
 import io.binarycodes.calculators.retirement.domain.RetirementInputs;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -18,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Smoke test that the SIP step-up fields are rendered and round-trip cleanly
- * through the binder. Catches binding-level regressions (renamed getters,
- * missing {@code bindPercentage} call) that the calculator unit tests can't.
+ * Smoke test that contribution rows render their step-up field and round-trip
+ * cleanly through the form. Catches binding-level regressions (renamed getters,
+ * missing row wiring) that the calculator unit tests can't.
  */
 class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
 
@@ -39,12 +41,22 @@ class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
     }
 
     @Test
-    void renders_two_step_up_fields() {
+    void renders_a_step_up_field_per_contribution_row() {
         final var form = new RetirementCalculatorForm(new UserPreferences());
+        // Seed one pre-retirement and one post-retirement contribution row so
+        // each renders its own Step Up field.
+        final RetirementInputs seed = new RetirementInputs();
+        seed.setPreRetirementContributions(List.of(new Contribution(
+                BigDecimal.valueOf(150_000), Frequency.MONTHLY,
+                BigDecimal.valueOf(12), BigDecimal.valueOf(10), BigDecimal.ZERO)));
+        seed.setPostRetirementContributions(List.of(new Contribution(
+                BigDecimal.valueOf(50_000), Frequency.MONTHLY,
+                BigDecimal.valueOf(8), BigDecimal.valueOf(5), BigDecimal.ZERO)));
+        form.setInputs(seed);
+
         // TabSheet swaps the selected tab's content into the component tree on
         // the next client round trip, so attach the form to a UI and flush
-        // before searching for fields in the (initially-inactive) Investments
-        // tab.
+        // before searching for fields in the (initially-inactive) Investments tab.
         UI.getCurrent().add(form);
         find(TabSheet.class, form).single().setSelectedIndex(1);
         roundTrip();
@@ -53,7 +65,7 @@ class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
                 .withCaption("Step Up Percentage (Yearly)").all();
 
         assertEquals(2, stepUpFields.size(),
-                "expected one Step Up field under Before Retirement and one under After Retirement");
+                "expected one Step Up field per contribution row (1 pre + 1 post)");
     }
 
     @Test
@@ -70,23 +82,27 @@ class RetirementCalculatorFormBrowserlessTest extends BrowserlessTest {
         initial.setGrowthPrePct(BigDecimal.valueOf(12));
         initial.setGrowthPostPct(BigDecimal.valueOf(8));
         initial.setCorpusTaxRatePct(BigDecimal.valueOf(5));
-        initial.setMonthlyInvPre(BigDecimal.valueOf(150_000));
-        initial.setSipGrowthPrePct(BigDecimal.valueOf(12));
-        initial.setSipStepUpPrePct(BigDecimal.valueOf(10));
-        initial.setTaxRatePrePct(BigDecimal.valueOf(15));
-        initial.setMonthlyInvPost(BigDecimal.valueOf(50_000));
-        initial.setSipGrowthPostPct(BigDecimal.valueOf(8));
-        initial.setSipStepUpPostPct(BigDecimal.valueOf(5));
-        initial.setTaxRatePostPct(BigDecimal.valueOf(20));
+        initial.setPreRetirementContributions(List.of(new Contribution(
+                BigDecimal.valueOf(150_000), Frequency.MONTHLY,
+                BigDecimal.valueOf(12), BigDecimal.valueOf(10), BigDecimal.valueOf(15))));
+        initial.setPostRetirementContributions(List.of(new Contribution(
+                BigDecimal.valueOf(50_000), Frequency.QUARTERLY,
+                BigDecimal.valueOf(8), BigDecimal.valueOf(5), BigDecimal.valueOf(20))));
         form.setInputs(initial);
 
         final RetirementInputs roundTripped = form.getInputs();
 
-        assertNotNull(roundTripped.getSipStepUpPrePct());
-        assertNotNull(roundTripped.getSipStepUpPostPct());
-        assertEquals(0, initial.getSipStepUpPrePct().compareTo(roundTripped.getSipStepUpPrePct()),
-                "pre step-up must survive binder round-trip");
-        assertEquals(0, initial.getSipStepUpPostPct().compareTo(roundTripped.getSipStepUpPostPct()),
-                "post step-up must survive binder round-trip");
+        assertEquals(1, roundTripped.getPreRetirementContributions().size());
+        final Contribution pre = roundTripped.getPreRetirementContributions().getFirst();
+        assertNotNull(pre.getStepUpPct());
+        assertEquals(0, BigDecimal.valueOf(10).compareTo(pre.getStepUpPct()),
+                "pre step-up must survive the row round-trip");
+        assertEquals(Frequency.MONTHLY, pre.getFrequency(), "pre frequency must survive");
+
+        assertEquals(1, roundTripped.getPostRetirementContributions().size());
+        final Contribution post = roundTripped.getPostRetirementContributions().getFirst();
+        assertEquals(0, BigDecimal.valueOf(5).compareTo(post.getStepUpPct()),
+                "post step-up must survive the row round-trip");
+        assertEquals(Frequency.QUARTERLY, post.getFrequency(), "post frequency must survive");
     }
 }

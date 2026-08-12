@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.common.Frequency;
+import io.binarycodes.calculators.retirement.domain.Contribution;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -38,15 +39,15 @@ class RetirementCalculatorTest {
         inputs.setGrowthPrePct(bd(12));
         inputs.setGrowthPostPct(bd(8));
         inputs.setCorpusTaxRatePct(bd(0));
-        inputs.setMonthlyInvPre(bd(150_000));
-        inputs.setSipGrowthPrePct(bd(12));
-        inputs.setSipStepUpPrePct(bd(0));
-        inputs.setTaxRatePrePct(bd(0));
-        inputs.setMonthlyInvPost(bd(0));
-        inputs.setSipGrowthPostPct(bd(0));
-        inputs.setSipStepUpPostPct(bd(0));
-        inputs.setTaxRatePostPct(bd(0));
+        inputs.setPreRetirementContributions(new ArrayList<>(List.of(
+                contribution(bd(150_000), Frequency.MONTHLY, bd(12), bd(0), bd(0)))));
+        inputs.setPostRetirementContributions(new ArrayList<>());
         return inputs;
+    }
+
+    private static Contribution contribution(BigDecimal amount, Frequency frequency,
+                                             BigDecimal growth, BigDecimal stepUp, BigDecimal tax) {
+        return new Contribution(amount, frequency, growth, stepUp, tax);
     }
 
     private static RetirementInputs allOnes(int currentAge, int retireAge, int lifeExp) {
@@ -60,14 +61,10 @@ class RetirementCalculatorTest {
         inputs.setGrowthPrePct(bd(1));
         inputs.setGrowthPostPct(bd(1));
         inputs.setCorpusTaxRatePct(bd(1));
-        inputs.setMonthlyInvPre(bd(1));
-        inputs.setSipGrowthPrePct(bd(1));
-        inputs.setSipStepUpPrePct(bd(1));
-        inputs.setTaxRatePrePct(bd(1));
-        inputs.setMonthlyInvPost(bd(1));
-        inputs.setSipGrowthPostPct(bd(1));
-        inputs.setSipStepUpPostPct(bd(1));
-        inputs.setTaxRatePostPct(bd(1));
+        inputs.setPreRetirementContributions(new ArrayList<>(List.of(
+                contribution(bd(1), Frequency.MONTHLY, bd(1), bd(1), bd(1)))));
+        inputs.setPostRetirementContributions(new ArrayList<>(List.of(
+                contribution(bd(1), Frequency.MONTHLY, bd(1), bd(1), bd(1)))));
         return inputs;
     }
 
@@ -160,7 +157,8 @@ class RetirementCalculatorTest {
         // 10% annual step-up on a 150,000 monthly SIP: each successive
         // pre-retirement year's investment is 1.1x the previous one.
         final RetirementInputs inputs = inrDefaults();
-        inputs.setSipStepUpPrePct(bd(10));
+        inputs.setPreRetirementContributions(List.of(
+                contribution(bd(150_000), Frequency.MONTHLY, bd(12), bd(10), bd(0))));
         final RetirementResult result = RetirementCalculator.calculate(inputs);
 
         final java.util.List<ProjectionRow> preRows = result.rows().stream()
@@ -183,9 +181,10 @@ class RetirementCalculatorTest {
         // The first post-retirement row's investment must equal the base
         // post-SIP × 1 (no inherited compounding from the pre phase).
         final RetirementInputs inputs = inrDefaults();
-        inputs.setSipStepUpPrePct(bd(20));
-        inputs.setMonthlyInvPost(bd(50_000));
-        inputs.setSipStepUpPostPct(bd(0));
+        inputs.setPreRetirementContributions(List.of(
+                contribution(bd(150_000), Frequency.MONTHLY, bd(12), bd(20), bd(0))));
+        inputs.setPostRetirementContributions(List.of(
+                contribution(bd(50_000), Frequency.MONTHLY, bd(0), bd(0), bd(0))));
         final RetirementResult result = RetirementCalculator.calculate(inputs);
 
         final ProjectionRow firstPostRow = result.rows().stream()
@@ -206,13 +205,86 @@ class RetirementCalculatorTest {
                 .calculate(inrDefaults()).investedAtRetirement();
 
         final RetirementInputs withStepUp = inrDefaults();
-        withStepUp.setSipStepUpPrePct(bd(10));
+        withStepUp.setPreRetirementContributions(List.of(
+                contribution(bd(150_000), Frequency.MONTHLY, bd(12), bd(10), bd(0))));
         final BigDecimal stepUpInvested = RetirementCalculator
                 .calculate(withStepUp).investedAtRetirement();
 
         assertTrue(stepUpInvested.compareTo(baseInvested) > 0,
                 "10% step-up must raise total invested at retirement; base=" + baseInvested
                         + " step-up=" + stepUpInvested);
+    }
+
+    @Test
+    void frequency_annualises_the_contribution_amount() {
+        // A monthly 100k stream invests 1.2M/yr; the same amount quarterly
+        // invests 400k/yr (amount × periods-per-year).
+        final RetirementInputs monthly = inrDefaults();
+        monthly.setPreRetirementContributions(List.of(
+                contribution(bd(100_000), Frequency.MONTHLY, bd(0), bd(0), bd(0))));
+        assertEquals(0, bd(1_200_000).compareTo(
+                RetirementCalculator.calculate(monthly).rows().getFirst().investment()));
+
+        final RetirementInputs quarterly = inrDefaults();
+        quarterly.setPreRetirementContributions(List.of(
+                contribution(bd(100_000), Frequency.QUARTERLY, bd(0), bd(0), bd(0))));
+        assertEquals(0, bd(400_000).compareTo(
+                RetirementCalculator.calculate(quarterly).rows().getFirst().investment()));
+    }
+
+    @Test
+    void pre_contribution_derisks_to_corpus_post_rate_after_retirement() {
+        // One pre-retirement year contributes 1.2M and grows 10% → 1.32M at
+        // retirement. With the corpus post rate at 0%, that pile must then stay
+        // frozen — proving the pre stream derisks to growthPost rather than
+        // keeping its own 10%. (No corpus, no expenses → no withdrawals.)
+        final var in = new RetirementInputs();
+        in.setCurrentAge(40);
+        in.setRetireAge(41);
+        in.setLifeExp(44);
+        in.setCorpus(bd(0));
+        in.setMonthlyExpenses(bd(0));
+        in.setInflationPct(bd(0));
+        in.setGrowthPrePct(bd(0));
+        in.setGrowthPostPct(bd(0));
+        in.setCorpusTaxRatePct(bd(0));
+        in.setPreRetirementContributions(List.of(
+                contribution(bd(100_000), Frequency.MONTHLY, bd(10), bd(0), bd(0))));
+        in.setPostRetirementContributions(List.of());
+
+        final List<ProjectionRow> post = RetirementCalculator.calculate(in).rows().stream()
+                .filter(ProjectionRow::isPost).toList();
+        assertTrue(post.size() >= 2, "need at least two post-retirement rows");
+        final BigDecimal frozen = post.getFirst().endCorpus();
+        assertEquals(0, bd(1_320_000).compareTo(frozen), "1.2M × 1.10 at retirement");
+        for (final ProjectionRow row : post) {
+            assertEquals(0, frozen.compareTo(row.endCorpus()),
+                    "post-retirement the derisked pile must stay frozen at growthPost=0");
+        }
+    }
+
+    @Test
+    void post_contribution_grows_at_its_own_rate() {
+        // growthPost = 0 freezes the (empty) corpus, so any positive returns
+        // must come from the post-retirement stream compounding at its own 10%.
+        final var in = new RetirementInputs();
+        in.setCurrentAge(40);
+        in.setRetireAge(41);
+        in.setLifeExp(44);
+        in.setCorpus(bd(0));
+        in.setMonthlyExpenses(bd(0));
+        in.setInflationPct(bd(0));
+        in.setGrowthPrePct(bd(0));
+        in.setGrowthPostPct(bd(0));
+        in.setCorpusTaxRatePct(bd(0));
+        in.setPreRetirementContributions(List.of());
+        in.setPostRetirementContributions(List.of(
+                contribution(bd(100_000), Frequency.MONTHLY, bd(10), bd(0), bd(0))));
+
+        final List<ProjectionRow> post = RetirementCalculator.calculate(in).rows().stream()
+                .filter(ProjectionRow::isPost).toList();
+        assertTrue(post.stream().anyMatch(row -> row.returns().signum() > 0),
+                "post stream must grow at its own rate even when the corpus post rate is 0");
     }
 
     @Test
@@ -307,20 +379,17 @@ class RetirementCalculatorTest {
 
     @Test
     void lowest_yield_first_outlasts_proportional_drain() {
-        // Configure a scenario where the main corpus grows much faster than
-        // the SIP corpus post-retirement, so the SIP bucket should be drained
-        // first. With pre-retirement bucket growth as well, the SIP corpus
-        // ends up with a significant balance at retirement, but its zero
-        // post-retirement growth means it's the natural sink for withdrawals
-        // until it empties. As long as the main corpus survives life
-        // expectancy, the calculator should not flag depletion.
+        // The main corpus grows fast post-retirement while a post-retirement
+        // contribution stream earns nothing. Under lowest-yield-first the zero
+        // stream is the natural sink for withdrawals, leaving the fast main to
+        // compound untouched — so a generous corpus should never deplete.
         final RetirementInputs inputs = inrDefaults();
         inputs.setGrowthPostPct(bd(10));      // fat main bucket post-retirement
-        inputs.setSipGrowthPostPct(bd(0));    // SIP earns nothing post-retirement
-        inputs.setMonthlyInvPost(bd(0));      // no further SIP contributions
+        inputs.setPostRetirementContributions(List.of(
+                contribution(bd(50_000), Frequency.MONTHLY, bd(0), bd(0), bd(0))));
         // Initial corpus is generous — under proportional-drain we'd be eating
-        // into the high-yielding main from day one. Under lowest-first the SIP
-        // bucket goes first and main keeps compounding at 10%.
+        // into the high-yielding main from day one. Under lowest-first the zero
+        // stream goes first and main keeps compounding at 10%.
         inputs.setCorpus(bd(30_000_000));
 
         final RetirementResult result = RetirementCalculator.calculate(inputs);
@@ -601,14 +670,8 @@ class RetirementCalculatorTest {
         inputs.setGrowthPrePct(bd(0));
         inputs.setGrowthPostPct(bd(0));
         inputs.setCorpusTaxRatePct(bd(0));
-        inputs.setMonthlyInvPre(bd(0));
-        inputs.setSipGrowthPrePct(bd(0));
-        inputs.setSipStepUpPrePct(bd(0));
-        inputs.setTaxRatePrePct(bd(0));
-        inputs.setMonthlyInvPost(bd(0));
-        inputs.setSipGrowthPostPct(bd(0));
-        inputs.setSipStepUpPostPct(bd(0));
-        inputs.setTaxRatePostPct(bd(0));
+        inputs.setPreRetirementContributions(List.of());
+        inputs.setPostRetirementContributions(List.of());
 
         final RetirementResult result = RetirementCalculator.calculate(inputs);
 

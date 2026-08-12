@@ -79,6 +79,8 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
             // (the binder is the authoritative source via writeBeanAsDraft).
             this.basicTab.fieldSignals().forEach(Signal::get);
             this.investmentsTab.fieldSignals().forEach(Signal::get);
+            this.investmentsTab.preContributionsSignal().get();
+            this.investmentsTab.postContributionsSignal().get();
             this.futureExpensesTab.futureExpensesSignal().get();
             this.futureExpensesTab.recurringExpensesSignal().get();
             this.futureIncomesTab.futureIncomesSignal().get();
@@ -115,6 +117,8 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
         // sequential field/list writes here naturally coalesce into one
         // downstream effect invocation without needing explicit batching.
         this.binder.readBean(inputs);
+        this.investmentsTab.setPreContributions(inputs.getPreRetirementContributions());
+        this.investmentsTab.setPostContributions(inputs.getPostRetirementContributions());
         this.futureExpensesTab.setFutureExpenses(inputs.getFutureExpenses());
         this.futureExpensesTab.setRecurringExpenses(inputs.getRecurringExpenses());
         this.retirementBenefitsTab.setRetirementBenefits(inputs.getRetirementBenefits());
@@ -142,6 +146,7 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
 
     public boolean isValid() {
         return this.binder.isValid()
+                && this.investmentsTab.isValid()
                 && this.futureExpensesTab.isValid()
                 && this.futureIncomesTab.isValid()
                 && this.retirementBenefitsTab.isValid();
@@ -156,6 +161,8 @@ public class RetirementCalculatorForm extends VerticalLayout implements Calculat
     private RetirementInputs buildInputs() {
         final var target = new RetirementInputs();
         this.binder.writeBeanAsDraft(target);
+        target.setPreRetirementContributions(this.investmentsTab.getPreContributions());
+        target.setPostRetirementContributions(this.investmentsTab.getPostContributions());
         target.setFutureExpenses(this.futureExpensesTab.getFutureExpenses());
         target.setRecurringExpenses(this.futureExpensesTab.getRecurringExpenses());
         target.setRetirementBenefits(this.retirementBenefitsTab.getRetirementBenefits());

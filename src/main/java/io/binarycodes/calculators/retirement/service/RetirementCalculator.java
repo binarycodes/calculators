@@ -2,6 +2,7 @@ package io.binarycodes.calculators.retirement.service;
 
 import io.binarycodes.calculators.base.math.Rates;
 import io.binarycodes.calculators.base.common.Frequency;
+import io.binarycodes.calculators.retirement.domain.Contribution;
 import io.binarycodes.calculators.retirement.domain.FutureExpense;
 import io.binarycodes.calculators.retirement.domain.FutureIncome;
 import io.binarycodes.calculators.retirement.domain.ProjectionRow;
@@ -25,21 +26,23 @@ import java.util.Optional;
  * matches IEEE 754 double precision while avoiding rounding drift on equality
  * assertions.
  *
- * <p>The calculator models two persistent buckets that each track their own
+ * <p>The calculator models several buckets that each track their own
  * principal and gains:</p>
  *
  * <ul>
  *     <li><b>Main corpus</b> — seeded with the user's existing corpus, grows
  *         at {@code growthPre}/{@code growthPost}, taxed at
- *         {@code corpusTaxRate} on gains.</li>
- *     <li><b>SIP corpus</b> — seeded at zero, accumulates monthly
- *         contributions plus retirement benefits and future incomes. Grows
- *         at {@code sipGrowthPre}/{@code sipGrowthPost}. Gains taxed at the
- *         current phase's {@code taxRatePre}/{@code taxRatePost}.</li>
+ *         {@code corpusTaxRate} on gains. Retirement benefits and future /
+ *         recurring incomes are added here.</li>
+ *     <li><b>Contribution streams</b> — one bucket per contribution row. A
+ *         pre-retirement stream deposits during the working years and grows at
+ *         its own rate, then derisks to {@code growthPost} once retired; a
+ *         post-retirement stream deposits during retirement and grows at its
+ *         own rate. Each stream's gains are taxed at its own rate.</li>
  * </ul>
  *
  * <p>Each year's withdrawal is satisfied by draining the bucket with the
- * lower current growth rate first, so the higher-yielding bucket compounds
+ * lower current growth rate first, so the higher-yielding buckets compound
  * longer. When a bucket is drawn down, the gains portion of the draw
  * incurs tax (reported separately; it doesn't reduce the gross corpus
  * drawdown).</p>
@@ -64,18 +67,17 @@ public final class RetirementCalculator {
         final BigDecimal growthPre = pctToFraction(in.getGrowthPrePct());
         final BigDecimal growthPost = pctToFraction(in.getGrowthPostPct());
         final BigDecimal corpusTaxRate = pctToFraction(in.getCorpusTaxRatePct());
-        final BigDecimal sipGrowthPre = pctToFraction(in.getSipGrowthPrePct());
-        final BigDecimal sipGrowthPost = pctToFraction(in.getSipGrowthPostPct());
-        final BigDecimal sipStepUpPre = pctToFraction(in.getSipStepUpPrePct());
-        final BigDecimal sipStepUpPost = pctToFraction(in.getSipStepUpPostPct());
-        final BigDecimal sipTaxRatePre = pctToFraction(in.getTaxRatePrePct());
-        final BigDecimal sipTaxRatePost = pctToFraction(in.getTaxRatePostPct());
         final BigDecimal annualExp0 = in.getMonthlyExpenses().multiply(TWELVE, MC);
-        final BigDecimal annualInvPre = in.getMonthlyInvPre().multiply(TWELVE, MC);
-        final BigDecimal annualInvPost = in.getMonthlyInvPost().multiply(TWELVE, MC);
 
         final Bucket main = new Bucket(in.getCorpus(), in.getCorpus());
-        final Bucket sip = new Bucket(BigDecimal.ZERO, BigDecimal.ZERO);
+        // Each contribution row is its own accumulating stream. Pre-retirement
+        // streams contribute during the working years; post-retirement streams
+        // during retirement.
+        final List<ContributionBucket> preBuckets = buildBuckets(in.getPreRetirementContributions(), false);
+        final List<ContributionBucket> postBuckets = buildBuckets(in.getPostRetirementContributions(), true);
+        final List<ContributionBucket> allBuckets = new ArrayList<>(preBuckets.size() + postBuckets.size());
+        allBuckets.addAll(preBuckets);
+        allBuckets.addAll(postBuckets);
 
         final List<ProjectionRow> rows = new ArrayList<>();
         BigDecimal totalInvested = in.getCorpus();
@@ -95,15 +97,22 @@ public final class RetirementCalculator {
             }
 
             final BigDecimal mainRate = isPost ? growthPost : growthPre;
-            final BigDecimal sipRate = isPost ? sipGrowthPost : sipGrowthPre;
-            final BigDecimal sipTaxRate = isPost ? sipTaxRatePost : sipTaxRatePre;
-
-            // This year's investment = SIP contribution (step-up applied) +
-            // any retirement benefits received this year + future incomes due
-            // this year. All land as principal in the SIP bucket.
             final int yearsInPhase = isPost ? age - in.getRetireAge() : age - in.getCurrentAge();
-            final BigDecimal stepUpFactor = pow1plus(isPost ? sipStepUpPost : sipStepUpPre, yearsInPhase);
-            final BigDecimal sipContribution = (isPost ? annualInvPost : annualInvPre).multiply(stepUpFactor, MC);
+
+            // This year's contributions: every active stream deposits its
+            // stepped-up amount into its own bucket (as principal).
+            BigDecimal contributionsThisYear = BigDecimal.ZERO;
+            for (final ContributionBucket contribution : allBuckets) {
+                if (contribution.activeAt(isPost)) {
+                    final BigDecimal deposit = contribution.annualAmount
+                            .multiply(pow1plus(contribution.stepUp, yearsInPhase), MC);
+                    contribution.bucket.contribute(deposit);
+                    contributionsThisYear = contributionsThisYear.add(deposit, MC);
+                }
+            }
+
+            // Retirement benefits + future/recurring incomes join the existing
+            // corpus (grown at the corpus rate, taxed at the corpus rate).
             final BigDecimal netBenefitsThisYear = isRetireYear
                     ? netRetirementBenefits(in.getRetirementBenefits())
                     : BigDecimal.ZERO;
@@ -111,19 +120,25 @@ public final class RetirementCalculator {
                     in.getFutureIncomes(), year);
             final BigDecimal netRecurringIncomeThisYear = netRecurringIncomesFor(
                     in.getRecurringIncomes(), year);
-            final BigDecimal investment = sipContribution
-                    .add(netBenefitsThisYear, MC)
+            final BigDecimal incomeThisYear = netBenefitsThisYear
                     .add(netFutureIncomeThisYear, MC)
                     .add(netRecurringIncomeThisYear, MC);
-            totalInvested = totalInvested.add(investment, MC);
-            sip.contribute(investment);
+            main.contribute(incomeThisYear);
 
-            final BigDecimal startCorpus = main.balance.add(sip.balance, MC);
+            final BigDecimal investment = contributionsThisYear.add(incomeThisYear, MC);
+            totalInvested = totalInvested.add(investment, MC);
+
+            BigDecimal startCorpus = main.balance;
+            for (final ContributionBucket contribution : allBuckets) {
+                startCorpus = startCorpus.add(contribution.bucket.balance, MC);
+            }
 
             // Apply this year's growth before any withdrawal.
-            final BigDecimal mainReturns = main.applyGrowth(mainRate);
-            final BigDecimal sipReturns = sip.applyGrowth(sipRate);
-            final BigDecimal returns = mainReturns.add(sipReturns, MC);
+            BigDecimal returns = main.applyGrowth(mainRate);
+            for (final ContributionBucket contribution : allBuckets) {
+                returns = returns.add(
+                        contribution.bucket.applyGrowth(contribution.currentRate(isPost, growthPost)), MC);
+            }
 
             final BigDecimal futureExpensesThisYear = inflatedFutureExpensesFor(
                     in.getFutureExpenses(), year, currentYear);
@@ -134,11 +149,14 @@ public final class RetirementCalculator {
                     .add(recurringExpensesThisYear, MC);
 
             // Drain from the bucket with the lower current growth rate first;
-            // tie-break in favour of main. This preserves the higher-yielding
-            // bucket for longer compounding.
+            // ties keep insertion order (main first, then streams), preserving
+            // the higher-yielding buckets for longer compounding.
             final List<BucketDraw> drawOrder = new ArrayList<>();
             drawOrder.add(new BucketDraw(main, mainRate, corpusTaxRate));
-            drawOrder.add(new BucketDraw(sip, sipRate, sipTaxRate));
+            for (final ContributionBucket contribution : allBuckets) {
+                drawOrder.add(new BucketDraw(contribution.bucket,
+                        contribution.currentRate(isPost, growthPost), contribution.taxRate));
+            }
             drawOrder.sort(Comparator.comparing((BucketDraw d) -> d.growthRate));
 
             BigDecimal remaining = withdrawal;
@@ -168,7 +186,11 @@ public final class RetirementCalculator {
                 endCorpus = remaining.negate();
                 depleted = true;
             } else {
-                endCorpus = main.balance.add(sip.balance, MC);
+                BigDecimal total = main.balance;
+                for (final ContributionBucket contribution : allBuckets) {
+                    total = total.add(contribution.bucket.balance, MC);
+                }
+                endCorpus = total;
                 depleted = endCorpus.signum() < 0;
             }
 
@@ -188,6 +210,63 @@ public final class RetirementCalculator {
                 List.copyOf(rows),
                 Optional.ofNullable(corpusDepletedAt),
                 investedAtRetirement);
+    }
+
+    private static List<ContributionBucket> buildBuckets(List<Contribution> rows, boolean post) {
+        final List<ContributionBucket> out = new ArrayList<>();
+        if (rows == null) {
+            return out;
+        }
+        for (final Contribution row : rows) {
+            if (row == null || row.getAmount() == null || row.getAmount().signum() <= 0) {
+                continue;
+            }
+            final Frequency frequency = row.getFrequency() == null ? Frequency.MONTHLY : row.getFrequency();
+            final BigDecimal annualAmount = row.getAmount()
+                    .multiply(BigDecimal.valueOf(frequency.periodsPerYear()), MC);
+            out.add(new ContributionBucket(annualAmount,
+                    pctToFraction(row.getStepUpPct()),
+                    pctToFraction(row.getGrowthPct()),
+                    pctToFraction(row.getTaxRatePct()),
+                    post));
+        }
+        return out;
+    }
+
+    /**
+     * One contribution stream: its own accumulating {@link Bucket} plus the
+     * annualised amount, yearly step-up, growth rate, and gains tax rate. A
+     * pre-retirement stream ({@code post == false}) grows at its own rate while
+     * contributing, then derisks to the corpus post-retirement rate; a
+     * post-retirement stream grows at its own rate throughout.
+     */
+    private static final class ContributionBucket {
+        final Bucket bucket = new Bucket(BigDecimal.ZERO, BigDecimal.ZERO);
+        final BigDecimal annualAmount;
+        final BigDecimal stepUp;
+        final BigDecimal growth;
+        final BigDecimal taxRate;
+        final boolean post;
+
+        ContributionBucket(BigDecimal annualAmount, BigDecimal stepUp, BigDecimal growth,
+                           BigDecimal taxRate, boolean post) {
+            this.annualAmount = annualAmount;
+            this.stepUp = stepUp;
+            this.growth = growth;
+            this.taxRate = taxRate;
+            this.post = post;
+        }
+
+        boolean activeAt(boolean isPost) {
+            return this.post == isPost;
+        }
+
+        BigDecimal currentRate(boolean isPost, BigDecimal growthPost) {
+            if (this.post) {
+                return this.growth;
+            }
+            return isPost ? growthPost : this.growth;
+        }
     }
 
     /**

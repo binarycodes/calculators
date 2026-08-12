@@ -31,13 +31,11 @@ class DefaultsJsonTest {
             "currentAge", "retireAge", "lifeExp");
 
     private static final List<String> MONEY_FIELDS = List.of(
-            "corpus", "monthlyExp", "monthlyInvPre", "monthlyInvPost");
+            "corpus", "monthlyExp");
 
     private static final List<String> PERCENTAGE_FIELDS = List.of(
             "inflation",
-            "growthPre", "growthPost", "corpusTaxRate",
-            "sipGrowthPre", "sipStepUpPre", "taxRatePre",
-            "sipGrowthPost", "sipStepUpPost", "taxRatePost");
+            "growthPre", "growthPost", "corpusTaxRate");
 
     @Test
     void file_parses_as_valid_json() {
@@ -133,8 +131,8 @@ class DefaultsJsonTest {
                   "currentAge":"35","retireAge":"60","lifeExp":"90",
                   "corpus":"5000000","monthlyExp":"50000","inflation":"6",
                   "growthPre":"12","growthPost":"8","corpusTaxRate":"0",
-                  "monthlyInvPre":"10000","sipGrowthPre":"12","sipStepUpPre":"0","taxRatePre":"0",
-                  "monthlyInvPost":"0","sipGrowthPost":"0","sipStepUpPost":"0","taxRatePost":"0",
+                  "preRetirementContributions":[{"amount":"10000","frequency":"WEEKLY","growth":"12","stepUp":"0","taxRate":"0"}],
+                  "postRetirementContributions":[{"amount":"5000","frequency":"QUARTERLY","growth":"6","stepUp":"0","taxRate":"20"}],
                   "recurringExpenses":[{"year":2030,"stopYear":2035,"description":"EMI",
                     "amount":"5000","frequency":"WEEKLY","inflation":""}],
                   "recurringIncomes":[{"year":2031,"stopYear":2036,"description":"Rent",
@@ -150,6 +148,14 @@ class DefaultsJsonTest {
         final var provider = new DefaultsProvider(new ByteArrayResource(json.getBytes()));
         provider.load();
         final RetirementInputs inputs = provider.forCurrency(SupportedCurrency.INR);
+
+        assertNotNull(inputs.getPreRetirementContributions());
+        assertEquals(1, inputs.getPreRetirementContributions().size());
+        assertEquals(Frequency.MONTHLY, inputs.getPreRetirementContributions().get(0).getFrequency(),
+                "WEEKLY must fall back to MONTHLY");
+        assertNotNull(inputs.getPostRetirementContributions());
+        assertEquals(1, inputs.getPostRetirementContributions().size());
+        assertEquals(Frequency.QUARTERLY, inputs.getPostRetirementContributions().get(0).getFrequency());
 
         assertNotNull(inputs.getRecurringExpenses());
         assertEquals(1, inputs.getRecurringExpenses().size());

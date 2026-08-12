@@ -128,15 +128,18 @@ through `defaults.json` and browser localStorage (`rc_inputs`).
 | After Retirement (%) | Growth rate applied to the main corpus while `age ≥ retireAge` |
 | Tax Rate (%) | Applied to gains-portion of any withdrawal that comes out of the main corpus |
 
-**Monthly Contributions → Before Retirement** and **→ After Retirement**
-(separate cards, identical fields):
+**Pre-Retirement Contributions** and **Post-Retirement Contributions** (two
+sections, each an add/remove list of rows). Pre rows are funded during the
+working years (`age < retireAge`); Post rows during retirement
+(`age ≥ retireAge`). Each row is an independent accumulating stream:
 
 | Field | Meaning |
 | --- | --- |
-| Amount | Money in today's currency, per month |
-| Growth Percentage (%) | Annual return on the SIP corpus while in this phase |
-| Step Up Percentage (Yearly) (%) | Annual increment applied compoundingly to the SIP contribution; resets at retirement |
-| Tax Rate (%) | Applied to gains-portion of any withdrawal from the SIP corpus while in this phase |
+| Amount | Money in today's currency, per period |
+| Frequency | `Monthly` / `Quarterly` / `Half-Yearly` / `Yearly`; the amount is annualised as `amount × periodsPerYear` |
+| Growth Percentage (%) | Annual return on this stream while it is accumulating. A **pre** stream derisks to the existing-corpus after-retirement rate once `age ≥ retireAge`; a **post** stream keeps its own rate throughout |
+| Step Up Percentage (Yearly) (%) | Annual compounding increment on the contribution amount, counted from the phase start (current age for pre, retirement age for post) |
+| Tax Rate (%) | Applied to the gains portion of any withdrawal drawn from this stream |
 
 ### 1.3 Future Expenses
 
@@ -203,13 +206,13 @@ No year field — by definition these are received in the retirement-age year.
 
 ### 2.1 Buckets
 
-The corpus is modelled as **two persistent buckets**. They are *not* merged
-at retirement.
+The corpus is modelled as several persistent buckets — the existing corpus
+plus one per contribution row. They are *not* merged at retirement.
 
 | Bucket | Seeded with | Growth rate | Tax rate |
 | --- | --- | --- | --- |
-| **Main** | `Current Corpus` as both balance and principal | `Existing Corpus Returns` (Before / After) | `Existing Corpus Tax Rate` |
-| **SIP** | 0 / 0 | `Monthly Contributions Growth` (Before / After) | `Monthly Contributions Tax Rate` (Before / After) |
+| **Main** | `Current Corpus` as both balance and principal. Retirement benefits + future / recurring incomes are added here too | `Existing Corpus Returns` (Before / After) | `Existing Corpus Tax Rate` |
+| **Contribution stream** (one per row) | 0 / 0, filled by its own contributions | Pre row: its own rate before retirement, then the corpus after-retirement rate; Post row: its own rate | The row's own tax rate |
 
 Each bucket tracks `balance` and `principal`. Gains are derived as
 `balance − principal`. Contributions raise both; growth raises only the
@@ -230,32 +233,35 @@ For each `age` from `currentAge` to `lifeExp`:
 3. **Snapshot `investedAtRetirement`** — set to `totalInvested` once, at
    the start of the retirement year, *before* this year's contribution.
 
-4. **SIP step-up factor** — `yearsInPhase = isPost ? age − retireAge : age − currentAge`;
-   `stepUpFactor = (1 + sipStepUp_currentPhase)^yearsInPhase`.
-   The factor resets at retirement so pre-phase compounding does not bleed
-   into post.
-
-5. **This year's investment** (lands in the SIP bucket as new principal):
+4. **Contributions** — for each active stream (pre rows while `!isPost`, post
+   rows while `isPost`), deposit into its own bucket:
    ```
-   sipContribution     = monthlyInv_currentPhase × 12 × stepUpFactor
+   yearsInPhase = isPost ? age − retireAge : age − currentAge
+   deposit      = amount × periodsPerYear(frequency) × (1 + stepUp)^yearsInPhase
+   ```
+   `periodsPerYear` = 12 / monthsPerPeriod (MONTHLY ×12, QUARTERLY ×4,
+   HALF_YEARLY ×2, YEARLY ×1). Step-up counts from the phase start, so a post
+   stream starts fresh at retirement. `contributionsThisYear` is their sum.
+
+5. **Incomes into the main corpus** (net of immediate tax):
+   ```
    benefitsThisYear    = isRetireYear ? Σ (amount × (1 − taxRate))  : 0   (retirement benefits)
    futureIncomeThisYr  = Σ (amount × (1 − taxRate))                       (fixed future incomes whose year == this year)
    recurringIncomeThis = Σ (annualise(amount, frequency) × (1 − taxRate)) (recurring incomes with year ≤ this year ≤ stopYear)
-   investment          = sipContribution + benefitsThisYear + futureIncomeThisYr + recurringIncomeThis
+   incomeThisYear      = benefitsThisYear + futureIncomeThisYr + recurringIncomeThis
    ```
-   `totalInvested += investment`; SIP bucket: `principal += investment`,
-   `balance += investment`. `annualise(x, f) = x × (12 / monthsPerPeriod(f))`,
-   i.e. MONTHLY ×12, QUARTERLY ×4, HALF_YEARLY ×2, YEARLY ×1.
+   `main.principal += incomeThisYear`, `main.balance += incomeThisYear`;
+   `investment = contributionsThisYear + incomeThisYear`;
+   `totalInvested += investment`.
+   `annualise(x, f) = x × (12 / monthsPerPeriod(f))`.
 
-6. **`startCorpus` snapshot** = `main.balance + sip.balance` *(before*
+6. **`startCorpus` snapshot** = `main.balance + Σ stream.balance` *(before*
    this year's growth).
 
-7. **Apply growth**:
-   ```
-   mainReturns = main.balance × growth_currentPhase  ;  main.balance += mainReturns
-   sipReturns  = sip.balance  × sipGrowth_currentPhase ; sip.balance  += sipReturns
-   returns     = mainReturns + sipReturns
-   ```
+7. **Apply growth** to every bucket at its current-phase rate (a pre stream
+   uses its own rate before retirement, the corpus after-retirement rate once
+   `isPost`; a post stream always uses its own rate). `returns` is the sum of
+   all buckets' earnings.
 
 8. **Withdrawal need**:
    ```
@@ -281,7 +287,7 @@ For each `age` from `currentAge` to `lifeExp`:
    If the buckets cannot satisfy the withdrawal, the remainder is the
    shortfall.
 
-10. **End-of-year** — `endCorpus = main.balance + sip.balance`
+10. **End-of-year** — `endCorpus = main.balance + Σ stream.balance`
     (or `−remaining` when shortfall).
     `depleted = remaining > 0 ∨ endCorpus < 0`.
 
@@ -294,16 +300,18 @@ For each `age` from `currentAge` to `lifeExp`:
 
 ### 2.3 Semantics worth being explicit about
 
-- **No retirement-year fold.** Main and SIP buckets keep their own growth
-  rate, principal-vs-gains split, and tax rate throughout the projection.
+- **No retirement-year fold.** Each bucket keeps its own principal-vs-gains
+  split and tax rate throughout. A **pre** contribution stream's growth rate
+  derisks to the corpus after-retirement rate once retired; a **post** stream
+  and the main corpus keep their configured rates.
 - **Withdrawal column = gross corpus drawdown.** Tax is reported separately
   in `Tax Paid`; the user effectively receives `withdrawal − taxPaid` net of
   tax, but the corpus drops by the gross `withdrawal`.
-- **Step-up resets at retirement.** Pre-retirement step-up factor never
-  bleeds into post-retirement contributions.
+- **Step-up counts from the phase start.** A post stream's step-up starts
+  fresh at retirement; there is no bleed-over between pre and post streams.
 - **Benefits and incomes are folded into investment**, *not* subtracted from
   withdrawal. The net (after immediate tax) lands as new principal in the
-  SIP bucket and earns at the SIP growth rate from then on.
+  **main corpus** and earns at the corpus growth rate from then on.
 - **Recurring expenses inflate.** Per-item rate if provided, otherwise the
   overall inflation rate. The entered amount is in today's money.
 - **Recurring incomes do not inflate.** The entered amount is the nominal
@@ -313,7 +321,7 @@ For each `age` from `currentAge` to `lifeExp`:
 - **Fixed future expense amount is in today's money.** Inflated per-item
   from current year to the target year.
 - **Retirement benefits are received in the retirement-age year** — no
-  year input; tax applied immediately on receipt; net lands in SIP bucket.
+  year input; tax applied immediately on receipt; net lands in the main corpus.
 - **`investedAtRetirement` snapshots `totalInvested` at the start of the
   retirement year, before that year's contribution.**
 - **Tax rate is applied to the gains portion of withdrawals only**, not to
@@ -423,7 +431,7 @@ Events marked:
 | `RetirementCalculatorTest` | Bucket math, step-up behaviour, future-expense inflation, retirement-benefit / future-income contribution, lowest-yield-first drain, depletion detection, validation rejections. |
 | `DefaultsJsonTest` | `defaults.json` parses, every currency entry has every required field, values are parseable, projection round-trips |
 | `MoneyFormatterTest`, `NumberToWordsTest` | Currency formatting (Indian vs Western groupings, words for amounts) |
-| `RetirementCalculatorFormBrowserlessTest` | Form smoke test through the binder; catches binding-level regressions in the SIP step-up fields |
+| `RetirementCalculatorFormBrowserlessTest` | Form smoke test; catches binding-level regressions in the contribution rows (step-up + frequency round-trip) |
 
 # Goal Planner
 
