@@ -130,6 +130,17 @@ class BuyRentCalculatorTest {
     // -------------------------------------------------------------------------
 
     @Test
+    void cumulative_buy_cost_includes_the_upfront_outlay() {
+        // "Total cash paid" on the buy path seeds with the down payment + buying
+        // costs (5M × 20% + 5M × 7% = 1.35M), then adds monthly EMI/tax/maint.
+        // So even year 1 must already exceed that upfront sum.
+        final BigDecimal upfront = new BigDecimal("1350000");
+        final BuyRentYear year1 = BuyRentCalculator.calculate(base()).rows().get(0);
+        assertTrue(year1.cumulativeBuyCost().compareTo(upfront) > 0,
+                "year-1 total paid must include upfront outlay plus a year of holding costs");
+    }
+
+    @Test
     void cumulative_costs_are_monotonically_increasing() {
         final BuyRentResult result = BuyRentCalculator.calculate(base());
         BigDecimal prevRent = BigDecimal.ZERO;

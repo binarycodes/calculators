@@ -77,7 +77,9 @@ public final class BuyRentCalculator {
         // Starts at the initial investment; monthly surpluses (positive or negative) are added.
         BigDecimal netContributions = initialInvestment;
         BigDecimal cumulativeRentPaid = BigDecimal.ZERO;
-        BigDecimal cumulativeBuyCost = BigDecimal.ZERO;
+        // Total cash paid on the buy path, seeded with the upfront outlay (down
+        // payment + buying costs); the monthly EMI + tax + maintenance accrue on top.
+        BigDecimal cumulativeBuyCost = initialInvestment;
         BigDecimal inflationAccumulator = BigDecimal.ONE;
 
         final BigDecimal initialMonthlyRent = inputs.getMonthlyRent();

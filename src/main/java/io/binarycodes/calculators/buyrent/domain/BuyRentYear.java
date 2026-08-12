@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  * @param rentPortfolio         accumulated investment portfolio, pre-tax
  * @param rentPortfolioAfterTax portfolio after capital-gains tax on investment gains
  * @param cumulativeRentPaid    total rent paid through this year
- * @param cumulativeBuyCost     total buy-path costs (EMI + tax + maintenance) through this year
+ * @param cumulativeBuyCost     total cash paid on the buy path through this year — down payment + buying costs + EMI + tax + maintenance
  * @param netDifference         equityAfterTax − rentPortfolioAfterTax; positive means buy is ahead
  * @param realNetDifference     netDifference deflated to today's money at the inflation rate
  */
