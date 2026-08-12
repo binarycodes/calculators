@@ -34,9 +34,9 @@ public class BuyRentProjectionGrid extends BaseGrid<BuyRentYear> {
         addMoneyColumn(Translations.get("grid.col.homeValue"), BuyRentYear::homeValue);
         addMoneyColumn(Translations.get("grid.col.mortgageBalance"), BuyRentYear::mortgageBalance);
         addMoneyColumn(Translations.get("grid.col.buyNetWorth"), BuyRentYear::equityAfterTax);
-        addMoneyColumn(Translations.get("grid.col.totalPaidBuy"), BuyRentYear::cumulativeBuyCost);
+        addMoneyColumn(Translations.get("grid.col.cashOutflowBuy"), BuyRentYear::cumulativeBuyCost);
         addMoneyColumn(Translations.get("grid.col.rentPortfolio"), BuyRentYear::rentPortfolioAfterTax);
-        addMoneyColumn(Translations.get("grid.col.totalRentPaid"), BuyRentYear::cumulativeRentPaid);
+        addMoneyColumn(Translations.get("grid.col.cashOutflowRent"), BuyRentYear::cumulativeRentPaid);
         addMoneyColumn(Translations.get("grid.col.difference"), BuyRentYear::netDifference);
 
         getColumns().forEach(column -> {

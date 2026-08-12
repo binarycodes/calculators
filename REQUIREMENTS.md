@@ -819,9 +819,9 @@ the analysis horizon. Where they cross is the break-even year.
 | Home Value | Appreciated home price |
 | Mortgage Balance | Outstanding loan (0 after payoff) |
 | Buy Net Worth | Equity after sell costs |
-| Total Paid (Buy) | Cumulative cash paid on the buy path: down payment + buying costs + EMI + property tax + maintenance |
+| Total Cash Outflow (Buy) | Cumulative cash paid on the buy path: down payment + buying costs + EMI + property tax + maintenance |
 | Rent Portfolio | Accumulated investment |
-| Total Rent Paid | Cumulative rent paid |
+| Total Cash Outflow (Rent) | Cumulative rent paid |
 | Difference (Buy − Rent) | Positive = buy ahead |
 
 Two rows are highlighted, explained by the grid's row-colour legend (the info
