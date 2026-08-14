@@ -27,8 +27,9 @@ class DebtInputsStoreTest {
                 new BigDecimal("12000"), null, new BigDecimal("0"), 6);
         final var inputs = new DebtPlanInputs();
         inputs.setDebts(new ArrayList<>(List.of(card, loan)));
-        inputs.setExtraPerMonth(new BigDecimal("10000"));
-        inputs.setExtraStepUpPct(new BigDecimal("5"));
+        inputs.setMonthlyBudget(new BigDecimal("45000"));
+        inputs.setBudgetStepUpPct(new BigDecimal("5"));
+        inputs.setDefaultFeePerMonth(new BigDecimal("600"));
         inputs.setWindfalls(new ArrayList<>(List.of(new Windfall(6, new BigDecimal("50000")))));
         inputs.setStrategy(PayoffStrategy.CUSTOM);
         inputs.setInflationRatePct(new BigDecimal("6"));
@@ -36,8 +37,9 @@ class DebtInputsStoreTest {
         final ObjectNode json = store.toJsonNode(inputs);
         final DebtPlanInputs restored = store.fromJsonNode(json);
 
-        assertEquals(0, new BigDecimal("10000").compareTo(restored.getExtraPerMonth()));
-        assertEquals(0, new BigDecimal("5").compareTo(restored.getExtraStepUpPct()));
+        assertEquals(0, new BigDecimal("45000").compareTo(restored.getMonthlyBudget()));
+        assertEquals(0, new BigDecimal("5").compareTo(restored.getBudgetStepUpPct()));
+        assertEquals(0, new BigDecimal("600").compareTo(restored.getDefaultFeePerMonth()));
         assertEquals(PayoffStrategy.CUSTOM, restored.getStrategy());
         assertEquals(0, new BigDecimal("6").compareTo(restored.getInflationRatePct()));
 
@@ -69,12 +71,12 @@ class DebtInputsStoreTest {
     @Test
     void empty_lists_round_trip() {
         final var inputs = new DebtPlanInputs();
-        inputs.setExtraPerMonth(new BigDecimal("100"));
+        inputs.setMonthlyBudget(new BigDecimal("100"));
         inputs.setStrategy(PayoffStrategy.AVALANCHE);
         final DebtPlanInputs restored = store.fromJsonNode(store.toJsonNode(inputs));
         assertTrue(restored.getDebts().isEmpty());
         assertTrue(restored.getWindfalls().isEmpty());
-        assertNull(restored.getExtraStepUpPct());
+        assertNull(restored.getBudgetStepUpPct());
     }
 
     @Test

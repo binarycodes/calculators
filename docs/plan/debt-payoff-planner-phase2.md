@@ -1,7 +1,17 @@
 # Debt Payoff Planner — Phase 2 spec
 
-**Status:** proposed (Phase 1 shipped)
+**Status:** shipped, then superseded in part
 **Builds on:** [`debt-payoff-planner.md`](./debt-payoff-planner.md)
+
+> **Update — budget-first model.** After Phase 2 shipped, the input model was
+> reworked: instead of per-debt minimums plus an "extra on top", the user enters a
+> single **maximum they can pay each month**, which the plan distributes across the
+> debts (minimums first, then the strategy target). If the budget can't cover every
+> minimum, the shortfall shows as a **default** (with an optional flat default fee)
+> rather than being topped up, and a **monthly per-debt payment schedule** grid
+> shows exactly what to pay where. The step-up now grows the budget; windfalls sit
+> on top of it. `REQUIREMENTS.md` (Debt Payoff Planner) is the canonical spec for
+> the current behaviour; the sections below describe the earlier Phase 2 model.
 
 ## Context
 

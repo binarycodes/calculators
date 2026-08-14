@@ -992,9 +992,10 @@ guarantees the payment eventually exceeds the interest so every debt amortizes.
 
 | Field | Notes |
 | --- | --- |
+| Maximum you can pay each month | Required, > 0. The total the user commits; the plan distributes it across the debts. |
 | Strategy | Avalanche (highest ongoing APR first), Snowball (smallest original balance first), or Custom (the user's row order, arranged with up/down move buttons). |
-| Extra per month | Optional, ≥ 0; added on top of the summed minimums. |
-| Extra step-up | Optional, 0–50%; grows the extra each year. |
+| Increase budget yearly | Optional, 0–50%; grows the monthly budget each year. |
+| Default fee (per missed minimum) | Optional, ≥ 0; a flat charge added to a debt in any month the budget can't cover its minimum. |
 | Inflation Rate | Optional, 0–20%; drives the today's-money interest total. |
 
 ### 1.3 One-off windfalls (per row, optional)
@@ -1002,43 +1003,49 @@ guarantees the payment eventually exceeds the interest so every debt amortizes.
 | Field | Notes |
 | --- | --- |
 | Month | Required, 1–600; 1-based from the plan start. |
-| Amount | Required, > 0; a lump payment that month, on top of the extra. |
+| Amount | Required, > 0; a lump payment that month, on top of the monthly budget. |
 
 ## 2. Calculation Model
 
 Month-by-month simulation, run once per strategy plus a minimums-only baseline.
+The budget is a hard cap — the plan never invents money it doesn't have.
 
-- **Budget** = `Σ initial effective minimums + extra × (1 + step-up)^yearsElapsed`.
-  The step-up only raises later years, so the month-1 budget is the lowest; if it
-  can't cover the first month's total interest, the plan is **infeasible**
-  (`debt.warning.infeasible`).
+- **Budget for month** = `monthlyBudget × (1 + step-up)^yearsElapsed`, plus any
+  windfall dated to that month.
 - **Fixed, promo-aware order:** rank once — Avalanche by ongoing (post-promo)
   APR descending, Snowball by original balance ascending, Custom by the debts'
   input order (the arranged order), tie-break input order. The order never
   re-sorts; only "already cleared" changes.
 - Each month: accrue interest (promo rate while `month ≤ promoMonths`, else APR),
-  pay every debt's effective minimum, then funnel the remaining budget **plus any
-  windfall dated to that month** to the debts in fixed order — **cascading within
-  the same month** once a target clears, so one month can retire several debts.
-- Stop when all balances hit zero, or at a 1200-month cap → `debt.warning.notPaidOff`.
-- **Baseline:** same loop with no extra, no step-up, no windfalls, and no
-  funnelling. `interestSaved` and `monthsSaved` are the primary strategy's
-  advantage over the baseline; today's-money interest deflates each month's
-  interest by `(1+inflation)^(m/12)`.
+  then **distribute the budget** — cover each debt's effective minimum in the
+  strategy's order, then funnel the remainder to the target, **cascading within
+  the same month** once a target clears (so one month can retire several debts).
+- **Defaults:** if the budget can't cover every minimum, the debts it can't reach
+  that month get less than their minimum and are flagged as defaulting; the flat
+  default fee (if set) is added to each defaulting balance. Nothing is topped up —
+  the plan shows what actually happens.
+- Stop when all balances hit zero, or at a 1200-month cap. A plan that never
+  clears is not an error — it comes back with `fullyPaid` false (the debt-free
+  card shows "Over 100 years").
+- **Baseline:** each debt pays exactly its minimum, ignoring the budget (no
+  distribution, no defaults) — the "bare minimum" yardstick. `interestSaved` and
+  `monthsSaved` are the primary strategy's advantage over it; today's-money
+  interest deflates each month's interest by `(1+inflation)^(m/12)`.
 
 The result carries the chosen strategy's schedule as `primary`, plus the two
 canonical strategies (avalanche, snowball) and the baseline. For a Custom
 primary, `primary` is a separate run and the "vs" card compares it against
-Avalanche (the interest-optimal reference).
+Avalanche (the interest-optimal reference). The only hard error is having no
+valid debts.
 
 ## 3. Output
 
 ### 3.1 Summary cards (5)
 
-Debt-free horizon (primary), total interest (with a today's-money subtitle),
-interest saved and time saved vs minimums-only, and the interest delta against
-the reference strategy (label names it, e.g. "vs Snowball", or "vs Avalanche"
-when the primary is Custom).
+Debt-free horizon (primary; "Over 100 years" when it never clears), total
+interest (with a today's-money subtitle), interest saved and time saved vs
+minimums-only, and the interest delta against the reference strategy (label names
+it, e.g. "vs Snowball", or "vs Avalanche" when the primary is Custom).
 
 ### 3.2 Comparison chart
 
@@ -1046,17 +1053,24 @@ Total outstanding balance over time — Avalanche, Snowball, and minimums-only
 (dashed). When the Custom strategy is selected, its schedule is added as a fourth
 line.
 
-### 3.3 Projection grid
+### 3.3 Year-by-year projection grid
 
 Year-by-year for the chosen strategy: Total Balance, Interest Paid, Principal
 Paid, Target(s) (every debt that took surplus that year, in strategy order), and
 Cumulative Interest. The debt-free year (last row) is highlighted with a legend.
 
+### 3.4 Monthly payment schedule grid
+
+Month-by-month for the chosen strategy: Month, one column per debt showing exactly
+what to pay into it, and a Total. A cell is shown in the danger colour in any
+month that debt defaulted (the budget couldn't cover its minimum); a legend
+explains it when a default occurs. Columns are built from the current debts.
+
 ## 4. Persistence & sharing
 
 | Key | Content |
 | --- | --- |
-| `debt-defaults.json` (classpath) | Per-currency sample debts, extra, step-up, windfalls, strategy, inflation, and the default minimum floor. |
+| `debt-defaults.json` (classpath) | Per-currency sample debts, monthly budget, budget step-up, default fee, windfalls, strategy, inflation, and the default minimum floor. |
 | `dbt_inputs` (localStorage) | Per-currency snapshot of the edited debts, windfalls, and plan settings. |
 
 `DebtInputsStore`'s `toJsonNode` / `fromJsonNode` (debts and windfalls round-trip
@@ -1066,9 +1080,9 @@ shareable-link codec.
 ## 5. Test coverage
 
 `DebtCalculator` (strategy ordering, fixed promo-aware order, same-month cascade,
-rollover, percentage-minimum shrink, promo window, floor termination, infeasible
-budget, single-debt and zero-APR cases, plus step-up, windfalls, and custom
-ordering), `DebtInputsStore` (JSON round-trip incl. the debts and windfalls
-lists), and `DebtDefaultsJsonTest` (defaults parse and feed the calculator) —
-under the `*/service` 80% coverage gate — plus a browserless form round-trip and
-Playwright reactivity/strategy ITs.
+percentage-minimum shrink, promo window, floor termination, budget-below-minimums
+defaults, default fee, single-debt and zero-APR cases, plus budget step-up,
+windfalls, and custom ordering), `DebtInputsStore` (JSON round-trip incl. the
+debts and windfalls lists), and `DebtDefaultsJsonTest` (defaults parse and clear
+the debts) — under the `*/service` 80% coverage gate — plus a browserless form
+round-trip and Playwright reactivity/strategy ITs.

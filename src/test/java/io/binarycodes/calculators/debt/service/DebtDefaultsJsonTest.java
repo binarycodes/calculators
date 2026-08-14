@@ -64,8 +64,10 @@ class DebtDefaultsJsonTest {
                 assertTrue(debt.getBalance().signum() > 0, currency + ": debt balance must be positive");
             }
             assertTrue(provider.minimumFloor(currency).signum() > 0, currency + ": floor must be positive");
-            assertDoesNotThrow(() -> DebtCalculator.calculate(inputs, provider.minimumFloor(currency)),
-                    currency + ": defaults must produce a valid payoff plan");
+            assertTrue(inputs.getMonthlyBudget().signum() > 0, currency + ": defaults must carry a monthly budget");
+            final var result = DebtCalculator.calculate(inputs, provider.minimumFloor(currency));
+            assertTrue(result.primary().fullyPaid(),
+                    currency + ": the default budget should clear the debts within the cap");
         }
     }
 

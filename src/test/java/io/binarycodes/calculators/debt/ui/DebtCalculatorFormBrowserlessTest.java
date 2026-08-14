@@ -43,8 +43,8 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
                 new BigDecimal("12000"), null, new BigDecimal("0"), 6);
         final var inputs = new DebtPlanInputs();
         inputs.setDebts(new ArrayList<>(List.of(card, loan)));
-        inputs.setExtraPerMonth(new BigDecimal("10000"));
-        inputs.setExtraStepUpPct(new BigDecimal("5"));
+        inputs.setMonthlyBudget(new BigDecimal("45000"));
+        inputs.setBudgetStepUpPct(new BigDecimal("5"));
         inputs.setWindfalls(new ArrayList<>(List.of(new Windfall(6, new BigDecimal("50000")))));
         inputs.setStrategy(PayoffStrategy.SNOWBALL);
         inputs.setInflationRatePct(new BigDecimal("6"));
@@ -61,7 +61,7 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
         final DebtPlanInputs roundTripped = form.getInputs();
         assertEquals(2, roundTripped.getDebts().size());
         assertEquals(PayoffStrategy.SNOWBALL, roundTripped.getStrategy());
-        assertEquals(0, new BigDecimal("10000").compareTo(roundTripped.getExtraPerMonth()));
+        assertEquals(0, new BigDecimal("45000").compareTo(roundTripped.getMonthlyBudget()));
 
         final Debt card = roundTripped.getDebts().get(0);
         assertEquals("Credit card", card.getName());
@@ -81,7 +81,7 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
         roundTrip();
 
         final DebtPlanInputs roundTripped = form.getInputs();
-        assertEquals(0, new BigDecimal("5").compareTo(roundTripped.getExtraStepUpPct()));
+        assertEquals(0, new BigDecimal("5").compareTo(roundTripped.getBudgetStepUpPct()));
         assertEquals(1, roundTripped.getWindfalls().size());
         assertEquals(6, roundTripped.getWindfalls().get(0).getMonth());
         assertEquals(0, new BigDecimal("50000").compareTo(roundTripped.getWindfalls().get(0).getAmount()));

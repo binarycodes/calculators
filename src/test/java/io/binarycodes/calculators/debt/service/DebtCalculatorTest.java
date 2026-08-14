@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,11 +34,12 @@ class DebtCalculatorTest {
         return debt;
     }
 
-    private static DebtPlanInputs inputs(PayoffStrategy strategy, String extraPerMonth, Debt... debts) {
+    /** Builds inputs with a total monthly budget (the max the user can pay). */
+    private static DebtPlanInputs inputs(PayoffStrategy strategy, String monthlyBudget, Debt... debts) {
         final DebtPlanInputs inputs = new DebtPlanInputs();
         inputs.setDebts(new ArrayList<>(List.of(debts)));
         inputs.setStrategy(strategy);
-        inputs.setExtraPerMonth(new BigDecimal(extraPerMonth));
+        inputs.setMonthlyBudget(new BigDecimal(monthlyBudget));
         return inputs;
     }
 
@@ -45,9 +47,15 @@ class DebtCalculatorTest {
         return result.primary().payoffMonthByDebt().get(debtName);
     }
 
+    private static String firstCleared(DebtScheduleResult schedule) {
+        return schedule.payoffMonthByDebt().entrySet().stream()
+                .min(Comparator.comparingInt(Map.Entry::getValue))
+                .map(Map.Entry::getKey)
+                .orElseThrow();
+    }
+
     @Test
     void avalanche_targets_the_highest_apr_first() {
-        // Smaller balance carries the lower rate, so avalanche and snowball disagree.
         final DebtPlanInputs inputs = inputs(PayoffStrategy.AVALANCHE, "500",
                 debt("small-cheap", "500", "10", "5"),
                 debt("large-costly", "2000", "30", "5"));
@@ -68,7 +76,6 @@ class DebtCalculatorTest {
 
     @Test
     void same_month_cascade_retires_multiple_debts_in_one_month() {
-        // A big surplus with no interest clears both tiny debts in month one.
         final DebtPlanInputs inputs = inputs(PayoffStrategy.AVALANCHE, "1000",
                 debt("a", "100", "0", null),
                 debt("b", "100", "0", null));
@@ -78,19 +85,17 @@ class DebtCalculatorTest {
     }
 
     @Test
-    void extra_payment_saves_interest_and_months_against_the_baseline() {
+    void a_bigger_budget_saves_interest_and_months_against_the_minimums_baseline() {
         final DebtPlanInputs inputs = inputs(PayoffStrategy.AVALANCHE, "500",
                 debt("small-cheap", "500", "10", "5"),
                 debt("large-costly", "2000", "30", "5"));
         final DebtPlanResult result = DebtCalculator.calculate(inputs, FLOOR);
-        assertTrue(result.interestSaved().signum() > 0, "the extra payment should save interest");
-        assertTrue(result.monthsSaved() > 0, "the extra payment should shorten the payoff");
+        assertTrue(result.interestSaved().signum() > 0, "paying more than the minimum should save interest");
+        assertTrue(result.monthsSaved() > 0, "paying more than the minimum should shorten the payoff");
     }
 
     @Test
     void a_promo_window_debt_with_a_high_ongoing_rate_is_still_prioritised() {
-        // 'promo' is 0% now but 25% after the window; avalanche must rank it by the
-        // ongoing 25%, ahead of the steady 20% debt, from month one.
         final Debt promo = debt("promo", "1000", "25", "5");
         promo.setPromoAprPct(BigDecimal.ZERO);
         promo.setPromoMonths(12);
@@ -107,11 +112,11 @@ class DebtCalculatorTest {
         withPromo.setPromoAprPct(BigDecimal.ZERO);
         withPromo.setPromoMonths(6);
         final BigDecimal promoInterest = DebtCalculator
-                .calculate(inputs(PayoffStrategy.AVALANCHE, "200", withPromo), FLOOR)
+                .calculate(inputs(PayoffStrategy.AVALANCHE, "500", withPromo), FLOOR)
                 .primary().totalInterest();
 
         final BigDecimal fullInterest = DebtCalculator
-                .calculate(inputs(PayoffStrategy.AVALANCHE, "200", debt("card", "5000", "24", "5")), FLOOR)
+                .calculate(inputs(PayoffStrategy.AVALANCHE, "500", debt("card", "5000", "24", "5")), FLOOR)
                 .primary().totalInterest();
 
         assertTrue(promoInterest.compareTo(fullInterest) < 0,
@@ -120,6 +125,8 @@ class DebtCalculatorTest {
 
     @Test
     void percentage_minimum_shrinks_so_it_pays_off_slower_than_a_fixed_minimum() {
+        // The baseline pays only the minimum, ignoring the budget, so it isolates
+        // the shrinking-percentage effect.
         final Debt percentMinimum = debt("pct", "10000", "12", "5");
         final Debt fixedMinimum = debt("fixed", "10000", "12", null);
         fixedMinimum.setMinimumPayment(new BigDecimal("500")); // 5% of the initial balance, held flat
@@ -139,17 +146,35 @@ class DebtCalculatorTest {
     void a_percentage_only_minimum_still_clears_via_the_floor() {
         final DebtPlanResult result = DebtCalculator.calculate(
                 inputs(PayoffStrategy.AVALANCHE, "0", debt("card", "8000", "18", "5")), FLOOR);
+        assertTrue(result.baseline().fullyPaid(), "the minimums-only baseline should still clear the debt");
         assertTrue(result.baseline().payoffMonth() > 0, "the debt should reach a finite payoff");
     }
 
     @Test
-    void an_infeasible_budget_is_flagged() {
-        // 100% APR on a large balance with only the tiny floor to pay it — the total
-        // balance can never fall.
-        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () ->
-                DebtCalculator.calculate(
-                        inputs(PayoffStrategy.AVALANCHE, "0", debt("runaway", "100000", "100", null)), FLOOR));
-        assertEquals("debt.warning.infeasible", error.getMessage());
+    void a_budget_below_the_minimums_defaults_instead_of_erroring() {
+        // Two 24% debts each needing a ₹5,000 minimum; the ₹6,000 budget can only
+        // cover one and part of the other.
+        final DebtPlanInputs inputs = inputs(PayoffStrategy.AVALANCHE, "6000",
+                debt("a", "100000", "24", "5"),
+                debt("b", "100000", "24", "5"));
+        final DebtPlanResult result = DebtCalculator.calculate(inputs, FLOOR);
+        assertTrue(result.primary().monthlyPayments().get(0).hasDefault(),
+                "the debt the budget can't reach should default in month one");
+    }
+
+    @Test
+    void a_default_fee_grows_the_defaulting_balance() {
+        // Budget below the minimum, so the debt defaults every month.
+        final DebtPlanInputs withoutFee = inputs(PayoffStrategy.AVALANCHE, "3000", debt("card", "100000", "12", "5"));
+        final DebtPlanInputs withFee = inputs(PayoffStrategy.AVALANCHE, "3000", debt("card", "100000", "12", "5"));
+        withFee.setDefaultFeePerMonth(new BigDecimal("1000"));
+
+        final BigDecimal balanceWithout = DebtCalculator.calculate(withoutFee, FLOOR)
+                .primary().years().get(0).totalBalance();
+        final BigDecimal balanceWith = DebtCalculator.calculate(withFee, FLOOR)
+                .primary().years().get(0).totalBalance();
+
+        assertTrue(balanceWith.compareTo(balanceWithout) > 0, "the default fee should add to the balance");
     }
 
     @Test
@@ -162,22 +187,21 @@ class DebtCalculatorTest {
     @Test
     void a_single_debt_makes_both_strategies_identical() {
         final DebtPlanResult result = DebtCalculator.calculate(
-                inputs(PayoffStrategy.AVALANCHE, "300", debt("only", "6000", "15", "5")), FLOOR);
+                inputs(PayoffStrategy.AVALANCHE, "500", debt("only", "6000", "15", "5")), FLOOR);
         assertEquals(result.avalanche().payoffMonth(), result.snowball().payoffMonth());
         assertEquals(result.avalanche().totalInterest(), result.snowball().totalInterest());
     }
 
     @Test
     void zero_apr_accrues_no_interest_and_pays_off_on_schedule() {
-        // ₹1200 with a ₹25 floor + ₹175 extra = ₹200/month → six months, no interest.
+        // ₹1,200 with a ₹200/month budget → six months, no interest.
         final DebtPlanResult result = DebtCalculator.calculate(
-                inputs(PayoffStrategy.AVALANCHE, "175", debt("free", "1200", "0", null)), FLOOR);
+                inputs(PayoffStrategy.AVALANCHE, "200", debt("free", "1200", "0", null)), FLOOR);
         assertEquals(0, result.primary().totalInterest().signum());
         assertEquals(6, result.primary().payoffMonth());
+        assertTrue(result.primary().fullyPaid());
     }
 
-
-    /** A fixed-minimum debt so the payoff spans several years and the annual step-up compounds. */
     private static Debt fixedMinimumDebt() {
         final Debt debt = debt("loan", "400000", "18", null);
         debt.setMinimumPayment(new BigDecimal("7000"));
@@ -185,34 +209,33 @@ class DebtCalculatorTest {
     }
 
     @Test
-    void an_annual_step_up_shortens_the_payoff() {
-        final DebtPlanInputs flat = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
+    void an_annual_budget_step_up_shortens_the_payoff() {
+        final DebtPlanInputs flat = inputs(PayoffStrategy.AVALANCHE, "8500", fixedMinimumDebt());
         final int flatPayoff = DebtCalculator.calculate(flat, FLOOR).primary().payoffMonth();
 
-        final DebtPlanInputs stepped = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
-        stepped.setExtraStepUpPct(new BigDecimal("50"));
+        final DebtPlanInputs stepped = inputs(PayoffStrategy.AVALANCHE, "8500", fixedMinimumDebt());
+        stepped.setBudgetStepUpPct(new BigDecimal("50"));
         final int steppedPayoff = DebtCalculator.calculate(stepped, FLOOR).primary().payoffMonth();
 
-        assertTrue(steppedPayoff < flatPayoff, "growing the extra each year should pay off sooner");
+        assertTrue(steppedPayoff < flatPayoff, "growing the budget each year should pay off sooner");
     }
 
     @Test
     void a_zero_step_up_reproduces_the_flat_plan() {
-        final DebtPlanInputs flat = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
-        final DebtPlanInputs zeroStep = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
-        zeroStep.setExtraStepUpPct(BigDecimal.ZERO);
+        final DebtPlanInputs flat = inputs(PayoffStrategy.AVALANCHE, "8500", fixedMinimumDebt());
+        final DebtPlanInputs zeroStep = inputs(PayoffStrategy.AVALANCHE, "8500", fixedMinimumDebt());
+        zeroStep.setBudgetStepUpPct(BigDecimal.ZERO);
 
         assertEquals(DebtCalculator.calculate(flat, FLOOR).primary().payoffMonth(),
                 DebtCalculator.calculate(zeroStep, FLOOR).primary().payoffMonth());
     }
 
-
     @Test
     void a_windfall_cuts_interest_and_shortens_the_payoff() {
-        final DebtPlanInputs plain = inputs(PayoffStrategy.AVALANCHE, "2000", debt("card", "300000", "30", "5"));
+        final DebtPlanInputs plain = inputs(PayoffStrategy.AVALANCHE, "17000", debt("card", "300000", "30", "5"));
         final DebtPlanResult without = DebtCalculator.calculate(plain, FLOOR);
 
-        final DebtPlanInputs withWindfall = inputs(PayoffStrategy.AVALANCHE, "2000", debt("card", "300000", "30", "5"));
+        final DebtPlanInputs withWindfall = inputs(PayoffStrategy.AVALANCHE, "17000", debt("card", "300000", "30", "5"));
         withWindfall.setWindfalls(new ArrayList<>(List.of(new Windfall(3, new BigDecimal("100000")))));
         final DebtPlanResult with = DebtCalculator.calculate(withWindfall, FLOOR);
 
@@ -224,7 +247,6 @@ class DebtCalculatorTest {
 
     @Test
     void a_windfall_follows_the_strategy_order() {
-        // Avalanche targets the 30% debt; the windfall must accelerate that one.
         final DebtPlanInputs base = inputs(PayoffStrategy.AVALANCHE, "500",
                 debt("cheap", "500", "10", "5"), debt("costly", "2000", "30", "5"));
         final int costlyWithout = DebtCalculator.calculate(base, FLOOR).primary().payoffMonthByDebt().get("costly");
@@ -249,10 +271,10 @@ class DebtCalculatorTest {
 
     @Test
     void a_windfall_after_payoff_is_a_no_op() {
-        final DebtPlanInputs plain = inputs(PayoffStrategy.AVALANCHE, "175", debt("free", "1200", "0", null));
+        final DebtPlanInputs plain = inputs(PayoffStrategy.AVALANCHE, "200", debt("free", "1200", "0", null));
         final DebtPlanResult without = DebtCalculator.calculate(plain, FLOOR);
 
-        final DebtPlanInputs late = inputs(PayoffStrategy.AVALANCHE, "175", debt("free", "1200", "0", null));
+        final DebtPlanInputs late = inputs(PayoffStrategy.AVALANCHE, "200", debt("free", "1200", "0", null));
         late.setWindfalls(new ArrayList<>(List.of(new Windfall(50, new BigDecimal("100000")))));
         final DebtPlanResult with = DebtCalculator.calculate(late, FLOOR);
 
@@ -260,11 +282,8 @@ class DebtCalculatorTest {
         assertEquals(0, without.primary().totalInterest().compareTo(with.primary().totalInterest()));
     }
 
-
     @Test
     void custom_order_funnels_in_input_order_distinct_from_avalanche_and_snowball() {
-        // Input order X, Y, Z; each strategy's head differs: custom→X, snowball→Y
-        // (smallest balance), avalanche→Z (highest rate).
         final DebtPlanResult result = DebtCalculator.calculate(inputs(PayoffStrategy.CUSTOM, "500",
                 debt("X", "1000", "10", "5"),
                 debt("Y", "500", "15", "5"),
@@ -282,12 +301,5 @@ class DebtCalculatorTest {
                 debt("Y", "500", "15", "5"),
                 debt("X", "1000", "10", "5")), FLOOR);
         assertEquals("Z", firstCleared(reordered.primary()));
-    }
-
-    private static String firstCleared(DebtScheduleResult schedule) {
-        return schedule.payoffMonthByDebt().entrySet().stream()
-                .min(Comparator.comparingInt(Map.Entry::getValue))
-                .map(Map.Entry::getKey)
-                .orElseThrow();
     }
 }
