@@ -126,6 +126,7 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
             node.put("minimumPct", plain(debt.getMinimumPct()));
             node.put("promoAprPct", plain(debt.getPromoAprPct()));
             node.put("promoMonths", intStr(debt.getPromoMonths()));
+            node.put("priority", debt.isPriority());
             array.add(node);
         }
         return array;
@@ -170,6 +171,8 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
             debt.setMinimumPct(bd(entry, "minimumPct"));
             debt.setPromoAprPct(bd(entry, "promoAprPct"));
             debt.setPromoMonths(intField(entry, "promoMonths"));
+            final JsonNode priority = entry.get("priority");
+            debt.setPriority(priority != null && priority.asBoolean());
             debts.add(debt);
         }
         return debts;
@@ -179,7 +182,12 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
         if (value == null || value.isNull() || value.asString().isBlank()) {
             return null;
         }
-        return PayoffStrategy.valueOf(value.asString());
+        try {
+            return PayoffStrategy.valueOf(value.asString());
+        } catch (final IllegalArgumentException unknownStrategy) {
+            // A retired value (e.g. the old CUSTOM) falls back to the default.
+            return null;
+        }
     }
 
     private static String text(JsonNode value) {

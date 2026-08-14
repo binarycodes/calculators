@@ -3,16 +3,13 @@ package io.binarycodes.calculators.debt.service;
 import io.binarycodes.calculators.debt.domain.Debt;
 import io.binarycodes.calculators.debt.domain.DebtPlanInputs;
 import io.binarycodes.calculators.debt.domain.DebtPlanResult;
-import io.binarycodes.calculators.debt.domain.DebtScheduleResult;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
 import io.binarycodes.calculators.debt.domain.Windfall;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -45,13 +42,6 @@ class DebtCalculatorTest {
 
     private static int payoff(DebtPlanResult result, String debtName) {
         return result.primary().payoffMonthByDebt().get(debtName);
-    }
-
-    private static String firstCleared(DebtScheduleResult schedule) {
-        return schedule.payoffMonthByDebt().entrySet().stream()
-                .min(Comparator.comparingInt(Map.Entry::getValue))
-                .map(Map.Entry::getKey)
-                .orElseThrow();
     }
 
     @Test
@@ -283,23 +273,32 @@ class DebtCalculatorTest {
     }
 
     @Test
-    void custom_order_funnels_in_input_order_distinct_from_avalanche_and_snowball() {
-        final DebtPlanResult result = DebtCalculator.calculate(inputs(PayoffStrategy.CUSTOM, "500",
-                debt("X", "1000", "10", "5"),
-                debt("Y", "500", "15", "5"),
-                debt("Z", "1500", "30", "5")), FLOOR);
-
-        assertEquals("X", firstCleared(result.primary()));
-        assertEquals("Z", firstCleared(result.avalanche()));
-        assertEquals("Y", firstCleared(result.snowball()));
+    void without_a_priority_the_strategy_order_decides_who_defaults() {
+        // ₹6,000 budget covers only one of two ₹5,000 minimums; avalanche pays the
+        // 30% debt's minimum first, so the 10% debt is the one that defaults.
+        final DebtPlanResult result = DebtCalculator.calculate(inputs(PayoffStrategy.AVALANCHE, "6000",
+                debt("card", "100000", "30", "5"),
+                debt("car", "100000", "10", "5")), FLOOR);
+        assertFalse(defaultedInMonthOne(result, "card"));
+        assertTrue(defaultedInMonthOne(result, "car"));
     }
 
     @Test
-    void reordering_the_debts_changes_the_custom_run() {
-        final DebtPlanResult reordered = DebtCalculator.calculate(inputs(PayoffStrategy.CUSTOM, "500",
-                debt("Z", "1500", "30", "5"),
-                debt("Y", "500", "15", "5"),
-                debt("X", "1000", "10", "5")), FLOOR);
-        assertEquals("Z", firstCleared(reordered.primary()));
+    void a_priority_debt_is_protected_from_default() {
+        // Marking the 10% 'car' as priority flips who defaults — its minimum is
+        // covered first, so the higher-rate card defaults instead.
+        final Debt car = debt("car", "100000", "10", "5");
+        car.setPriority(true);
+        final DebtPlanResult result = DebtCalculator.calculate(inputs(PayoffStrategy.AVALANCHE, "6000",
+                debt("card", "100000", "30", "5"), car), FLOOR);
+        assertFalse(defaultedInMonthOne(result, "car"), "the priority debt keeps its minimum");
+        assertTrue(defaultedInMonthOne(result, "card"), "the non-priority debt defaults instead");
+    }
+
+    private static boolean defaultedInMonthOne(DebtPlanResult result, String debtName) {
+        return result.primary().monthlyPayments().get(0).payments().stream()
+                .filter(payment -> payment.debtName().equals(debtName))
+                .findFirst().orElseThrow()
+                .defaulted();
     }
 }

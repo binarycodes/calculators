@@ -3,11 +3,11 @@ package io.binarycodes.calculators.debt.domain;
 import java.math.BigDecimal;
 
 /**
- * The full debt-payoff analysis: the chosen strategy's {@link #primary} schedule,
- * the two canonical strategies (kept as references for the chart and the "vs"
- * card even when the primary is {@link PayoffStrategy#CUSTOM}), and the
- * minimums-only baseline. {@link #interestSaved} and {@link #monthsSaved} are the
- * primary strategy's advantage over paying minimums only.
+ * The full debt-payoff analysis: the chosen strategy's {@link #primary} schedule
+ * (the same object as {@link #avalanche} or {@link #snowball}) and the
+ * minimums-only {@link #baseline}. {@link #interestSaved} and
+ * {@link #monthsSaved} are the primary strategy's advantage over paying minimums
+ * only.
  */
 public record DebtPlanResult(
         DebtScheduleResult primary,
@@ -26,17 +26,11 @@ public record DebtPlanResult(
      * interest-optimal reference) for a custom order.
      */
     public DebtScheduleResult alternative() {
-        return switch (primaryStrategy) {
-            case AVALANCHE -> snowball;
-            case SNOWBALL, CUSTOM -> avalanche;
-        };
+        return primaryStrategy == PayoffStrategy.SNOWBALL ? avalanche : snowball;
     }
 
     /** The strategy whose name the "vs" card shows. */
     public PayoffStrategy alternativeStrategy() {
-        return switch (primaryStrategy) {
-            case AVALANCHE -> PayoffStrategy.SNOWBALL;
-            case SNOWBALL, CUSTOM -> PayoffStrategy.AVALANCHE;
-        };
+        return primaryStrategy == PayoffStrategy.SNOWBALL ? PayoffStrategy.AVALANCHE : PayoffStrategy.SNOWBALL;
     }
 }

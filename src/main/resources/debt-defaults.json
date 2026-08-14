@@ -9,7 +9,7 @@
     "debts": [
       { "name": "Credit card", "balance": "250000", "aprPct": "36", "minimumPct": "5" },
       { "name": "Personal loan", "balance": "400000", "aprPct": "14", "minimumPayment": "9000" },
-      { "name": "Car loan", "balance": "600000", "aprPct": "10", "minimumPayment": "12000", "promoAprPct": "0", "promoMonths": "6" }
+      { "name": "Car loan", "balance": "600000", "aprPct": "10", "minimumPayment": "12000", "promoAprPct": "0", "promoMonths": "6", "priority": true }
     ],
     "windfalls": [
       { "month": "6", "amount": "50000" }

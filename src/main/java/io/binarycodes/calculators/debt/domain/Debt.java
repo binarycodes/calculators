@@ -16,6 +16,10 @@ import java.math.BigDecimal;
  * {@link #minimumPct} may be null; the floor still guarantees the debt
  * amortizes. {@link #promoAprPct} applies for the first {@link #promoMonths}
  * months, after which {@link #aprPct} takes over.
+ *
+ * <p>{@link #priority} marks a debt the user must keep current (e.g. the car
+ * needed for work): its minimum is covered before any other debt's, so it is the
+ * last to default when the budget is tight.</p>
  */
 @Getter
 @Setter
@@ -30,4 +34,5 @@ public class Debt {
     private BigDecimal minimumPct;
     private BigDecimal promoAprPct;
     private Integer promoMonths;
+    private boolean priority;
 }

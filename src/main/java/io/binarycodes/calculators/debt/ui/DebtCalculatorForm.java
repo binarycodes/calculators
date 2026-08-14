@@ -3,6 +3,7 @@ package io.binarycodes.calculators.debt.ui;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
@@ -37,7 +38,6 @@ import io.binarycodes.calculators.debt.domain.Windfall;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -263,19 +263,15 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private static String strategyLabel(PayoffStrategy strategy) {
-        return switch (strategy) {
-            case SNOWBALL -> Translations.get("debt.strategy.snowball");
-            case CUSTOM -> Translations.get("debt.strategy.custom");
-            case AVALANCHE -> Translations.get("debt.strategy.avalanche");
-        };
+        return strategy == PayoffStrategy.SNOWBALL
+                ? Translations.get("debt.strategy.snowball")
+                : Translations.get("debt.strategy.avalanche");
     }
 
     private static String strategyDescription(PayoffStrategy strategy) {
-        return switch (strategy == null ? PayoffStrategy.AVALANCHE : strategy) {
-            case SNOWBALL -> Translations.get("debt.strategy.snowball.desc");
-            case CUSTOM -> Translations.get("debt.strategy.custom.desc");
-            case AVALANCHE -> Translations.get("debt.strategy.avalanche.desc");
-        };
+        return strategy == PayoffStrategy.SNOWBALL
+                ? Translations.get("debt.strategy.snowball.desc")
+                : Translations.get("debt.strategy.avalanche.desc");
     }
 
     /** The debts list: rows container + authoritative list + published snapshot. */
@@ -292,7 +288,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
 
         private void add(Debt initial) {
             final DebtRow row = new DebtRow(DebtCalculatorForm.this.preferences, initial,
-                    this::remove, this::moveUp, this::moveDown, this::publish);
+                    this::remove, this::onPrioritySelected, this::publish);
             this.rows.add(row);
             this.rowsContainer.add(row);
             publish();
@@ -305,26 +301,13 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             }
         }
 
-        private void moveUp(DebtRow row) {
-            final int index = this.rows.indexOf(row);
-            if (index > 0) {
-                swap(index, index - 1);
+        /** Only one debt can be the priority, so selecting one clears the rest. */
+        private void onPrioritySelected(DebtRow selected) {
+            for (final DebtRow row : this.rows) {
+                if (row != selected) {
+                    row.clearPriority();
+                }
             }
-        }
-
-        private void moveDown(DebtRow row) {
-            final int index = this.rows.indexOf(row);
-            if (index >= 0 && index < this.rows.size() - 1) {
-                swap(index, index + 1);
-            }
-        }
-
-        private void swap(int first, int second) {
-            Collections.swap(this.rows, first, second);
-            // Re-adding the same row instances preserves their field state while
-            // reordering them in the DOM; the custom strategy pays in this order.
-            this.rowsContainer.removeAll();
-            this.rows.forEach(this.rowsContainer::add);
             publish();
         }
 
@@ -368,13 +351,15 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         private final NumberField minimumPctField = PercentageField.create(Translations.get("field.debt.minimumPct"));
         private final NumberField promoAprField = PercentageField.create(Translations.get("field.debt.promoApr"));
         private final IntegerField promoMonthsField = monthsField(Translations.get("field.debt.promoMonths"));
+        private final Checkbox priorityField = new Checkbox(Translations.get("field.debt.priority"));
         private final Binder<Debt> binder = new Binder<>(Debt.class);
 
         DebtRow(UserPreferences preferences, Debt initial, Consumer<DebtRow> onRemove,
-                Consumer<DebtRow> onMoveUp, Consumer<DebtRow> onMoveDown, Runnable onChanged) {
+                Consumer<DebtRow> onPrioritySelected, Runnable onChanged) {
             this.balanceField = new MoneyField(Translations.get("field.debt.balance"), preferences);
             this.minimumPaymentField = new MoneyField(Translations.get("field.debt.minimumPayment"), preferences);
             this.nameField.setValueChangeMode(ValueChangeMode.LAZY);
+            this.priorityField.setTooltipText(Translations.get("field.debt.priority.tooltip"));
 
             this.nameField.setValue(initial.getName() == null ? "" : initial.getName());
             this.balanceField.setValue(initial.getBalance());
@@ -383,6 +368,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             this.minimumPctField.setValue(toDouble(initial.getMinimumPct()));
             this.promoAprField.setValue(toDouble(initial.getPromoAprPct()));
             this.promoMonthsField.setValue(initial.getPromoMonths());
+            this.priorityField.setValue(initial.isPriority());
 
             configureBindings();
 
@@ -390,15 +376,20 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
                     this.minimumPaymentField, this.minimumPctField, this.promoAprField, this.promoMonthsField}) {
                 ((com.vaadin.flow.component.HasValue<?, ?>) field).addValueChangeListener(event -> onChanged.run());
             }
+            this.priorityField.addValueChangeListener(event -> {
+                if (Boolean.TRUE.equals(event.getValue())) {
+                    onPrioritySelected.accept(this);
+                } else {
+                    onChanged.run();
+                }
+            });
             this.binder.addStatusChangeListener(event -> onChanged.run());
 
-            final Button moveUpButton = iconButton(VaadinIcon.ARROW_UP, "row.moveUp", () -> onMoveUp.accept(this));
-            final Button moveDownButton = iconButton(VaadinIcon.ARROW_DOWN, "row.moveDown", () -> onMoveDown.accept(this));
             final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
 
             final HorizontalLayout mainRow = new HorizontalLayout(this.nameField, this.balanceField,
                     withPercentageSuffix(this.aprField), this.minimumPaymentField,
-                    withPercentageSuffix(this.minimumPctField), moveUpButton, moveDownButton, removeButton);
+                    withPercentageSuffix(this.minimumPctField), this.priorityField, removeButton);
             mainRow.setWidthFull();
             mainRow.setAlignItems(Alignment.BASELINE);
             mainRow.addClassName("form-row");
@@ -409,6 +400,10 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             setWidthFull();
             addClassName("debt-row");
             add(mainRow, buildAdvanced());
+        }
+
+        private void clearPriority() {
+            this.priorityField.setValue(false);
         }
 
         private Component buildAdvanced() {
@@ -455,6 +450,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
                             ? ValidationResult.ok()
                             : ValidationResult.error(Translations.get("validation.between", 0, 240)))
                     .bind(Debt::getPromoMonths, Debt::setPromoMonths);
+            this.binder.forField(this.priorityField).bind(Debt::isPriority, Debt::setPriority);
             this.binder.validate();
         }
 
@@ -574,13 +570,6 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             this.binder.writeBeanAsDraft(windfall);
             return windfall;
         }
-    }
-
-    private static Button iconButton(VaadinIcon icon, String ariaLabelKey, Runnable action) {
-        final Button button = new Button(icon.create(), event -> action.run());
-        button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        button.setAriaLabel(Translations.get(ariaLabelKey));
-        return button;
     }
 
     private static IntegerField monthNumberField(String label) {

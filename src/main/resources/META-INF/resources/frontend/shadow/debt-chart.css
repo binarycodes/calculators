@@ -15,11 +15,6 @@
         stroke-width: 3px;
     }
 
-    & .debt-custom > .highcharts-graph {
-        stroke: var(--chart-warning-color);
-        stroke-width: 3px;
-    }
-
     & .debt-baseline > .highcharts-graph {
         stroke: var(--chart-danger-color);
         stroke-width: 2px;

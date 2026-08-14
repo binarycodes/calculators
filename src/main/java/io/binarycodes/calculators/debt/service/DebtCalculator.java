@@ -83,12 +83,8 @@ public final class DebtCalculator {
 
         final PayoffStrategy primaryStrategy =
                 inputs.getStrategy() == null ? PayoffStrategy.AVALANCHE : inputs.getStrategy();
-        final DebtScheduleResult primary = switch (primaryStrategy) {
-            case AVALANCHE -> avalanche;
-            case SNOWBALL -> snowball;
-            case CUSTOM -> simulate(debts, floor, planBudget, defaultFee,
-                    PayoffStrategy.CUSTOM, true, inflation, calendarYear);
-        };
+        final DebtScheduleResult primary =
+                primaryStrategy == PayoffStrategy.SNOWBALL ? snowball : avalanche;
 
         final BigDecimal interestSaved =
                 baseline.totalInterest().subtract(primary.totalInterest(), MC).max(BigDecimal.ZERO);
@@ -197,10 +193,13 @@ public final class DebtCalculator {
                 scale(totalInterest), scale(totalPaidFrom(monthlyPayments)), scale(realInterest), payoffByDebt);
     }
 
-    /** Cover minimums in strategy order, then funnel the remainder to the target, cascading. */
+    /**
+     * Cover minimums — priority debts first so they are the last to default —
+     * then funnel the remainder to the strategy target, cascading.
+     */
     private static void distributeBudget(List<WorkingDebt> order, BigDecimal available, YearTargets yearTargets) {
         BigDecimal remaining = available.max(BigDecimal.ZERO);
-        for (final WorkingDebt debt : order) {
+        for (final WorkingDebt debt : minimumOrder(order)) {
             if (debt.cleared() || remaining.signum() <= 0) {
                 continue;
             }
@@ -255,9 +254,8 @@ public final class DebtCalculator {
     }
 
     private static List<WorkingDebt> rank(List<WorkingDebt> working, PayoffStrategy strategy) {
-        // The baseline (null) and CUSTOM both pay in the debts' input order — for
-        // CUSTOM that is exactly the order the user arranged in the form.
-        if (strategy == null || strategy == PayoffStrategy.CUSTOM) {
+        // The minimums-only baseline (null) pays in input order.
+        if (strategy == null) {
             return working;
         }
         final Comparator<WorkingDebt> comparator = strategy == PayoffStrategy.SNOWBALL
@@ -267,6 +265,17 @@ public final class DebtCalculator {
         // A stable sort preserves input order as the tie-break.
         ordered.sort(comparator);
         return ordered;
+    }
+
+    /** The strategy order with priority (protected) debts moved to the front, stably. */
+    private static List<WorkingDebt> minimumOrder(List<WorkingDebt> order) {
+        if (order.stream().noneMatch(debt -> debt.priority)) {
+            return order;
+        }
+        final List<WorkingDebt> minimumFirst = new ArrayList<>(order.size());
+        order.stream().filter(debt -> debt.priority).forEach(minimumFirst::add);
+        order.stream().filter(debt -> !debt.priority).forEach(minimumFirst::add);
+        return minimumFirst;
     }
 
     private static Map<Integer, BigDecimal> windfallsByMonth(DebtPlanInputs inputs) {
@@ -354,6 +363,7 @@ public final class DebtCalculator {
         private final int promoMonths;
         private final BigDecimal floor;
         private final BigDecimal minimumPctFraction;
+        private final boolean priority;
 
         private BigDecimal balance;
         private int payoffMonth;
@@ -372,6 +382,7 @@ public final class DebtCalculator {
             this.promoMonths = debt.getPromoMonths() == null ? 0 : Math.max(0, debt.getPromoMonths());
             this.floor = debt.getMinimumPayment() == null ? defaultFloor : debt.getMinimumPayment();
             this.minimumPctFraction = Rates.pctToFraction(debt.getMinimumPct());
+            this.priority = debt.isPriority();
             this.balance = debt.getBalance();
         }
 

@@ -38,9 +38,9 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
 
     private static DebtPlanInputs seeded() {
         final var card = new Debt("Credit card", new BigDecimal("250000"), new BigDecimal("36"),
-                null, new BigDecimal("5"), null, null);
+                null, new BigDecimal("5"), null, null, false);
         final var loan = new Debt("Car loan", new BigDecimal("600000"), new BigDecimal("10"),
-                new BigDecimal("12000"), null, new BigDecimal("0"), 6);
+                new BigDecimal("12000"), null, new BigDecimal("0"), 6, true);
         final var inputs = new DebtPlanInputs();
         inputs.setDebts(new ArrayList<>(List.of(card, loan)));
         inputs.setMonthlyBudget(new BigDecimal("45000"));
@@ -92,17 +92,29 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
         final var form = new DebtCalculatorForm(new UserPreferences());
         UI.getCurrent().add(form);
 
-        final DebtPlanInputs custom = seeded();
-        custom.setStrategy(PayoffStrategy.CUSTOM);
-        form.setInputs(custom);
-        assertTrue(form.strategyDescriptionText().contains("reorder"),
-                "the custom description should mention reordering");
+        final DebtPlanInputs snowball = seeded();
+        snowball.setStrategy(PayoffStrategy.SNOWBALL);
+        form.setInputs(snowball);
+        assertTrue(form.strategyDescriptionText().contains("smallest balance"),
+                "the snowball description should mention the smallest balance");
 
         final DebtPlanInputs avalanche = seeded();
         avalanche.setStrategy(PayoffStrategy.AVALANCHE);
         form.setInputs(avalanche);
         assertTrue(form.strategyDescriptionText().contains("highest rate"),
                 "the avalanche description should mention the highest rate");
+    }
+
+    @Test
+    void the_priority_flag_round_trips() {
+        final var form = new DebtCalculatorForm(new UserPreferences());
+        UI.getCurrent().add(form);
+        form.setInputs(seeded());
+        roundTrip();
+
+        final DebtPlanInputs roundTripped = form.getInputs();
+        assertFalse(roundTripped.getDebts().get(0).isPriority(), "the card is not the priority");
+        assertTrue(roundTripped.getDebts().get(1).isPriority(), "the seeded car loan is the priority");
     }
 
     @Test

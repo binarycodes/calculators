@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,16 +23,16 @@ class DebtInputsStoreTest {
     @Test
     void round_trip_preserves_scalars_the_debts_list_and_the_windfalls_list() {
         final var card = new Debt("Credit card", new BigDecimal("250000"), new BigDecimal("36"),
-                null, new BigDecimal("5"), null, null);
+                null, new BigDecimal("5"), null, null, false);
         final var loan = new Debt("Car loan", new BigDecimal("600000"), new BigDecimal("10"),
-                new BigDecimal("12000"), null, new BigDecimal("0"), 6);
+                new BigDecimal("12000"), null, new BigDecimal("0"), 6, true);
         final var inputs = new DebtPlanInputs();
         inputs.setDebts(new ArrayList<>(List.of(card, loan)));
         inputs.setMonthlyBudget(new BigDecimal("45000"));
         inputs.setBudgetStepUpPct(new BigDecimal("5"));
         inputs.setDefaultFeePerMonth(new BigDecimal("600"));
         inputs.setWindfalls(new ArrayList<>(List.of(new Windfall(6, new BigDecimal("50000")))));
-        inputs.setStrategy(PayoffStrategy.CUSTOM);
+        inputs.setStrategy(PayoffStrategy.SNOWBALL);
         inputs.setInflationRatePct(new BigDecimal("6"));
 
         final ObjectNode json = store.toJsonNode(inputs);
@@ -40,7 +41,7 @@ class DebtInputsStoreTest {
         assertEquals(0, new BigDecimal("45000").compareTo(restored.getMonthlyBudget()));
         assertEquals(0, new BigDecimal("5").compareTo(restored.getBudgetStepUpPct()));
         assertEquals(0, new BigDecimal("600").compareTo(restored.getDefaultFeePerMonth()));
-        assertEquals(PayoffStrategy.CUSTOM, restored.getStrategy());
+        assertEquals(PayoffStrategy.SNOWBALL, restored.getStrategy());
         assertEquals(0, new BigDecimal("6").compareTo(restored.getInflationRatePct()));
 
         assertEquals(2, restored.getDebts().size());
@@ -48,7 +49,9 @@ class DebtInputsStoreTest {
         assertEquals("Credit card", restoredCard.getName());
         assertEquals(0, new BigDecimal("5").compareTo(restoredCard.getMinimumPct()));
         assertNull(restoredCard.getMinimumPayment());
+        assertFalse(restoredCard.isPriority());
         assertEquals(6, restored.getDebts().get(1).getPromoMonths());
+        assertTrue(restored.getDebts().get(1).isPriority(), "the priority flag should round-trip");
 
         assertEquals(1, restored.getWindfalls().size());
         assertEquals(6, restored.getWindfalls().get(0).getMonth());
@@ -56,16 +59,10 @@ class DebtInputsStoreTest {
     }
 
     @Test
-    void debt_order_is_preserved_for_the_custom_strategy() {
-        final var inputs = new DebtPlanInputs();
-        inputs.setStrategy(PayoffStrategy.CUSTOM);
-        inputs.setDebts(new ArrayList<>(List.of(
-                new Debt("second", new BigDecimal("200"), new BigDecimal("10"), null, null, null, null),
-                new Debt("first", new BigDecimal("100"), new BigDecimal("20"), null, null, null, null))));
-
-        final DebtPlanInputs restored = store.fromJsonNode(store.toJsonNode(inputs));
-        assertEquals("second", restored.getDebts().get(0).getName());
-        assertEquals("first", restored.getDebts().get(1).getName());
+    void an_unknown_strategy_falls_back_to_none() {
+        final ObjectNode json = store.toJsonNode(new DebtPlanInputs());
+        json.put("strategy", "CUSTOM"); // a retired value that may linger in localStorage
+        assertNull(store.fromJsonNode(json).getStrategy());
     }
 
     @Test

@@ -114,6 +114,8 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
             debt.setMinimumPct(bdOrNull(entry, "minimumPct"));
             debt.setPromoAprPct(bdOrNull(entry, "promoAprPct"));
             debt.setPromoMonths(intField(entry, "promoMonths"));
+            final JsonNode priority = entry.get("priority");
+            debt.setPriority(priority != null && priority.asBoolean());
             debts.add(debt);
         }
         return debts;
@@ -159,7 +161,8 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
         final List<Debt> debtsCopy = new ArrayList<>();
         for (final Debt debt : source.getDebts()) {
             debtsCopy.add(new Debt(debt.getName(), debt.getBalance(), debt.getAprPct(),
-                    debt.getMinimumPayment(), debt.getMinimumPct(), debt.getPromoAprPct(), debt.getPromoMonths()));
+                    debt.getMinimumPayment(), debt.getMinimumPct(), debt.getPromoAprPct(),
+                    debt.getPromoMonths(), debt.isPriority()));
         }
         final List<Windfall> windfallsCopy = new ArrayList<>();
         for (final Windfall windfall : source.getWindfalls()) {
@@ -171,9 +174,9 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
 
     private static DebtPlanInputs fallback() {
         final var card = new Debt("Credit card", BigDecimal.valueOf(250_000), BigDecimal.valueOf(36),
-                null, BigDecimal.valueOf(5), null, null);
+                null, BigDecimal.valueOf(5), null, null, false);
         final var loan = new Debt("Personal loan", BigDecimal.valueOf(400_000), BigDecimal.valueOf(14),
-                BigDecimal.valueOf(9_000), null, null, null);
+                BigDecimal.valueOf(9_000), null, null, null, false);
         final List<Debt> debts = new ArrayList<>(List.of(card, loan));
         return new DebtPlanInputs(debts, BigDecimal.valueOf(45_000), null, null, new ArrayList<>(),
                 PayoffStrategy.AVALANCHE, BigDecimal.valueOf(6));

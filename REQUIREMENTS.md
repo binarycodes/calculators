@@ -981,6 +981,7 @@ ordering saves over paying minimums only.
 | APR | Required, 0–100%; nominal `annual/12` monthly rate (as Loan / EMI). |
 | Min payment | Optional fixed minimum. |
 | Min % of balance | Optional percentage-of-(statement)-balance minimum. |
+| Priority | Optional; at most one debt. Its minimum is covered before any other's, so it is the last to default when the budget is tight (e.g. the car needed for work). |
 | Promo APR / Promo months | Optional intro rate applied for the first *N* months (behind an "advanced" disclosure). |
 
 Effective monthly minimum = `max(minimumFloor, minimumPct% × statement balance)`,
@@ -993,7 +994,7 @@ guarantees the payment eventually exceeds the interest so every debt amortizes.
 | Field | Notes |
 | --- | --- |
 | Maximum you can pay each month | Required, > 0. The total the user commits; the plan distributes it across the debts. |
-| Strategy | Avalanche (highest ongoing APR first), Snowball (smallest original balance first), or Custom (the user's row order, arranged with up/down move buttons). |
+| Strategy | Avalanche (highest ongoing APR first) or Snowball (smallest original balance first). Decides where the surplus (beyond minimums) goes. |
 | Increase budget yearly | Optional, 0–50%; grows the monthly budget each year. |
 | Default fee (per missed minimum) | Optional, ≥ 0; a flat charge added to a debt in any month the budget can't cover its minimum. |
 | Inflation Rate | Optional, 0–20%; drives the today's-money interest total. |
@@ -1013,13 +1014,13 @@ The budget is a hard cap — the plan never invents money it doesn't have.
 - **Budget for month** = `monthlyBudget × (1 + step-up)^yearsElapsed`, plus any
   windfall dated to that month.
 - **Fixed, promo-aware order:** rank once — Avalanche by ongoing (post-promo)
-  APR descending, Snowball by original balance ascending, Custom by the debts'
-  input order (the arranged order), tie-break input order. The order never
-  re-sorts; only "already cleared" changes.
+  APR descending, Snowball by original balance ascending, tie-break input order.
+  The order never re-sorts; only "already cleared" changes.
 - Each month: accrue interest (promo rate while `month ≤ promoMonths`, else APR),
-  then **distribute the budget** — cover each debt's effective minimum in the
-  strategy's order, then funnel the remainder to the target, **cascading within
-  the same month** once a target clears (so one month can retire several debts).
+  then **distribute the budget** — cover each debt's effective minimum (the
+  **priority** debt first, then the rest in strategy order), then funnel the
+  remainder to the strategy target, **cascading within the same month** once a
+  target clears (so one month can retire several debts).
 - **Defaults:** if the budget can't cover every minimum, the debts it can't reach
   that month get less than their minimum and are flagged as defaulting; the flat
   default fee (if set) is added to each defaulting balance. Nothing is topped up —
@@ -1032,11 +1033,9 @@ The budget is a hard cap — the plan never invents money it doesn't have.
   `monthsSaved` are the primary strategy's advantage over it; today's-money
   interest deflates each month's interest by `(1+inflation)^(m/12)`.
 
-The result carries the chosen strategy's schedule as `primary`, plus the two
-canonical strategies (avalanche, snowball) and the baseline. For a Custom
-primary, `primary` is a separate run and the "vs" card compares it against
-Avalanche (the interest-optimal reference). The only hard error is having no
-valid debts.
+The result carries the chosen strategy's schedule as `primary` (the same object
+as the avalanche or snowball run) plus the baseline. The only hard error is
+having no valid debts.
 
 ## 3. Output
 
@@ -1044,14 +1043,13 @@ valid debts.
 
 Debt-free horizon (primary; "Over 100 years" when it never clears), total
 interest (with a today's-money subtitle), interest saved and time saved vs
-minimums-only, and the interest delta against the reference strategy (label names
-it, e.g. "vs Snowball", or "vs Avalanche" when the primary is Custom).
+minimums-only, and the interest delta against the other strategy (label names it,
+e.g. "vs Snowball").
 
 ### 3.2 Comparison chart
 
 Total outstanding balance over time — Avalanche, Snowball, and minimums-only
-(dashed). When the Custom strategy is selected, its schedule is added as a fourth
-line.
+(dashed).
 
 ### 3.3 Year-by-year projection grid
 
@@ -1081,8 +1079,9 @@ shareable-link codec.
 
 `DebtCalculator` (strategy ordering, fixed promo-aware order, same-month cascade,
 percentage-minimum shrink, promo window, floor termination, budget-below-minimums
-defaults, default fee, single-debt and zero-APR cases, plus budget step-up,
-windfalls, and custom ordering), `DebtInputsStore` (JSON round-trip incl. the
-debts and windfalls lists), and `DebtDefaultsJsonTest` (defaults parse and clear
-the debts) — under the `*/service` 80% coverage gate — plus a browserless form
-round-trip and Playwright reactivity/strategy ITs.
+defaults, default fee, priority protection, single-debt and zero-APR cases, plus
+budget step-up and windfalls), `DebtInputsStore` (JSON round-trip incl. the debts
+and windfalls lists and the priority flag; unknown strategy falls back), and
+`DebtDefaultsJsonTest` (defaults parse and clear the debts) — under the
+`*/service` 80% coverage gate — plus a browserless form round-trip and Playwright
+reactivity/strategy ITs.

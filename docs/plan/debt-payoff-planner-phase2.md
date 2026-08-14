@@ -10,8 +10,14 @@
 > minimum, the shortfall shows as a **default** (with an optional flat default fee)
 > rather than being topped up, and a **monthly per-debt payment schedule** grid
 > shows exactly what to pay where. The step-up now grows the budget; windfalls sit
-> on top of it. `REQUIREMENTS.md` (Debt Payoff Planner) is the canonical spec for
-> the current behaviour; the sections below describe the earlier Phase 2 model.
+> on top of it.
+>
+> The **Custom strategy and row reordering were later removed** — only Avalanche
+> and Snowball remain. In their place, a debt can be flagged **priority**: its
+> minimum is covered before any other's, so it is the last to default (the "car
+> needed for work" case). `REQUIREMENTS.md` (Debt Payoff Planner) is the canonical
+> spec for the current behaviour; the sections below describe the earlier Phase 2
+> model.
 
 ## Context
 

@@ -56,17 +56,6 @@ class DebtPlanIT extends SpringPlaywrightIT {
         assertThat(page.getByText("vs Avalanche", new GetByTextOptions().setExact(false))).isVisible();
     }
 
-    @Test
-    @DisplayName("Selecting the Custom strategy re-points the comparison to Avalanche")
-    void selectingCustom_comparesAgainstAvalanche() {
-        page.locator("vaadin-radio-button")
-                .filter(new Locator.FilterOptions().setHasText("Custom"))
-                .click();
-
-        // Custom is measured against Avalanche in the "vs" card.
-        assertThat(page.getByText("vs Avalanche", new GetByTextOptions().setExact(false))).isVisible();
-    }
-
     private Locator summaryCard(String title) {
         return page.getByRole(AriaRole.REGION, new GetByRoleOptions().setName(title));
     }
