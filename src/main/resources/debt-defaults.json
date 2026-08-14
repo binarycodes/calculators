@@ -1,7 +1,8 @@
 {
   "INR": {
-    "extraPerMonth": "10000",
-    "extraStepUpPct": "5",
+    "monthlyBudget": "45000",
+    "budgetStepUpPct": "5",
+    "defaultFeePerMonth": "600",
     "strategy": "AVALANCHE",
     "inflationRatePct": "6",
     "minimumFloor": "500",
@@ -15,7 +16,9 @@
     ]
   },
   "EUR": {
-    "extraPerMonth": "200",
+    "monthlyBudget": "600",
+    "budgetStepUpPct": "3",
+    "defaultFeePerMonth": "25",
     "strategy": "AVALANCHE",
     "inflationRatePct": "2",
     "minimumFloor": "25",
@@ -26,7 +29,9 @@
     ]
   },
   "USD": {
-    "extraPerMonth": "300",
+    "monthlyBudget": "900",
+    "budgetStepUpPct": "3",
+    "defaultFeePerMonth": "30",
     "strategy": "AVALANCHE",
     "inflationRatePct": "3",
     "minimumFloor": "25",

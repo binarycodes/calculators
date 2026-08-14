@@ -89,8 +89,9 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
     @Override
     public ObjectNode toJsonNode(DebtPlanInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
-        node.put("extraPerMonth", plain(inputs.getExtraPerMonth()));
-        node.put("extraStepUpPct", plain(inputs.getExtraStepUpPct()));
+        node.put("monthlyBudget", plain(inputs.getMonthlyBudget()));
+        node.put("budgetStepUpPct", plain(inputs.getBudgetStepUpPct()));
+        node.put("defaultFeePerMonth", plain(inputs.getDefaultFeePerMonth()));
         node.put("strategy", inputs.getStrategy() == null ? null : inputs.getStrategy().name());
         node.put("inflationRatePct", plain(inputs.getInflationRatePct()));
         node.set("debts", debtsToJson(inputs.getDebts()));
@@ -101,8 +102,9 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
     @Override
     public DebtPlanInputs fromJsonNode(JsonNode node) {
         final var inputs = new DebtPlanInputs();
-        inputs.setExtraPerMonth(bd(node, "extraPerMonth"));
-        inputs.setExtraStepUpPct(bd(node, "extraStepUpPct"));
+        inputs.setMonthlyBudget(bd(node, "monthlyBudget"));
+        inputs.setBudgetStepUpPct(bd(node, "budgetStepUpPct"));
+        inputs.setDefaultFeePerMonth(bd(node, "defaultFeePerMonth"));
         inputs.setStrategy(readStrategy(node.get("strategy")));
         inputs.setInflationRatePct(bd(node, "inflationRatePct"));
         inputs.setDebts(readDebts(node.get("debts")));

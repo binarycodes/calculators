@@ -78,8 +78,9 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
 
     private static DebtPlanInputs toInputs(JsonNode node) {
         final var inputs = new DebtPlanInputs();
-        inputs.setExtraPerMonth(bd(node, "extraPerMonth"));
-        inputs.setExtraStepUpPct(bdOrNull(node, "extraStepUpPct"));
+        inputs.setMonthlyBudget(bd(node, "monthlyBudget"));
+        inputs.setBudgetStepUpPct(bdOrNull(node, "budgetStepUpPct"));
+        inputs.setDefaultFeePerMonth(bdOrNull(node, "defaultFeePerMonth"));
         inputs.setStrategy(readStrategy(node.get("strategy")));
         inputs.setInflationRatePct(bd(node, "inflationRatePct"));
         inputs.setDebts(readDebts(node.get("debts")));
@@ -164,8 +165,8 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
         for (final Windfall windfall : source.getWindfalls()) {
             windfallsCopy.add(new Windfall(windfall.getMonth(), windfall.getAmount()));
         }
-        return new DebtPlanInputs(debtsCopy, source.getExtraPerMonth(), source.getExtraStepUpPct(),
-                windfallsCopy, source.getStrategy(), source.getInflationRatePct());
+        return new DebtPlanInputs(debtsCopy, source.getMonthlyBudget(), source.getBudgetStepUpPct(),
+                source.getDefaultFeePerMonth(), windfallsCopy, source.getStrategy(), source.getInflationRatePct());
     }
 
     private static DebtPlanInputs fallback() {
@@ -174,7 +175,7 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
         final var loan = new Debt("Personal loan", BigDecimal.valueOf(400_000), BigDecimal.valueOf(14),
                 BigDecimal.valueOf(9_000), null, null, null);
         final List<Debt> debts = new ArrayList<>(List.of(card, loan));
-        return new DebtPlanInputs(debts, BigDecimal.valueOf(10_000), null, new ArrayList<>(),
+        return new DebtPlanInputs(debts, BigDecimal.valueOf(45_000), null, null, new ArrayList<>(),
                 PayoffStrategy.AVALANCHE, BigDecimal.valueOf(6));
     }
 }
