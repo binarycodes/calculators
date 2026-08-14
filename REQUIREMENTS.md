@@ -1051,18 +1051,20 @@ e.g. "vs Snowball").
 Total outstanding balance over time — Avalanche, Snowball, and minimums-only
 (dashed).
 
-### 3.3 Year-by-year projection grid
+### 3.3 Schedule grids (tabbed)
 
-Year-by-year for the chosen strategy: Total Balance, Interest Paid, Principal
-Paid, and Cumulative Interest. The debt-free year (last row) is highlighted with
-a legend. The per-debt breakdown lives in the monthly schedule (§3.4).
+The year-by-year and monthly grids share one card, switched by a "Year by year" /
+"Monthly schedule" tab.
 
-### 3.4 Monthly payment schedule grid
-
-Month-by-month for the chosen strategy: Month, one column per debt showing exactly
-what to pay into it, and a Total. A cell is shown in the danger colour in any
-month that debt defaulted (the budget couldn't cover its minimum); a legend
-explains it when a default occurs. Columns are built from the current debts.
+- **Year by year** — for the chosen strategy: Total Balance, Interest Paid,
+  Principal Paid, and Cumulative Interest. The debt-free year (last row) is
+  highlighted with a legend.
+- **Monthly schedule** — month-by-month: Month, one column per debt showing
+  exactly what to pay into it, and a Total. When the budget can't cover a debt's
+  minimum, the unpaid **shortfall** is shown in red beneath that payment. If any
+  month falls short, a **Shortfall** total column and a legend explaining the red
+  appear (both hidden when nothing ever defaults). Columns are built from the
+  current debts; the tab carries its own column-chooser and legend controls.
 
 ## 4. Persistence & sharing
 

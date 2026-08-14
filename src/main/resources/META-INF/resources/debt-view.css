@@ -19,12 +19,17 @@
     font-weight: 600;
 }
 
-/* A defaulting payment in the monthly schedule — a minimum the budget missed. */
-.debt-view .payment-default {
-    color: var(--color-danger-text);
-    font-weight: 600;
+/* Monthly-schedule cell: the payment, with any shortfall stacked beneath it. */
+.debt-view .payment-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.25;
 }
 
-.debt-view .defaults-legend {
+/* The unpaid part of a minimum the budget couldn't cover, shown in red. */
+.debt-view .payment-shortfall {
     color: var(--color-danger-text);
+    font-size: 0.8em;
+    font-weight: 600;
 }

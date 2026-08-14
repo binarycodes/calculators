@@ -101,6 +101,14 @@ vaadin-grid::part(corpus-end-healthy) {
     background: var(--color-primary-bg);
 }
 
+.legend-swatch.debt-free {
+    background: var(--color-success-bg);
+}
+
+.legend-swatch.payment-shortfall {
+    background: var(--color-danger-bg);
+}
+
 /* Dual monthly / yearly money cell --------------------------------------- */
 .money-cell {
     display: flex;

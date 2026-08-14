@@ -17,4 +17,9 @@ public record MonthlyPayment(int month, List<DebtPayment> payments, BigDecimal t
     public boolean hasDefault() {
         return payments.stream().anyMatch(DebtPayment::defaulted);
     }
+
+    /** The combined shortfall across all debts this month (zero when none defaulted). */
+    public BigDecimal totalShortfall() {
+        return payments.stream().map(DebtPayment::shortfall).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

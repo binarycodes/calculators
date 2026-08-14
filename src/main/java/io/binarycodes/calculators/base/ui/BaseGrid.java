@@ -61,6 +61,17 @@ public abstract class BaseGrid<T> extends Grid<T> {
     }
 
     /**
+     * Drop all grid columns and their chooser tracking. For grids that rebuild
+     * their columns on each update (e.g. one column per debt); call this before
+     * re-tracking, then rebuild {@link #createControls()} so the chooser reflects
+     * the new columns.
+     */
+    protected void clearTrackedColumns() {
+        this.columnsByHeader.clear();
+        removeAllColumns();
+    }
+
+    /**
      * Register a row-colour legend entry. {@code partName} is the part-name the
      * row {@code setPartNameGenerator} assigns (so the legend swatch can be tinted
      * to match), and {@code descriptionKey} is the translation key describing what
@@ -69,6 +80,11 @@ public abstract class BaseGrid<T> extends Grid<T> {
      */
     protected void trackRowLegend(String partName, String descriptionKey) {
         this.rowLegend.add(new RowLegendEntry(partName, descriptionKey));
+    }
+
+    /** Drop all legend entries, for grids that decide the legend per update. */
+    protected void clearRowLegend() {
+        this.rowLegend.clear();
     }
 
     /**

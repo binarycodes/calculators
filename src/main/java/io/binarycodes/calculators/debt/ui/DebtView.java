@@ -1,11 +1,12 @@
 package io.binarycodes.calculators.debt.ui;
 
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
@@ -51,11 +52,10 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
     private final DebtProjectionGrid projectionGrid;
     private final DebtMonthlyGrid monthlyGrid;
     private final DebtDefaultsProvider defaultsProvider;
-    private final Span defaultsLegend = new Span();
+    private final HorizontalLayout monthlyControls = new HorizontalLayout();
 
     private final VerticalLayout chartCard;
-    private final VerticalLayout projectionCard;
-    private final VerticalLayout monthlyCard;
+    private final VerticalLayout scheduleCard;
 
     public DebtView(UserPreferences preferences,
                     DebtDefaultsProvider defaultsProvider,
@@ -69,10 +69,8 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         add(buildSummaryRow());
         this.chartCard = buildChartCard();
         add(this.chartCard);
-        this.projectionCard = buildProjectionCard();
-        add(this.projectionCard);
-        this.monthlyCard = buildMonthlyCard();
-        add(this.monthlyCard);
+        this.scheduleCard = buildScheduleCard();
+        add(this.scheduleCard);
     }
 
     @Override
@@ -114,15 +112,14 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         updateAlternativeCard(result, currency);
 
         this.chartCard.setVisible(true);
-        this.projectionCard.setVisible(true);
-        this.monthlyCard.setVisible(true);
+        this.scheduleCard.setVisible(true);
         this.comparisonChart.update(result, currency);
         this.projectionGrid.update(result.primary().years(), payoffYear(result.primary().payoffMonth()));
         this.monthlyGrid.update(result.primary().monthlyPayments(), currency);
-
-        final boolean anyDefault = result.primary().monthlyPayments().stream().anyMatch(month -> month.hasDefault());
-        this.defaultsLegend.setText(getTranslation("debt.defaultLegend"));
-        this.defaultsLegend.setVisible(anyDefault);
+        // The monthly grid rebuilds its columns per update, so its column chooser
+        // must be rebuilt to match.
+        this.monthlyControls.removeAll();
+        this.monthlyControls.add(this.monthlyGrid.createControls());
     }
 
     private void updateAlternativeCard(DebtPlanResult result, SupportedCurrency currency) {
@@ -186,14 +183,30 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         return card;
     }
 
-    private VerticalLayout buildProjectionCard() {
-        final H2 title = new H2(getTranslation("section.projectionByYear"));
-        final HorizontalLayout header = new HorizontalLayout(title, this.projectionGrid.createControls());
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+    private VerticalLayout buildScheduleCard() {
+        final Tabs tabs = new Tabs(
+                new Tab(getTranslation("tab.debt.yearByYear")),
+                new Tab(getTranslation("tab.debt.monthly")));
 
-        final VerticalLayout card = new VerticalLayout(header, this.projectionGrid);
+        final HorizontalLayout yearHeader = new HorizontalLayout(this.projectionGrid.createControls());
+        yearHeader.setWidthFull();
+        yearHeader.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        final VerticalLayout yearContent = tabContent(yearHeader, this.projectionGrid);
+
+        this.monthlyControls.setWidthFull();
+        this.monthlyControls.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        final VerticalLayout monthlyContent = tabContent(this.monthlyControls, this.monthlyGrid);
+
+        final VerticalLayout activeContent = new VerticalLayout(yearContent);
+        activeContent.setPadding(false);
+        activeContent.setSpacing(false);
+        activeContent.setWidthFull();
+        tabs.addSelectedChangeListener(event -> {
+            activeContent.removeAll();
+            activeContent.add(tabs.getSelectedIndex() == 1 ? monthlyContent : yearContent);
+        });
+
+        final VerticalLayout card = new VerticalLayout(tabs, activeContent);
         card.addClassName("grid-card");
         card.setPadding(false);
         card.setSpacing(true);
@@ -201,18 +214,12 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         return card;
     }
 
-    private VerticalLayout buildMonthlyCard() {
-        final H2 title = new H2(getTranslation("section.debt.monthlySchedule"));
-        this.defaultsLegend.addClassName("subsection-hint");
-        this.defaultsLegend.addClassName("defaults-legend");
-        this.defaultsLegend.setVisible(false);
-
-        final VerticalLayout card = new VerticalLayout(title, this.defaultsLegend, this.monthlyGrid);
-        card.addClassName("grid-card");
-        card.setPadding(false);
-        card.setSpacing(true);
-        card.setWidthFull();
-        return card;
+    private static VerticalLayout tabContent(Component... children) {
+        final VerticalLayout content = new VerticalLayout(children);
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setWidthFull();
+        return content;
     }
 
     private void showInvalidFormPlaceholders() {
@@ -224,7 +231,6 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         this.timeSavedCard.setValue(dash, null);
         this.vsAlternativeCard.setValue(dash, null);
         this.chartCard.setVisible(false);
-        this.projectionCard.setVisible(false);
-        this.monthlyCard.setVisible(false);
+        this.scheduleCard.setVisible(false);
     }
 }

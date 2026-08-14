@@ -237,7 +237,11 @@ public final class DebtCalculator {
         final List<DebtPayment> payments = new ArrayList<>(working.size());
         BigDecimal total = BigDecimal.ZERO;
         for (final WorkingDebt debt : working) {
-            payments.add(new DebtPayment(debt.name, scale(debt.paidThisMonth), debt.defaultedThisMonth));
+            final BigDecimal shortfall = debt.defaultedThisMonth
+                    ? debt.requiredMinimum.subtract(debt.paidThisMonth, MC).max(BigDecimal.ZERO)
+                    : BigDecimal.ZERO;
+            payments.add(new DebtPayment(debt.name, scale(debt.paidThisMonth), scale(shortfall),
+                    debt.defaultedThisMonth));
             total = total.add(debt.paidThisMonth, MC);
         }
         return new MonthlyPayment(month, payments, scale(total));

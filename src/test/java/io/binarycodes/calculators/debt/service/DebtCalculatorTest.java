@@ -295,6 +295,21 @@ class DebtCalculatorTest {
         assertTrue(defaultedInMonthOne(result, "card"), "the non-priority debt defaults instead");
     }
 
+    @Test
+    void a_default_records_the_unpaid_shortfall() {
+        // ₹6,000 budget covers the card's ₹5,000 minimum; the car gets the ₹1,000
+        // left, so its shortfall is ₹4,000.
+        final DebtPlanResult result = DebtCalculator.calculate(inputs(PayoffStrategy.AVALANCHE, "6000",
+                debt("card", "100000", "30", "5"),
+                debt("car", "100000", "10", "5")), FLOOR);
+        final var monthOne = result.primary().monthlyPayments().get(0);
+        final var carPayment = monthOne.payments().stream()
+                .filter(payment -> payment.debtName().equals("car"))
+                .findFirst().orElseThrow();
+        assertEquals(0, new BigDecimal("4000").compareTo(carPayment.shortfall()));
+        assertEquals(0, new BigDecimal("4000").compareTo(monthOne.totalShortfall()));
+    }
+
     private static boolean defaultedInMonthOne(DebtPlanResult result, String debtName) {
         return result.primary().monthlyPayments().get(0).payments().stream()
                 .filter(payment -> payment.debtName().equals(debtName))
