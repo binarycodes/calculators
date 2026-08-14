@@ -1,0 +1,35 @@
+{
+  "INR": {
+    "extraPerMonth": "10000",
+    "strategy": "AVALANCHE",
+    "inflationRatePct": "6",
+    "minimumFloor": "500",
+    "debts": [
+      { "name": "Credit card", "balance": "250000", "aprPct": "36", "minimumPct": "5" },
+      { "name": "Personal loan", "balance": "400000", "aprPct": "14", "minimumPayment": "9000" },
+      { "name": "Car loan", "balance": "600000", "aprPct": "10", "minimumPayment": "12000", "promoAprPct": "0", "promoMonths": "6" }
+    ]
+  },
+  "EUR": {
+    "extraPerMonth": "200",
+    "strategy": "AVALANCHE",
+    "inflationRatePct": "2",
+    "minimumFloor": "25",
+    "debts": [
+      { "name": "Credit card", "balance": "4000", "aprPct": "19.9", "minimumPct": "3" },
+      { "name": "Store card", "balance": "1500", "aprPct": "24.9", "minimumPct": "5", "promoAprPct": "0", "promoMonths": "12" },
+      { "name": "Personal loan", "balance": "9000", "aprPct": "7.5", "minimumPayment": "200" }
+    ]
+  },
+  "USD": {
+    "extraPerMonth": "300",
+    "strategy": "AVALANCHE",
+    "inflationRatePct": "3",
+    "minimumFloor": "25",
+    "debts": [
+      { "name": "Credit card", "balance": "6000", "aprPct": "22.9", "minimumPct": "3" },
+      { "name": "Store card", "balance": "2000", "aprPct": "27.9", "minimumPct": "5", "promoAprPct": "0", "promoMonths": "12" },
+      { "name": "Auto loan", "balance": "15000", "aprPct": "6.9", "minimumPayment": "320" }
+    ]
+  }
+}
