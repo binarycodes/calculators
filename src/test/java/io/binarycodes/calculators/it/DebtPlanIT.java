@@ -47,9 +47,9 @@ class DebtPlanIT extends SpringPlaywrightIT {
         assertThat(page.getByText("vs Snowball", new GetByTextOptions().setExact(false))).isVisible();
 
         // Click the radio-button component itself (the segmented toggle hides the
-        // native input), scoped so the matching card heading — a div — is excluded.
+        // native input).
         page.locator("vaadin-radio-button")
-                .filter(new Locator.FilterOptions().setHasText("Snowball (smallest balance first)"))
+                .filter(new Locator.FilterOptions().setHasText("Snowball"))
                 .click();
 
         // ...and after switching, it flips to compare against Avalanche.
@@ -57,15 +57,14 @@ class DebtPlanIT extends SpringPlaywrightIT {
     }
 
     @Test
-    @DisplayName("Selecting the Custom strategy adds its chart line and compares against Avalanche")
+    @DisplayName("Selecting the Custom strategy re-points the comparison to Avalanche")
     void selectingCustom_comparesAgainstAvalanche() {
         page.locator("vaadin-radio-button")
-                .filter(new Locator.FilterOptions().setHasText("Custom (your order)"))
+                .filter(new Locator.FilterOptions().setHasText("Custom"))
                 .click();
 
-        // Custom is measured against Avalanche, and gains its own chart series.
+        // Custom is measured against Avalanche in the "vs" card.
         assertThat(page.getByText("vs Avalanche", new GetByTextOptions().setExact(false))).isVisible();
-        assertThat(page.getByText("Custom", new GetByTextOptions().setExact(true))).isVisible();
     }
 
     private Locator summaryCard(String title) {

@@ -64,7 +64,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             PercentageField.create(Translations.get("field.debt.inflationRate"));
 
     private FormCard debtsCard;
-    private final Span customHint = secondaryText(Translations.get("debt.customOrderHint"));
+    private final Span strategyDescription = secondaryText("");
 
     private Signal<?> strategySignal;
     private Signal<?> extraPerMonthSignal;
@@ -141,9 +141,9 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         return this.binder.validate();
     }
 
-    /** Visible for tests: whether the custom-order reorder hint is currently shown. */
-    boolean isReorderHintVisible() {
-        return this.customHint.isVisible();
+    /** Visible for tests: the description shown beneath the strategy toggle. */
+    String strategyDescriptionText() {
+        return this.strategyDescription.getText();
     }
 
     private DebtPlanInputs buildInputs() {
@@ -159,11 +159,11 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         this.strategy.setItemLabelGenerator(DebtCalculatorForm::strategyLabel);
         this.strategy.setValue(PayoffStrategy.AVALANCHE);
         this.strategy.addClassName("segmented-toggle");
-        // The reorder hint is only relevant to the custom order.
-        this.customHint.addClassName("subsection-hint");
-        this.customHint.setVisible(this.strategy.getValue() == PayoffStrategy.CUSTOM);
+        // The description below the toggle explains whichever strategy is selected.
+        this.strategyDescription.addClassName("subsection-hint");
+        this.strategyDescription.setText(strategyDescription(this.strategy.getValue()));
         this.strategy.addValueChangeListener(
-                event -> this.customHint.setVisible(event.getValue() == PayoffStrategy.CUSTOM));
+                event -> this.strategyDescription.setText(strategyDescription(event.getValue())));
     }
 
     private void configureBindings() {
@@ -217,7 +217,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         layout.add(this.extraPerMonth, withPercentageSuffix(this.extraStepUpPct),
                 withPercentageSuffix(this.inflationRatePct));
 
-        final var content = new VerticalLayout(this.strategy, this.customHint, layout);
+        final var content = new VerticalLayout(this.strategy, this.strategyDescription, layout);
         content.setPadding(false);
         content.setSpacing(true);
 
@@ -251,6 +251,14 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             case SNOWBALL -> Translations.get("debt.strategy.snowball");
             case CUSTOM -> Translations.get("debt.strategy.custom");
             case AVALANCHE -> Translations.get("debt.strategy.avalanche");
+        };
+    }
+
+    private static String strategyDescription(PayoffStrategy strategy) {
+        return switch (strategy == null ? PayoffStrategy.AVALANCHE : strategy) {
+            case SNOWBALL -> Translations.get("debt.strategy.snowball.desc");
+            case CUSTOM -> Translations.get("debt.strategy.custom.desc");
+            case AVALANCHE -> Translations.get("debt.strategy.avalanche.desc");
         };
     }
 

@@ -88,19 +88,21 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
     }
 
     @Test
-    void the_reorder_hint_shows_only_for_the_custom_strategy() {
+    void the_strategy_description_tracks_the_selected_strategy() {
         final var form = new DebtCalculatorForm(new UserPreferences());
         UI.getCurrent().add(form);
 
         final DebtPlanInputs custom = seeded();
         custom.setStrategy(PayoffStrategy.CUSTOM);
         form.setInputs(custom);
-        assertTrue(form.isReorderHintVisible(), "the reorder hint should show for the custom strategy");
+        assertTrue(form.strategyDescriptionText().contains("reorder"),
+                "the custom description should mention reordering");
 
         final DebtPlanInputs avalanche = seeded();
         avalanche.setStrategy(PayoffStrategy.AVALANCHE);
         form.setInputs(avalanche);
-        assertFalse(form.isReorderHintVisible(), "the reorder hint should hide for a non-custom strategy");
+        assertTrue(form.strategyDescriptionText().contains("highest rate"),
+                "the avalanche description should mention the highest rate");
     }
 
     @Test
