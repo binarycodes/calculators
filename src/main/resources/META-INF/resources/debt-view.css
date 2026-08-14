@@ -1,0 +1,20 @@
+/*
+ * Debt-planner screen. Reuses the shared .form-section, .action-row,
+ * .summary-row, .chart-card, and .grid-card rules. Only view-specific tweaks
+ * live here.
+ */
+
+.debt-view .summary-row {
+    margin-top: 2.5rem;
+}
+
+.debt-view .debt-row {
+    padding-bottom: 0.25rem;
+}
+
+/* Highlight the debt-free row — the year the last debt clears. */
+.debt-view::part(debt-free) {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+    font-weight: 600;
+}

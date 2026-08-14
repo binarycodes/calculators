@@ -1,0 +1,23 @@
+/*
+ * Debt-planner balance chart. Avalanche uses the primary colour, Snowball the
+ * secondary, and the minimums-only baseline the danger colour so the slow,
+ * costly reference reads as the one to beat.
+ */
+
+:host(.debt-chart) {
+    & .debt-avalanche > .highcharts-graph {
+        stroke: var(--chart-primary-color);
+        stroke-width: 3px;
+    }
+
+    & .debt-snowball > .highcharts-graph {
+        stroke: var(--chart-secondary-color);
+        stroke-width: 3px;
+    }
+
+    & .debt-baseline > .highcharts-graph {
+        stroke: var(--chart-danger-color);
+        stroke-width: 2px;
+        stroke-dasharray: 6, 4;
+    }
+}
