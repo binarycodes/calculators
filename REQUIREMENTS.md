@@ -18,11 +18,14 @@ input. The app currently ships:
 - **IRR / XIRR** — computes the annualised internal rate of return across dated
   cashflows (investments and withdrawals), and flags schedules whose rate is not
   unique (multiple roots).
+- **Debt Planner** — pays off several debts under a constant monthly budget,
+  comparing avalanche vs snowball vs a minimums-only baseline; reports the
+  debt-free horizon and the interest and time saved.
 
 The landing route (`/`) shows a tile per calculator, populated automatically
 from the `@Menu`-annotated views (no manual registration). Each calculator
 owns a route segment (`/retirement`, `/goal`, `/inflation`, `/investment`,
-`/loan`, `/buyrent`, `/xirr`).
+`/loan`, `/buyrent`, `/xirr`, `/debt`).
 
 The Years / Ages / Target-Year horizon selector is shared infrastructure:
 `base.common.TimeHorizonMode` + `base.common.TimeHorizon.resolveTotalMonths`,
@@ -960,3 +963,92 @@ shareable-link codec.
 (expansion, totals, payback, status, validation), `XirrInputsStore` (JSON
 round-trip), and `XirrDefaultsJsonTest` (defaults parse and resolve) — all under
 the `*/service` 80% coverage gate.
+
+# Debt Payoff Planner (`/debt`)
+
+Given several debts and a fixed extra monthly payment, work out when the user is
+debt-free, how much interest they pay, and how much the avalanche/snowball
+ordering saves over paying minimums only.
+
+## 1. Inputs
+
+### 1.1 Debts (per row)
+
+| Field | Notes |
+| --- | --- |
+| Name | Required; labels the debt in the schedule and target column. |
+| Balance | Required, > 0. |
+| APR | Required, 0–100%; nominal `annual/12` monthly rate (as Loan / EMI). |
+| Min payment | Optional fixed minimum. |
+| Min % of balance | Optional percentage-of-(statement)-balance minimum. |
+| Promo APR / Promo months | Optional intro rate applied for the first *N* months (behind an "advanced" disclosure). |
+
+Effective monthly minimum = `max(minimumFloor, minimumPct% × statement balance)`,
+capped at the outstanding balance. `minimumFloor` is the row's Min payment when
+set, otherwise a per-currency default floor from `debt-defaults.json`. The floor
+guarantees the payment eventually exceeds the interest so every debt amortizes.
+
+### 1.2 Plan
+
+| Field | Notes |
+| --- | --- |
+| Strategy | Avalanche (highest ongoing APR first) or Snowball (smallest original balance first). |
+| Extra per month | Optional, ≥ 0; added on top of the summed minimums. |
+| Inflation Rate | Optional, 0–20%; drives the today's-money interest total. |
+
+## 2. Calculation Model
+
+Month-by-month simulation, run once per strategy plus a minimums-only baseline.
+
+- **Budget** = `Σ initial effective minimums + extra`, held constant as debts
+  clear (the rollover). If it can't cover the first month's total interest, the
+  plan is **infeasible** (`debt.warning.infeasible`).
+- **Fixed, promo-aware order:** rank once — Avalanche by ongoing (post-promo)
+  APR descending, Snowball by original balance ascending, tie-break input order.
+  The order never re-sorts; only "already cleared" changes.
+- Each month: accrue interest (promo rate while `month ≤ promoMonths`, else APR),
+  pay every debt's effective minimum, then funnel the remaining budget to the
+  debts in fixed order — **cascading within the same month** once a target
+  clears, so one month can retire several debts.
+- Stop when all balances hit zero, or at a 1200-month cap → `debt.warning.notPaidOff`.
+- **Baseline:** same loop with no extra and no funnelling. `interestSaved` and
+  `monthsSaved` are the primary strategy's advantage over the baseline;
+  today's-money interest deflates each month's interest by `(1+inflation)^(m/12)`.
+
+## 3. Output
+
+### 3.1 Summary cards (5)
+
+Debt-free horizon (primary), total interest (with a today's-money subtitle),
+interest saved and time saved vs minimums-only, and the interest delta against
+the other strategy (label names it, e.g. "vs Snowball").
+
+### 3.2 Comparison chart
+
+Total outstanding balance over time — Avalanche, Snowball, and minimums-only
+(dashed) as three lines.
+
+### 3.3 Projection grid
+
+Year-by-year for the chosen strategy: Total Balance, Interest Paid, Principal
+Paid, Target(s) (every debt that took surplus that year, in strategy order), and
+Cumulative Interest. The debt-free year (last row) is highlighted with a legend.
+
+## 4. Persistence & sharing
+
+| Key | Content |
+| --- | --- |
+| `debt-defaults.json` (classpath) | Per-currency sample debts, extra, strategy, inflation, and the default minimum floor. |
+| `dbt_inputs` (localStorage) | Per-currency snapshot of the edited debts and plan settings. |
+
+`DebtInputsStore`'s `toJsonNode` / `fromJsonNode` (debts round-trip as a JSON
+array) also back the shareable-link codec.
+
+## 5. Test coverage
+
+`DebtCalculator` (strategy ordering, fixed promo-aware order, same-month cascade,
+rollover, percentage-minimum shrink, promo window, floor termination, infeasible
+budget, single-debt and zero-APR cases), `DebtInputsStore` (JSON round-trip incl.
+the debts list), and `DebtDefaultsJsonTest` (defaults parse and feed the
+calculator) — under the `*/service` 80% coverage gate — plus a browserless
+form round-trip and a Playwright reactivity IT.
