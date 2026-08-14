@@ -104,15 +104,13 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
 
         this.chartCard.setVisible(true);
         this.projectionCard.setVisible(true);
-        this.comparisonChart.update(result.avalanche(), result.snowball(), result.baseline(), currency);
+        this.comparisonChart.update(result, currency);
         this.projectionGrid.update(result.primary().years(), payoffYear(result.primary().payoffMonth()));
     }
 
     private void updateAlternativeCard(DebtPlanResult result, SupportedCurrency currency) {
-        final PayoffStrategy alternativeStrategy = result.primaryStrategy() == PayoffStrategy.SNOWBALL
-                ? PayoffStrategy.AVALANCHE : PayoffStrategy.SNOWBALL;
         this.vsAlternativeCard.setLabel(getTranslation("summary.debt.vsAlternative.named",
-                strategyName(alternativeStrategy)));
+                strategyName(result.alternativeStrategy())));
 
         final BigDecimal difference = result.alternative().totalInterest()
                 .subtract(result.primary().totalInterest());

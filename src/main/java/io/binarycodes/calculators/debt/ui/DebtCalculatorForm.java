@@ -33,9 +33,11 @@ import io.binarycodes.calculators.base.ui.RowControls;
 import io.binarycodes.calculators.debt.domain.Debt;
 import io.binarycodes.calculators.debt.domain.DebtPlanInputs;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
+import io.binarycodes.calculators.debt.domain.Windfall;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -53,8 +55,11 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Binder<DebtPlanInputs> binder = new Binder<>(DebtPlanInputs.class);
 
     private final DebtsSection debtsSection = new DebtsSection();
+    private final WindfallsSection windfallsSection = new WindfallsSection();
     private final RadioButtonGroup<PayoffStrategy> strategy = new RadioButtonGroup<>();
     private final MoneyField extraPerMonth;
+    private final NumberField extraStepUpPct =
+            PercentageField.create(Translations.get("field.debt.extraStepUp"));
     private final NumberField inflationRatePct =
             PercentageField.create(Translations.get("field.debt.inflationRate"));
 
@@ -62,6 +67,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
 
     private Signal<?> strategySignal;
     private Signal<?> extraPerMonthSignal;
+    private Signal<?> extraStepUpSignal;
     private Signal<?> inflationRateSignal;
 
     private final Signal<DebtPlanInputs> inputsSignal;
@@ -78,12 +84,14 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         configureStrategy();
         configureBindings();
 
-        add(buildDebtsCard(), buildPlanCard());
+        add(buildDebtsCard(), buildPlanCard(), buildWindfallsCard());
 
         this.inputsSignal = Signal.computed(() -> {
             this.debtsSection.signal.get();
+            this.windfallsSection.signal.get();
             this.strategySignal.get();
             this.extraPerMonthSignal.get();
+            this.extraStepUpSignal.get();
             this.inflationRateSignal.get();
             return buildInputs();
         });
@@ -101,6 +109,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             this.strategy.setValue(PayoffStrategy.AVALANCHE);
         }
         this.debtsSection.set(inputs.getDebts());
+        this.windfallsSection.set(inputs.getWindfalls());
     }
 
     @Override
@@ -121,9 +130,10 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         }
     }
 
-    /** Valid once every debt row is complete and there is at least one debt. */
+    /** Valid once every debt row is complete, there is at least one debt, and every windfall row is complete. */
     public boolean isValid() {
-        return this.binder.isValid() && this.debtsSection.hasDebts() && this.debtsSection.isValid();
+        return this.binder.isValid() && this.debtsSection.hasDebts() && this.debtsSection.isValid()
+                && this.windfallsSection.isValid();
     }
 
     public BinderValidationStatus<DebtPlanInputs> validate() {
@@ -134,6 +144,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         final var target = new DebtPlanInputs();
         this.binder.writeBeanAsDraft(target);
         target.setDebts(this.debtsSection.snapshot());
+        target.setWindfalls(this.windfallsSection.snapshot());
         return target;
     }
 
@@ -153,6 +164,12 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
                 .withValidator(new BigDecimalRangeValidator(Translations.get("validation.nonNegative"),
                         BigDecimal.ZERO, null))
                 .bind(DebtPlanInputs::getExtraPerMonth, DebtPlanInputs::setExtraPerMonth)
+                .valueSignal();
+
+        this.extraStepUpSignal = this.binder.forField(this.extraStepUpPct)
+                .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 50), 0d, 50d))
+                .withConverter(doubleToBigDecimalConverter())
+                .bind(DebtPlanInputs::getExtraStepUpPct, DebtPlanInputs::setExtraStepUpPct)
                 .valueSignal();
 
         this.inflationRateSignal = this.binder.forField(this.inflationRatePct)
@@ -181,13 +198,18 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private Component buildPlanCard() {
+        final Span customHint = secondaryText(Translations.get("debt.customOrderHint"));
+        customHint.addClassName("subsection-hint");
+
         final FormLayout layout = new FormLayout();
         layout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("36em", 2));
-        layout.add(this.extraPerMonth, withPercentageSuffix(this.inflationRatePct));
+                new FormLayout.ResponsiveStep("36em", 2),
+                new FormLayout.ResponsiveStep("64em", 3));
+        layout.add(this.extraPerMonth, withPercentageSuffix(this.extraStepUpPct),
+                withPercentageSuffix(this.inflationRatePct));
 
-        final var content = new VerticalLayout(this.strategy, layout);
+        final var content = new VerticalLayout(this.strategy, customHint, layout);
         content.setPadding(false);
         content.setSpacing(true);
 
@@ -198,10 +220,30 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         return card;
     }
 
+    private Component buildWindfallsCard() {
+        final Span intro = secondaryText(Translations.get("debt.windfalls.intro"));
+
+        final Button addButton = new Button(Translations.get("debt.addWindfall"), VaadinIcon.PLUS.create(),
+                event -> this.windfallsSection.add(new Windfall()));
+        addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        final var content = new VerticalLayout(intro, this.windfallsSection.rowsContainer, addButton);
+        content.setPadding(false);
+        content.setSpacing(true);
+
+        final FormCard card = new FormCard(Translations.get("section.debt.windfalls"));
+        card.setWidthFull();
+        card.addClassName("form-section");
+        card.add(content);
+        return card;
+    }
+
     private static String strategyLabel(PayoffStrategy strategy) {
-        return strategy == PayoffStrategy.SNOWBALL
-                ? Translations.get("debt.strategy.snowball")
-                : Translations.get("debt.strategy.avalanche");
+        return switch (strategy) {
+            case SNOWBALL -> Translations.get("debt.strategy.snowball");
+            case CUSTOM -> Translations.get("debt.strategy.custom");
+            case AVALANCHE -> Translations.get("debt.strategy.avalanche");
+        };
     }
 
     /** The debts list: rows container + authoritative list + published snapshot. */
@@ -217,7 +259,8 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         }
 
         private void add(Debt initial) {
-            final DebtRow row = new DebtRow(DebtCalculatorForm.this.preferences, initial, this::remove, this::publish);
+            final DebtRow row = new DebtRow(DebtCalculatorForm.this.preferences, initial,
+                    this::remove, this::moveUp, this::moveDown, this::publish);
             this.rows.add(row);
             this.rowsContainer.add(row);
             publish();
@@ -228,6 +271,29 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
                 this.rowsContainer.remove(row);
                 publish();
             }
+        }
+
+        private void moveUp(DebtRow row) {
+            final int index = this.rows.indexOf(row);
+            if (index > 0) {
+                swap(index, index - 1);
+            }
+        }
+
+        private void moveDown(DebtRow row) {
+            final int index = this.rows.indexOf(row);
+            if (index >= 0 && index < this.rows.size() - 1) {
+                swap(index, index + 1);
+            }
+        }
+
+        private void swap(int first, int second) {
+            Collections.swap(this.rows, first, second);
+            // Re-adding the same row instances preserves their field state while
+            // reordering them in the DOM; the custom strategy pays in this order.
+            this.rowsContainer.removeAll();
+            this.rows.forEach(this.rowsContainer::add);
+            publish();
         }
 
         private void publish() {
@@ -272,7 +338,8 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         private final IntegerField promoMonthsField = monthsField(Translations.get("field.debt.promoMonths"));
         private final Binder<Debt> binder = new Binder<>(Debt.class);
 
-        DebtRow(UserPreferences preferences, Debt initial, Consumer<DebtRow> onRemove, Runnable onChanged) {
+        DebtRow(UserPreferences preferences, Debt initial, Consumer<DebtRow> onRemove,
+                Consumer<DebtRow> onMoveUp, Consumer<DebtRow> onMoveDown, Runnable onChanged) {
             this.balanceField = new MoneyField(Translations.get("field.debt.balance"), preferences);
             this.minimumPaymentField = new MoneyField(Translations.get("field.debt.minimumPayment"), preferences);
             this.nameField.setValueChangeMode(ValueChangeMode.LAZY);
@@ -293,11 +360,13 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             }
             this.binder.addStatusChangeListener(event -> onChanged.run());
 
+            final Button moveUpButton = iconButton(VaadinIcon.ARROW_UP, "row.moveUp", () -> onMoveUp.accept(this));
+            final Button moveDownButton = iconButton(VaadinIcon.ARROW_DOWN, "row.moveDown", () -> onMoveDown.accept(this));
             final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
 
             final HorizontalLayout mainRow = new HorizontalLayout(this.nameField, this.balanceField,
                     withPercentageSuffix(this.aprField), this.minimumPaymentField,
-                    withPercentageSuffix(this.minimumPctField), removeButton);
+                    withPercentageSuffix(this.minimumPctField), moveUpButton, moveDownButton, removeButton);
             mainRow.setWidthFull();
             mainRow.setAlignItems(Alignment.BASELINE);
             mainRow.addClassName("form-row");
@@ -370,6 +439,124 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         private static Double toDouble(BigDecimal value) {
             return value == null ? null : value.doubleValue();
         }
+    }
+
+    /** The optional one-off windfalls list: rows container + authoritative list + published snapshot. */
+    private final class WindfallsSection {
+        private final VerticalLayout rowsContainer = new VerticalLayout();
+        private final List<WindfallRow> rows = new ArrayList<>();
+        private final ValueSignal<List<Windfall>> signal = new ValueSignal<>(List.of());
+
+        WindfallsSection() {
+            this.rowsContainer.setPadding(false);
+            this.rowsContainer.setSpacing(true);
+            this.rowsContainer.setWidthFull();
+        }
+
+        private void add(Windfall initial) {
+            final WindfallRow row = new WindfallRow(DebtCalculatorForm.this.preferences, initial,
+                    this::remove, this::publish);
+            this.rows.add(row);
+            this.rowsContainer.add(row);
+            publish();
+        }
+
+        private void remove(WindfallRow row) {
+            if (this.rows.remove(row)) {
+                this.rowsContainer.remove(row);
+                publish();
+            }
+        }
+
+        private void publish() {
+            this.signal.set(snapshot());
+        }
+
+        private List<Windfall> snapshot() {
+            final List<Windfall> out = new ArrayList<>();
+            for (final WindfallRow row : this.rows) {
+                out.add(row.snapshot());
+            }
+            return out;
+        }
+
+        private void set(List<Windfall> windfalls) {
+            this.rowsContainer.removeAll();
+            this.rows.clear();
+            if (windfalls != null) {
+                for (final Windfall windfall : windfalls) {
+                    add(windfall);
+                }
+            }
+            publish();
+        }
+
+        private boolean isValid() {
+            return this.rows.stream().allMatch(WindfallRow::isValid);
+        }
+    }
+
+    private static final class WindfallRow extends HorizontalLayout {
+        private final IntegerField monthField = monthNumberField(Translations.get("field.debt.windfallMonth"));
+        private final MoneyField amountField;
+        private final Binder<Windfall> binder = new Binder<>(Windfall.class);
+
+        WindfallRow(UserPreferences preferences, Windfall initial, Consumer<WindfallRow> onRemove, Runnable onChanged) {
+            this.amountField = new MoneyField(Translations.get("field.debt.windfallAmount"), preferences);
+
+            this.monthField.setValue(initial.getMonth());
+            this.amountField.setValue(initial.getAmount());
+
+            this.binder.forField(this.monthField)
+                    .asRequired(Translations.get("validation.required"))
+                    .withValidator((value, context) -> value != null && value >= 1 && value <= 600
+                            ? ValidationResult.ok()
+                            : ValidationResult.error(Translations.get("validation.between", 1, 600)))
+                    .bind(Windfall::getMonth, Windfall::setMonth);
+            this.binder.forField(this.amountField)
+                    .asRequired(Translations.get("validation.required"))
+                    .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
+                            new BigDecimal("0.01"), null))
+                    .bind(Windfall::getAmount, Windfall::setAmount);
+            this.binder.validate();
+
+            this.monthField.addValueChangeListener(event -> onChanged.run());
+            this.amountField.addValueChangeListener(event -> onChanged.run());
+            this.binder.addStatusChangeListener(event -> onChanged.run());
+
+            final Button removeButton = RowControls.removeButton(() -> onRemove.accept(this));
+
+            setWidthFull();
+            setAlignItems(Alignment.BASELINE);
+            addClassName("form-row");
+            add(this.monthField, this.amountField, removeButton);
+            expand(this.amountField);
+        }
+
+        private boolean isValid() {
+            return this.binder.isValid();
+        }
+
+        private Windfall snapshot() {
+            final Windfall windfall = new Windfall();
+            this.binder.writeBeanAsDraft(windfall);
+            return windfall;
+        }
+    }
+
+    private static Button iconButton(VaadinIcon icon, String ariaLabelKey, Runnable action) {
+        final Button button = new Button(icon.create(), event -> action.run());
+        button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        button.setAriaLabel(Translations.get(ariaLabelKey));
+        return button;
+    }
+
+    private static IntegerField monthNumberField(String label) {
+        final IntegerField field = new IntegerField(label);
+        field.setStepButtonsVisible(false);
+        field.setMin(1);
+        field.setValueChangeMode(ValueChangeMode.LAZY);
+        return field;
     }
 
     private static IntegerField monthsField(String label) {

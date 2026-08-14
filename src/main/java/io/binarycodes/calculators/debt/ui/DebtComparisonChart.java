@@ -13,9 +13,12 @@ import com.vaadin.flow.component.dependency.CssImport;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.debt.domain.DebtPlanResult;
 import io.binarycodes.calculators.debt.domain.DebtPlanYear;
 import io.binarycodes.calculators.debt.domain.DebtScheduleResult;
+import io.binarycodes.calculators.debt.domain.PayoffStrategy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,6 +33,7 @@ public class DebtComparisonChart extends Chart {
     private static final String AVALANCHE_CLASSNAME = "debt-avalanche";
     private static final String SNOWBALL_CLASSNAME = "debt-snowball";
     private static final String BASELINE_CLASSNAME = "debt-baseline";
+    private static final String CUSTOM_CLASSNAME = "debt-custom";
 
     public DebtComparisonChart() {
         super(ChartType.LINE);
@@ -47,16 +51,22 @@ public class DebtComparisonChart extends Chart {
         xAxis.setAllowDecimals(false);
     }
 
-    public void update(DebtScheduleResult avalanche, DebtScheduleResult snowball,
-                       DebtScheduleResult baseline, SupportedCurrency currency) {
+    public void update(DebtPlanResult result, SupportedCurrency currency) {
         final Configuration configuration = getConfiguration();
         configuration.getyAxis().setTitle(currency.name());
         configuration.getyAxis().getLabels().setFormatter(MoneyFormatter.compactAxisFormatterJs(currency));
 
-        configuration.setSeries(
-                series(Translations.get("chart.debt.seriesAvalanche"), AVALANCHE_CLASSNAME, avalanche),
-                series(Translations.get("chart.debt.seriesSnowball"), SNOWBALL_CLASSNAME, snowball),
-                series(Translations.get("chart.debt.seriesBaseline"), BASELINE_CLASSNAME, baseline));
+        final List<DataSeries> allSeries = new ArrayList<>();
+        allSeries.add(series(Translations.get("chart.debt.seriesAvalanche"), AVALANCHE_CLASSNAME, result.avalanche()));
+        allSeries.add(series(Translations.get("chart.debt.seriesSnowball"), SNOWBALL_CLASSNAME, result.snowball()));
+        // A custom order isn't one of the two canonical lines, so add it as a
+        // fourth series when it's the strategy in play.
+        if (result.primaryStrategy() == PayoffStrategy.CUSTOM) {
+            allSeries.add(series(Translations.get("chart.debt.seriesCustom"), CUSTOM_CLASSNAME, result.primary()));
+        }
+        allSeries.add(series(Translations.get("chart.debt.seriesBaseline"), BASELINE_CLASSNAME, result.baseline()));
+
+        configuration.setSeries(allSeries.toArray(DataSeries[]::new));
         drawChart(true);
     }
 
