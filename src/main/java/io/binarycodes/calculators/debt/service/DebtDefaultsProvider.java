@@ -5,6 +5,7 @@ import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.debt.domain.Debt;
 import io.binarycodes.calculators.debt.domain.DebtPlanInputs;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
+import io.binarycodes.calculators.debt.domain.Windfall;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -78,10 +79,24 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
     private static DebtPlanInputs toInputs(JsonNode node) {
         final var inputs = new DebtPlanInputs();
         inputs.setExtraPerMonth(bd(node, "extraPerMonth"));
+        inputs.setExtraStepUpPct(bdOrNull(node, "extraStepUpPct"));
         inputs.setStrategy(readStrategy(node.get("strategy")));
         inputs.setInflationRatePct(bd(node, "inflationRatePct"));
         inputs.setDebts(readDebts(node.get("debts")));
+        inputs.setWindfalls(readWindfalls(node.get("windfalls")));
         return inputs;
+    }
+
+    private static List<Windfall> readWindfalls(JsonNode arrayNode) {
+        final List<Windfall> windfalls = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return windfalls;
+        }
+        for (final JsonNode entry : arrayNode) {
+            final Integer month = entry.get("month") == null ? null : Integer.valueOf(entry.get("month").asString());
+            windfalls.add(new Windfall(month, bdOrNull(entry, "amount")));
+        }
+        return windfalls;
     }
 
     private static List<Debt> readDebts(JsonNode arrayNode) {
@@ -145,8 +160,12 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
             debtsCopy.add(new Debt(debt.getName(), debt.getBalance(), debt.getAprPct(),
                     debt.getMinimumPayment(), debt.getMinimumPct(), debt.getPromoAprPct(), debt.getPromoMonths()));
         }
-        return new DebtPlanInputs(debtsCopy, source.getExtraPerMonth(), source.getStrategy(),
-                source.getInflationRatePct());
+        final List<Windfall> windfallsCopy = new ArrayList<>();
+        for (final Windfall windfall : source.getWindfalls()) {
+            windfallsCopy.add(new Windfall(windfall.getMonth(), windfall.getAmount()));
+        }
+        return new DebtPlanInputs(debtsCopy, source.getExtraPerMonth(), source.getExtraStepUpPct(),
+                windfallsCopy, source.getStrategy(), source.getInflationRatePct());
     }
 
     private static DebtPlanInputs fallback() {
@@ -155,6 +174,7 @@ public class DebtDefaultsProvider implements CalculatorDefaults<DebtPlanInputs> 
         final var loan = new Debt("Personal loan", BigDecimal.valueOf(400_000), BigDecimal.valueOf(14),
                 BigDecimal.valueOf(9_000), null, null, null);
         final List<Debt> debts = new ArrayList<>(List.of(card, loan));
-        return new DebtPlanInputs(debts, BigDecimal.valueOf(10_000), PayoffStrategy.AVALANCHE, BigDecimal.valueOf(6));
+        return new DebtPlanInputs(debts, BigDecimal.valueOf(10_000), null, new ArrayList<>(),
+                PayoffStrategy.AVALANCHE, BigDecimal.valueOf(6));
     }
 }

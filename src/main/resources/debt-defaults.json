@@ -1,6 +1,7 @@
 {
   "INR": {
     "extraPerMonth": "10000",
+    "extraStepUpPct": "5",
     "strategy": "AVALANCHE",
     "inflationRatePct": "6",
     "minimumFloor": "500",
@@ -8,6 +9,9 @@
       { "name": "Credit card", "balance": "250000", "aprPct": "36", "minimumPct": "5" },
       { "name": "Personal loan", "balance": "400000", "aprPct": "14", "minimumPayment": "9000" },
       { "name": "Car loan", "balance": "600000", "aprPct": "10", "minimumPayment": "12000", "promoAprPct": "0", "promoMonths": "6" }
+    ],
+    "windfalls": [
+      { "month": "6", "amount": "50000" }
     ]
   },
   "EUR": {

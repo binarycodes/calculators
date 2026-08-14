@@ -8,6 +8,7 @@ import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.debt.domain.Debt;
 import io.binarycodes.calculators.debt.domain.DebtPlanInputs;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
+import io.binarycodes.calculators.debt.domain.Windfall;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -89,9 +90,11 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
     public ObjectNode toJsonNode(DebtPlanInputs inputs) {
         final ObjectNode node = this.objectMapper.createObjectNode();
         node.put("extraPerMonth", plain(inputs.getExtraPerMonth()));
+        node.put("extraStepUpPct", plain(inputs.getExtraStepUpPct()));
         node.put("strategy", inputs.getStrategy() == null ? null : inputs.getStrategy().name());
         node.put("inflationRatePct", plain(inputs.getInflationRatePct()));
         node.set("debts", debtsToJson(inputs.getDebts()));
+        node.set("windfalls", windfallsToJson(inputs.getWindfalls()));
         return node;
     }
 
@@ -99,9 +102,11 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
     public DebtPlanInputs fromJsonNode(JsonNode node) {
         final var inputs = new DebtPlanInputs();
         inputs.setExtraPerMonth(bd(node, "extraPerMonth"));
+        inputs.setExtraStepUpPct(bd(node, "extraStepUpPct"));
         inputs.setStrategy(readStrategy(node.get("strategy")));
         inputs.setInflationRatePct(bd(node, "inflationRatePct"));
         inputs.setDebts(readDebts(node.get("debts")));
+        inputs.setWindfalls(readWindfalls(node.get("windfalls")));
         return inputs;
     }
 
@@ -122,6 +127,31 @@ public class DebtInputsStore implements InputsStore<DebtPlanInputs> {
             array.add(node);
         }
         return array;
+    }
+
+    private ArrayNode windfallsToJson(List<Windfall> windfalls) {
+        final ArrayNode array = this.objectMapper.createArrayNode();
+        if (windfalls == null) {
+            return array;
+        }
+        for (final Windfall windfall : windfalls) {
+            final ObjectNode node = this.objectMapper.createObjectNode();
+            node.put("month", intStr(windfall.getMonth()));
+            node.put("amount", plain(windfall.getAmount()));
+            array.add(node);
+        }
+        return array;
+    }
+
+    private static List<Windfall> readWindfalls(JsonNode arrayNode) {
+        final List<Windfall> windfalls = new ArrayList<>();
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return windfalls;
+        }
+        for (final JsonNode entry : arrayNode) {
+            windfalls.add(new Windfall(intField(entry, "month"), bd(entry, "amount")));
+        }
+        return windfalls;
     }
 
     private static List<Debt> readDebts(JsonNode arrayNode) {
