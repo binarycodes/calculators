@@ -7,6 +7,7 @@ import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.debt.domain.Debt;
 import io.binarycodes.calculators.debt.domain.DebtPlanInputs;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
+import io.binarycodes.calculators.debt.domain.Windfall;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -40,8 +41,14 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
                 null, new BigDecimal("5"), null, null);
         final var loan = new Debt("Car loan", new BigDecimal("600000"), new BigDecimal("10"),
                 new BigDecimal("12000"), null, new BigDecimal("0"), 6);
-        return new DebtPlanInputs(new ArrayList<>(List.of(card, loan)),
-                new BigDecimal("10000"), PayoffStrategy.SNOWBALL, new BigDecimal("6"));
+        final var inputs = new DebtPlanInputs();
+        inputs.setDebts(new ArrayList<>(List.of(card, loan)));
+        inputs.setExtraPerMonth(new BigDecimal("10000"));
+        inputs.setExtraStepUpPct(new BigDecimal("5"));
+        inputs.setWindfalls(new ArrayList<>(List.of(new Windfall(6, new BigDecimal("50000")))));
+        inputs.setStrategy(PayoffStrategy.SNOWBALL);
+        inputs.setInflationRatePct(new BigDecimal("6"));
+        return inputs;
     }
 
     @Test
@@ -64,6 +71,20 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
         final Debt loan = roundTripped.getDebts().get(1);
         assertEquals(0, new BigDecimal("12000").compareTo(loan.getMinimumPayment()));
         assertEquals(6, loan.getPromoMonths());
+    }
+
+    @Test
+    void step_up_and_windfall_rows_round_trip() {
+        final var form = new DebtCalculatorForm(new UserPreferences());
+        UI.getCurrent().add(form);
+        form.setInputs(seeded());
+        roundTrip();
+
+        final DebtPlanInputs roundTripped = form.getInputs();
+        assertEquals(0, new BigDecimal("5").compareTo(roundTripped.getExtraStepUpPct()));
+        assertEquals(1, roundTripped.getWindfalls().size());
+        assertEquals(6, roundTripped.getWindfalls().get(0).getMonth());
+        assertEquals(0, new BigDecimal("50000").compareTo(roundTripped.getWindfalls().get(0).getAmount()));
     }
 
     @Test

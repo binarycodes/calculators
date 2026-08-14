@@ -3,12 +3,16 @@ package io.binarycodes.calculators.debt.service;
 import io.binarycodes.calculators.debt.domain.Debt;
 import io.binarycodes.calculators.debt.domain.DebtPlanInputs;
 import io.binarycodes.calculators.debt.domain.DebtPlanResult;
+import io.binarycodes.calculators.debt.domain.DebtScheduleResult;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
+import io.binarycodes.calculators.debt.domain.Windfall;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -170,5 +174,120 @@ class DebtCalculatorTest {
                 inputs(PayoffStrategy.AVALANCHE, "175", debt("free", "1200", "0", null)), FLOOR);
         assertEquals(0, result.primary().totalInterest().signum());
         assertEquals(6, result.primary().payoffMonth());
+    }
+
+
+    /** A fixed-minimum debt so the payoff spans several years and the annual step-up compounds. */
+    private static Debt fixedMinimumDebt() {
+        final Debt debt = debt("loan", "400000", "18", null);
+        debt.setMinimumPayment(new BigDecimal("7000"));
+        return debt;
+    }
+
+    @Test
+    void an_annual_step_up_shortens_the_payoff() {
+        final DebtPlanInputs flat = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
+        final int flatPayoff = DebtCalculator.calculate(flat, FLOOR).primary().payoffMonth();
+
+        final DebtPlanInputs stepped = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
+        stepped.setExtraStepUpPct(new BigDecimal("50"));
+        final int steppedPayoff = DebtCalculator.calculate(stepped, FLOOR).primary().payoffMonth();
+
+        assertTrue(steppedPayoff < flatPayoff, "growing the extra each year should pay off sooner");
+    }
+
+    @Test
+    void a_zero_step_up_reproduces_the_flat_plan() {
+        final DebtPlanInputs flat = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
+        final DebtPlanInputs zeroStep = inputs(PayoffStrategy.AVALANCHE, "1500", fixedMinimumDebt());
+        zeroStep.setExtraStepUpPct(BigDecimal.ZERO);
+
+        assertEquals(DebtCalculator.calculate(flat, FLOOR).primary().payoffMonth(),
+                DebtCalculator.calculate(zeroStep, FLOOR).primary().payoffMonth());
+    }
+
+
+    @Test
+    void a_windfall_cuts_interest_and_shortens_the_payoff() {
+        final DebtPlanInputs plain = inputs(PayoffStrategy.AVALANCHE, "2000", debt("card", "300000", "30", "5"));
+        final DebtPlanResult without = DebtCalculator.calculate(plain, FLOOR);
+
+        final DebtPlanInputs withWindfall = inputs(PayoffStrategy.AVALANCHE, "2000", debt("card", "300000", "30", "5"));
+        withWindfall.setWindfalls(new ArrayList<>(List.of(new Windfall(3, new BigDecimal("100000")))));
+        final DebtPlanResult with = DebtCalculator.calculate(withWindfall, FLOOR);
+
+        assertTrue(with.primary().payoffMonth() < without.primary().payoffMonth(),
+                "a windfall should shorten the payoff");
+        assertTrue(with.primary().totalInterest().compareTo(without.primary().totalInterest()) < 0,
+                "a windfall should cut total interest");
+    }
+
+    @Test
+    void a_windfall_follows_the_strategy_order() {
+        // Avalanche targets the 30% debt; the windfall must accelerate that one.
+        final DebtPlanInputs base = inputs(PayoffStrategy.AVALANCHE, "500",
+                debt("cheap", "500", "10", "5"), debt("costly", "2000", "30", "5"));
+        final int costlyWithout = DebtCalculator.calculate(base, FLOOR).primary().payoffMonthByDebt().get("costly");
+
+        final DebtPlanInputs withWindfall = inputs(PayoffStrategy.AVALANCHE, "500",
+                debt("cheap", "500", "10", "5"), debt("costly", "2000", "30", "5"));
+        withWindfall.setWindfalls(new ArrayList<>(List.of(new Windfall(2, new BigDecimal("800")))));
+        final int costlyWith = DebtCalculator.calculate(withWindfall, FLOOR).primary().payoffMonthByDebt().get("costly");
+
+        assertTrue(costlyWith < costlyWithout, "the windfall should land on the avalanche target");
+    }
+
+    @Test
+    void a_large_windfall_cascades_to_clear_multiple_debts_in_its_month() {
+        final DebtPlanInputs inputs = inputs(PayoffStrategy.AVALANCHE, "0",
+                debt("a", "100", "0", null), debt("b", "100", "0", null));
+        inputs.setWindfalls(new ArrayList<>(List.of(new Windfall(1, new BigDecimal("1000")))));
+        final DebtPlanResult result = DebtCalculator.calculate(inputs, FLOOR);
+        assertEquals(1, result.primary().payoffMonthByDebt().get("a"));
+        assertEquals(1, result.primary().payoffMonthByDebt().get("b"));
+    }
+
+    @Test
+    void a_windfall_after_payoff_is_a_no_op() {
+        final DebtPlanInputs plain = inputs(PayoffStrategy.AVALANCHE, "175", debt("free", "1200", "0", null));
+        final DebtPlanResult without = DebtCalculator.calculate(plain, FLOOR);
+
+        final DebtPlanInputs late = inputs(PayoffStrategy.AVALANCHE, "175", debt("free", "1200", "0", null));
+        late.setWindfalls(new ArrayList<>(List.of(new Windfall(50, new BigDecimal("100000")))));
+        final DebtPlanResult with = DebtCalculator.calculate(late, FLOOR);
+
+        assertEquals(without.primary().payoffMonth(), with.primary().payoffMonth());
+        assertEquals(0, without.primary().totalInterest().compareTo(with.primary().totalInterest()));
+    }
+
+
+    @Test
+    void custom_order_funnels_in_input_order_distinct_from_avalanche_and_snowball() {
+        // Input order X, Y, Z; each strategy's head differs: custom→X, snowball→Y
+        // (smallest balance), avalanche→Z (highest rate).
+        final DebtPlanResult result = DebtCalculator.calculate(inputs(PayoffStrategy.CUSTOM, "500",
+                debt("X", "1000", "10", "5"),
+                debt("Y", "500", "15", "5"),
+                debt("Z", "1500", "30", "5")), FLOOR);
+
+        assertEquals("X", firstCleared(result.primary()));
+        assertEquals("Z", firstCleared(result.avalanche()));
+        assertEquals("Y", firstCleared(result.snowball()));
+    }
+
+    @Test
+    void reordering_the_debts_changes_the_custom_run() {
+        final DebtPlanResult reordered = DebtCalculator.calculate(inputs(PayoffStrategy.CUSTOM, "500",
+                debt("Z", "1500", "30", "5"),
+                debt("Y", "500", "15", "5"),
+                debt("X", "1000", "10", "5")), FLOOR);
+        assertEquals("Z", firstCleared(reordered.primary()));
+    }
+
+    private static String firstCleared(DebtScheduleResult schedule) {
+        return schedule.payoffMonthByDebt().entrySet().stream()
+                .min(Comparator.comparingInt(Map.Entry::getValue))
+                .map(Map.Entry::getKey)
+                .orElseThrow();
     }
 }

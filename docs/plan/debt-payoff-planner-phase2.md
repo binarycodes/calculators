@@ -20,11 +20,13 @@ the debts row-list UI.
 3. **Custom ordering** — a third strategy that pays debts in a user-arranged
    order, set by moving rows up/down.
 
-**Out (still deferred):**
+**Won't do:**
 - **Dynamic (interest-optimal) target re-sort** — re-picking the target each
-  month. The fixed promo-aware order covers the common cases; revisit only if
-  users ask. No UI footprint in Phase 2.
-- Balance-transfer / consolidation optimisation.
+  month. Dropped for good: the fixed promo-aware order is the model, and the
+  extra month-to-month complexity isn't worth it.
+
+**Out of scope:**
+- Balance-transfer / consolidation optimisation (a possible later calculator).
 
 ## Resolved decisions
 1. **Windfall targeting** — a windfall joins that month's surplus and funnels to
@@ -35,7 +37,7 @@ the debts row-list UI.
 3. **Step-up scope** — the annual step-up applies to the **extra** only, never to
    the minimums baseline, so `interestSaved` / `monthsSaved` still measure the
    whole plan's advantage over paying minimums.
-4. **Dynamic re-sort** — deferred again (see Out).
+4. **Dynamic re-sort** — dropped for good (see Won't do); not part of the model.
 
 ## Inputs (domain)
 

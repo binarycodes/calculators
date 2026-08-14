@@ -56,6 +56,18 @@ class DebtPlanIT extends SpringPlaywrightIT {
         assertThat(page.getByText("vs Avalanche", new GetByTextOptions().setExact(false))).isVisible();
     }
 
+    @Test
+    @DisplayName("Selecting the Custom strategy adds its chart line and compares against Avalanche")
+    void selectingCustom_comparesAgainstAvalanche() {
+        page.locator("vaadin-radio-button")
+                .filter(new Locator.FilterOptions().setHasText("Custom (your order)"))
+                .click();
+
+        // Custom is measured against Avalanche, and gains its own chart series.
+        assertThat(page.getByText("vs Avalanche", new GetByTextOptions().setExact(false))).isVisible();
+        assertThat(page.getByText("Custom", new GetByTextOptions().setExact(true))).isVisible();
+    }
+
     private Locator summaryCard(String title) {
         return page.getByRole(AriaRole.REGION, new GetByRoleOptions().setName(title));
     }
