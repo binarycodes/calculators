@@ -18,3 +18,13 @@
     color: var(--color-success-text);
     font-weight: 600;
 }
+
+/* A defaulting payment in the monthly schedule — a minimum the budget missed. */
+.debt-view .payment-default {
+    color: var(--color-danger-text);
+    font-weight: 600;
+}
+
+.debt-view .defaults-legend {
+    color: var(--color-danger-text);
+}

@@ -57,9 +57,10 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     private final DebtsSection debtsSection = new DebtsSection();
     private final WindfallsSection windfallsSection = new WindfallsSection();
     private final RadioButtonGroup<PayoffStrategy> strategy = new RadioButtonGroup<>();
-    private final MoneyField extraPerMonth;
-    private final NumberField extraStepUpPct =
-            PercentageField.create(Translations.get("field.debt.extraStepUp"));
+    private final MoneyField monthlyBudget;
+    private final MoneyField defaultFeePerMonth;
+    private final NumberField budgetStepUpPct =
+            PercentageField.create(Translations.get("field.debt.budgetStepUp"));
     private final NumberField inflationRatePct =
             PercentageField.create(Translations.get("field.debt.inflationRate"));
 
@@ -67,8 +68,9 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     private final Span strategyDescription = secondaryText("");
 
     private Signal<?> strategySignal;
-    private Signal<?> extraPerMonthSignal;
-    private Signal<?> extraStepUpSignal;
+    private Signal<?> monthlyBudgetSignal;
+    private Signal<?> budgetStepUpSignal;
+    private Signal<?> defaultFeeSignal;
     private Signal<?> inflationRateSignal;
 
     private final Signal<DebtPlanInputs> inputsSignal;
@@ -80,7 +82,8 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         setSpacing(true);
         setWidthFull();
 
-        this.extraPerMonth = new MoneyField(Translations.get("field.debt.extraPerMonth"), preferences);
+        this.monthlyBudget = new MoneyField(Translations.get("field.debt.monthlyBudget"), preferences);
+        this.defaultFeePerMonth = new MoneyField(Translations.get("field.debt.defaultFee"), preferences);
 
         configureStrategy();
         configureBindings();
@@ -91,8 +94,9 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             this.debtsSection.signal.get();
             this.windfallsSection.signal.get();
             this.strategySignal.get();
-            this.extraPerMonthSignal.get();
-            this.extraStepUpSignal.get();
+            this.monthlyBudgetSignal.get();
+            this.budgetStepUpSignal.get();
+            this.defaultFeeSignal.get();
             this.inflationRateSignal.get();
             return buildInputs();
         });
@@ -171,16 +175,23 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
                 .bind(DebtPlanInputs::getStrategy, DebtPlanInputs::setStrategy)
                 .valueSignal();
 
-        this.extraPerMonthSignal = this.binder.forField(this.extraPerMonth)
-                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.nonNegative"),
-                        BigDecimal.ZERO, null))
-                .bind(DebtPlanInputs::getExtraPerMonth, DebtPlanInputs::setExtraPerMonth)
+        this.monthlyBudgetSignal = this.binder.forField(this.monthlyBudget)
+                .asRequired(Translations.get("validation.required"))
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.positive"),
+                        new BigDecimal("0.01"), null))
+                .bind(DebtPlanInputs::getMonthlyBudget, DebtPlanInputs::setMonthlyBudget)
                 .valueSignal();
 
-        this.extraStepUpSignal = this.binder.forField(this.extraStepUpPct)
+        this.budgetStepUpSignal = this.binder.forField(this.budgetStepUpPct)
                 .withValidator(new DoubleRangeValidator(Translations.get("validation.between", 0, 50), 0d, 50d))
                 .withConverter(doubleToBigDecimalConverter())
-                .bind(DebtPlanInputs::getExtraStepUpPct, DebtPlanInputs::setExtraStepUpPct)
+                .bind(DebtPlanInputs::getBudgetStepUpPct, DebtPlanInputs::setBudgetStepUpPct)
+                .valueSignal();
+
+        this.defaultFeeSignal = this.binder.forField(this.defaultFeePerMonth)
+                .withValidator(new BigDecimalRangeValidator(Translations.get("validation.nonNegative"),
+                        BigDecimal.ZERO, null))
+                .bind(DebtPlanInputs::getDefaultFeePerMonth, DebtPlanInputs::setDefaultFeePerMonth)
                 .valueSignal();
 
         this.inflationRateSignal = this.binder.forField(this.inflationRatePct)
@@ -209,15 +220,20 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private Component buildPlanCard() {
-        final FormLayout layout = new FormLayout();
-        layout.setResponsiveSteps(
+        this.monthlyBudget.setWidthFull();
+        final Span budgetHint = secondaryText(Translations.get("debt.monthlyBudgetHint"));
+        budgetHint.addClassName("subsection-hint");
+
+        final FormLayout secondary = new FormLayout();
+        secondary.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("36em", 2),
                 new FormLayout.ResponsiveStep("64em", 3));
-        layout.add(this.extraPerMonth, withPercentageSuffix(this.extraStepUpPct),
+        secondary.add(withPercentageSuffix(this.budgetStepUpPct), this.defaultFeePerMonth,
                 withPercentageSuffix(this.inflationRatePct));
 
-        final var content = new VerticalLayout(this.strategy, this.strategyDescription, layout);
+        final var content = new VerticalLayout(this.monthlyBudget, budgetHint,
+                this.strategy, this.strategyDescription, secondary);
         content.setPadding(false);
         content.setSpacing(true);
 

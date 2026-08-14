@@ -1,6 +1,7 @@
 package io.binarycodes.calculators.debt.ui;
 
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -48,10 +49,13 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
 
     private final DebtComparisonChart comparisonChart = new DebtComparisonChart();
     private final DebtProjectionGrid projectionGrid;
+    private final DebtMonthlyGrid monthlyGrid;
     private final DebtDefaultsProvider defaultsProvider;
+    private final Span defaultsLegend = new Span();
 
     private final VerticalLayout chartCard;
     private final VerticalLayout projectionCard;
+    private final VerticalLayout monthlyCard;
 
     public DebtView(UserPreferences preferences,
                     DebtDefaultsProvider defaultsProvider,
@@ -60,12 +64,15 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
                 new DebtCalculatorForm(preferences), "debt", "page.debt");
         this.defaultsProvider = defaultsProvider;
         this.projectionGrid = new DebtProjectionGrid(preferences);
+        this.monthlyGrid = new DebtMonthlyGrid(preferences);
 
         add(buildSummaryRow());
         this.chartCard = buildChartCard();
         add(this.chartCard);
         this.projectionCard = buildProjectionCard();
         add(this.projectionCard);
+        this.monthlyCard = buildMonthlyCard();
+        add(this.monthlyCard);
     }
 
     @Override
@@ -89,7 +96,11 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         }
         this.form.showValidationMessages(null);
 
-        this.debtFreeCard.setValue(duration(result.primary().payoffMonth()), Status.SUCCESS);
+        if (result.primary().fullyPaid()) {
+            this.debtFreeCard.setValue(duration(result.primary().payoffMonth()), Status.SUCCESS);
+        } else {
+            this.debtFreeCard.setValue(getTranslation("debt.notCleared"), Status.WARNING);
+        }
 
         this.totalInterestCard.setValue(MoneyFormatter.format(result.primary().totalInterest(), currency), null);
         this.totalInterestCard.setSecondaryText(getTranslation("summary.debt.todaysMoney",
@@ -104,8 +115,14 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
 
         this.chartCard.setVisible(true);
         this.projectionCard.setVisible(true);
+        this.monthlyCard.setVisible(true);
         this.comparisonChart.update(result, currency);
         this.projectionGrid.update(result.primary().years(), payoffYear(result.primary().payoffMonth()));
+        this.monthlyGrid.update(result.primary().monthlyPayments(), currency);
+
+        final boolean anyDefault = result.primary().monthlyPayments().stream().anyMatch(month -> month.hasDefault());
+        this.defaultsLegend.setText(getTranslation("debt.defaultLegend"));
+        this.defaultsLegend.setVisible(anyDefault);
     }
 
     private void updateAlternativeCard(DebtPlanResult result, SupportedCurrency currency) {
@@ -184,6 +201,20 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         return card;
     }
 
+    private VerticalLayout buildMonthlyCard() {
+        final H2 title = new H2(getTranslation("section.debt.monthlySchedule"));
+        this.defaultsLegend.addClassName("subsection-hint");
+        this.defaultsLegend.addClassName("defaults-legend");
+        this.defaultsLegend.setVisible(false);
+
+        final VerticalLayout card = new VerticalLayout(title, this.defaultsLegend, this.monthlyGrid);
+        card.addClassName("grid-card");
+        card.setPadding(false);
+        card.setSpacing(true);
+        card.setWidthFull();
+        return card;
+    }
+
     private void showInvalidFormPlaceholders() {
         final String dash = getTranslation("common.dash");
         this.debtFreeCard.setValue(dash, null);
@@ -194,5 +225,6 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
         this.vsAlternativeCard.setValue(dash, null);
         this.chartCard.setVisible(false);
         this.projectionCard.setVisible(false);
+        this.monthlyCard.setVisible(false);
     }
 }
