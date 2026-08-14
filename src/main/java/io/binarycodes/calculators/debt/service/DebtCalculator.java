@@ -7,6 +7,7 @@ import io.binarycodes.calculators.debt.domain.DebtPlanResult;
 import io.binarycodes.calculators.debt.domain.DebtPlanYear;
 import io.binarycodes.calculators.debt.domain.DebtScheduleResult;
 import io.binarycodes.calculators.debt.domain.PayoffStrategy;
+import io.binarycodes.calculators.debt.domain.Windfall;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -14,6 +15,7 @@ import java.math.RoundingMode;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,25 +64,31 @@ public final class DebtCalculator {
         final BigDecimal extra = inputs.getExtraPerMonth() == null
                 ? BigDecimal.ZERO : inputs.getExtraPerMonth().max(BigDecimal.ZERO);
         final BigDecimal inflation = Rates.pctToFraction(inputs.getInflationRatePct());
+        final PlanBudget planBudget = new PlanBudget(totalInitialMinimums(debts, floor), extra,
+                Rates.pctToFraction(inputs.getExtraStepUpPct()), windfallsByMonth(inputs));
 
-        final BigDecimal budget = totalInitialMinimums(debts, floor).add(extra, MC);
-        if (budget.compareTo(firstMonthInterest(debts)) <= 0) {
+        // The month-1 budget is the lowest (a positive step-up only raises later
+        // months), so it is the binding case for feasibility.
+        if (planBudget.forMonth(1).compareTo(firstMonthInterest(debts)) <= 0) {
             throw new IllegalArgumentException("debt.warning.infeasible");
         }
 
         final int calendarYear = Year.now().getValue();
 
         final DebtScheduleResult avalanche =
-                simulate(debts, floor, budget, PayoffStrategy.AVALANCHE, true, inflation, calendarYear);
+                simulate(debts, floor, planBudget, PayoffStrategy.AVALANCHE, true, inflation, calendarYear);
         final DebtScheduleResult snowball =
-                simulate(debts, floor, budget, PayoffStrategy.SNOWBALL, true, inflation, calendarYear);
+                simulate(debts, floor, planBudget, PayoffStrategy.SNOWBALL, true, inflation, calendarYear);
         final DebtScheduleResult baseline =
-                simulate(debts, floor, BigDecimal.ZERO, null, false, inflation, calendarYear);
+                simulate(debts, floor, PlanBudget.none(), null, false, inflation, calendarYear);
 
         final PayoffStrategy primaryStrategy =
                 inputs.getStrategy() == null ? PayoffStrategy.AVALANCHE : inputs.getStrategy();
-        final DebtScheduleResult primary =
-                primaryStrategy == PayoffStrategy.SNOWBALL ? snowball : avalanche;
+        final DebtScheduleResult primary = switch (primaryStrategy) {
+            case AVALANCHE -> avalanche;
+            case SNOWBALL -> snowball;
+            case CUSTOM -> simulate(debts, floor, planBudget, PayoffStrategy.CUSTOM, true, inflation, calendarYear);
+        };
 
         final BigDecimal interestSaved =
                 baseline.totalInterest().subtract(primary.totalInterest(), MC).max(BigDecimal.ZERO);
@@ -88,11 +96,11 @@ public final class DebtCalculator {
                 baseline.realTotalInterest().subtract(primary.realTotalInterest(), MC).max(BigDecimal.ZERO);
         final int monthsSaved = Math.max(0, baseline.payoffMonth() - primary.payoffMonth());
 
-        return new DebtPlanResult(avalanche, snowball, baseline, primaryStrategy,
+        return new DebtPlanResult(primary, avalanche, snowball, baseline, primaryStrategy,
                 scale(interestSaved), monthsSaved, scale(realInterestSaved));
     }
 
-    private static DebtScheduleResult simulate(List<Debt> debts, BigDecimal floor, BigDecimal budget,
+    private static DebtScheduleResult simulate(List<Debt> debts, BigDecimal floor, PlanBudget budget,
                                                PayoffStrategy strategy, boolean funnelSurplus,
                                                BigDecimal inflation, int calendarYear) {
         final List<WorkingDebt> working = debts.stream().map(debt -> new WorkingDebt(debt, floor)).toList();
@@ -130,7 +138,10 @@ public final class DebtCalculator {
             }
 
             if (funnelSurplus) {
-                BigDecimal remaining = budget.subtract(paidThisMonth, MC).max(BigDecimal.ZERO);
+                // The month's surplus is the budget beyond the minimums paid, plus
+                // any one-off windfall dated to this month.
+                BigDecimal remaining = budget.forMonth(month).subtract(paidThisMonth, MC).max(BigDecimal.ZERO)
+                        .add(budget.windfall(month), MC);
                 for (final WorkingDebt debt : order) {
                     if (remaining.signum() <= 0) {
                         break;
@@ -189,7 +200,9 @@ public final class DebtCalculator {
     }
 
     private static List<WorkingDebt> rank(List<WorkingDebt> working, PayoffStrategy strategy) {
-        if (strategy == null) {
+        // The baseline (null) and CUSTOM both pay in the debts' input order — for
+        // CUSTOM that is exactly the order the user arranged in the form.
+        if (strategy == null || strategy == PayoffStrategy.CUSTOM) {
             return working;
         }
         final Comparator<WorkingDebt> comparator = strategy == PayoffStrategy.SNOWBALL
@@ -199,6 +212,21 @@ public final class DebtCalculator {
         // A stable sort preserves input order as the tie-break.
         ordered.sort(comparator);
         return ordered;
+    }
+
+    private static Map<Integer, BigDecimal> windfallsByMonth(DebtPlanInputs inputs) {
+        if (inputs.getWindfalls() == null) {
+            return Map.of();
+        }
+        final Map<Integer, BigDecimal> byMonth = new HashMap<>();
+        for (final Windfall windfall : inputs.getWindfalls()) {
+            if (windfall.getMonth() == null || windfall.getMonth() < 1
+                    || windfall.getAmount() == null || windfall.getAmount().signum() <= 0) {
+                continue;
+            }
+            byMonth.merge(windfall.getMonth(), windfall.getAmount(), (existing, added) -> existing.add(added, MC));
+        }
+        return byMonth;
     }
 
     private static List<Debt> validDebts(DebtPlanInputs inputs) {
@@ -267,6 +295,27 @@ public final class DebtCalculator {
 
     private static BigDecimal scale(BigDecimal value) {
         return value.setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * The monthly budget: base minimums plus the extra (grown annually by the
+     * step-up), with one-off windfalls indexed by their month.
+     */
+    private record PlanBudget(BigDecimal baseMinimums, BigDecimal extra, BigDecimal stepUpFraction,
+                              Map<Integer, BigDecimal> windfallsByMonth) {
+
+        static PlanBudget none() {
+            return new PlanBudget(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, Map.of());
+        }
+
+        BigDecimal forMonth(int month) {
+            final int yearsElapsed = (month - 1) / 12;
+            return baseMinimums.add(extra.multiply(Rates.pow1plus(stepUpFraction, yearsElapsed), MC), MC);
+        }
+
+        BigDecimal windfall(int month) {
+            return windfallsByMonth.getOrDefault(month, BigDecimal.ZERO);
+        }
     }
 
     /** Mutable per-run debt state; a fresh instance is built for every simulation. */

@@ -11,10 +11,11 @@ import java.util.List;
 
 /**
  * Mutable input bean for the debt-payoff planner. {@link #extraPerMonth} is
- * added on top of the summed effective minimums to form the constant monthly
- * budget; {@link #strategy} is the headline strategy shown in the summary;
- * {@link #inflationRatePct} is optional and drives the today's-money interest
- * totals.
+ * added on top of the summed effective minimums to form the monthly budget;
+ * {@link #extraStepUpPct} grows that extra each year; {@link #windfalls} are
+ * one-off lump payments in specific months; {@link #strategy} is the headline
+ * strategy shown in the summary; {@link #inflationRatePct} is optional and drives
+ * the today's-money interest totals.
  */
 @Getter
 @Setter
@@ -24,6 +25,8 @@ public class DebtPlanInputs {
 
     private List<Debt> debts = new ArrayList<>();
     private BigDecimal extraPerMonth;
+    private BigDecimal extraStepUpPct;
+    private List<Windfall> windfalls = new ArrayList<>();
     private PayoffStrategy strategy;
     private BigDecimal inflationRatePct;
 }

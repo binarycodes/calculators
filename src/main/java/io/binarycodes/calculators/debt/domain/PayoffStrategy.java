@@ -4,10 +4,12 @@ package io.binarycodes.calculators.debt.domain;
  * How the surplus (budget beyond the summed minimums) is aimed while paying down
  * several debts. {@link #AVALANCHE} attacks the debt with the highest ongoing
  * (post-promo) APR first; {@link #SNOWBALL} attacks the smallest original
- * balance first. Both rank the debts once up front and hold that order for the
- * whole run.
+ * balance first; {@link #CUSTOM} pays the debts in the order the user arranged
+ * them. All three rank the debts once up front and hold that order for the whole
+ * run.
  */
 public enum PayoffStrategy {
     AVALANCHE,
-    SNOWBALL
+    SNOWBALL,
+    CUSTOM
 }
