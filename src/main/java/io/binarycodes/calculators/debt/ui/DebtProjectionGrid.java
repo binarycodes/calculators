@@ -14,9 +14,9 @@ import java.util.function.Function;
 
 /**
  * Year-by-year schedule for the headline strategy: total balance, interest and
- * principal paid, the debts that received surplus that year, and cumulative
- * interest. The final row — the year the last debt clears — is highlighted and
- * explained by the row-colour legend.
+ * principal paid, and cumulative interest. The final row — the year the last
+ * debt clears — is highlighted and explained by the row-colour legend. The
+ * per-debt breakdown lives in the monthly payment schedule below.
  */
 public class DebtProjectionGrid extends BaseGrid<DebtPlanYear> {
 
@@ -33,9 +33,6 @@ public class DebtProjectionGrid extends BaseGrid<DebtPlanYear> {
         addMoneyColumn(Translations.get("grid.col.debt.totalBalance"), DebtPlanYear::totalBalance);
         addMoneyColumn(Translations.get("grid.col.debt.interestPaid"), DebtPlanYear::interestPaid);
         addMoneyColumn(Translations.get("grid.col.debt.principalPaid"), DebtPlanYear::principalPaid);
-        track(Translations.get("grid.col.debt.targets"), addColumn(row -> targets(row))
-                .setHeader(Translations.get("grid.col.debt.targets"))
-                .setFlexGrow(1));
         addMoneyColumn(Translations.get("grid.col.debt.cumulativeInterest"), DebtPlanYear::cumulativeInterest);
 
         getColumns().forEach(column -> {
@@ -56,13 +53,6 @@ public class DebtProjectionGrid extends BaseGrid<DebtPlanYear> {
 
     private String rowParts(DebtPlanYear row) {
         return row.year() == this.payoffYear ? "debt-free" : null;
-    }
-
-    private String targets(DebtPlanYear row) {
-        if (row.targets() == null || row.targets().isEmpty()) {
-            return getTranslation("common.dash");
-        }
-        return String.join(", ", row.targets());
     }
 
     private void addMoneyColumn(String header, Function<DebtPlanYear, BigDecimal> accessor) {

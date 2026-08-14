@@ -1,7 +1,6 @@
 package io.binarycodes.calculators.debt.domain;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * One year of a payoff schedule.
@@ -11,8 +10,6 @@ import java.util.List;
  * @param totalBalance       total outstanding across all debts at year end
  * @param interestPaid       interest accrued during the year
  * @param principalPaid      principal cleared during the year
- * @param targets            debts that received surplus (beyond their minimum)
- *                           during the year, in strategy order
  * @param cumulativeInterest running total of interest through this year
  */
 public record DebtPlanYear(
@@ -21,7 +18,6 @@ public record DebtPlanYear(
         BigDecimal totalBalance,
         BigDecimal interestPaid,
         BigDecimal principalPaid,
-        List<String> targets,
         BigDecimal cumulativeInterest
 ) {
 }

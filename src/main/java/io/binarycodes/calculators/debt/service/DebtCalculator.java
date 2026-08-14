@@ -110,7 +110,6 @@ public final class DebtCalculator {
         final List<MonthlyPayment> monthlyPayments = new ArrayList<>();
         BigDecimal yearInterest = BigDecimal.ZERO;
         BigDecimal yearPrincipal = BigDecimal.ZERO;
-        final YearTargets yearTargets = new YearTargets(order);
         int monthsInYear = 0;
         int yearIndex = 0;
 
@@ -131,7 +130,7 @@ public final class DebtCalculator {
             }
 
             if (budgetLimited) {
-                distributeBudget(order, budget.forMonth(month).add(budget.windfall(month), MC), yearTargets);
+                distributeBudget(order, budget.forMonth(month).add(budget.windfall(month), MC));
                 applyDefaults(working, defaultFee);
             } else {
                 for (final WorkingDebt debt : working) {
@@ -163,7 +162,7 @@ public final class DebtCalculator {
             if (monthsInYear == 12 || allCleared || month == MONTH_CAP) {
                 years.add(new DebtPlanYear(yearIndex + 1, calendarYear + yearIndex + 1,
                         scale(totalOutstanding(working)), scale(yearInterest), scale(yearPrincipal),
-                        yearTargets.drain(), scale(cumulativeInterest)));
+                        scale(cumulativeInterest)));
                 yearIndex++;
                 monthsInYear = 0;
                 yearInterest = BigDecimal.ZERO;
@@ -197,7 +196,7 @@ public final class DebtCalculator {
      * Cover minimums — priority debts first so they are the last to default —
      * then funnel the remainder to the strategy target, cascading.
      */
-    private static void distributeBudget(List<WorkingDebt> order, BigDecimal available, YearTargets yearTargets) {
+    private static void distributeBudget(List<WorkingDebt> order, BigDecimal available) {
         BigDecimal remaining = available.max(BigDecimal.ZERO);
         for (final WorkingDebt debt : minimumOrder(order)) {
             if (debt.cleared() || remaining.signum() <= 0) {
@@ -217,7 +216,6 @@ public final class DebtCalculator {
             final BigDecimal surplus = remaining.min(debt.balance);
             debt.pay(surplus);
             remaining = remaining.subtract(surplus, MC);
-            yearTargets.add(debt.name);
         }
     }
 
@@ -408,32 +406,6 @@ public final class DebtCalculator {
 
         boolean cleared() {
             return payoffMonth > 0;
-        }
-    }
-
-    /** Accumulates the debts funnelled to within a year, emitted in strategy order. */
-    private static final class YearTargets {
-
-        private final List<WorkingDebt> order;
-        private final List<String> touched = new ArrayList<>();
-
-        YearTargets(List<WorkingDebt> order) {
-            this.order = order;
-        }
-
-        void add(String name) {
-            if (!touched.contains(name)) {
-                touched.add(name);
-            }
-        }
-
-        List<String> drain() {
-            final List<String> result = order.stream()
-                    .map(debt -> debt.name)
-                    .filter(touched::contains)
-                    .toList();
-            touched.clear();
-            return result;
         }
     }
 }

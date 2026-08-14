@@ -1054,8 +1054,8 @@ Total outstanding balance over time — Avalanche, Snowball, and minimums-only
 ### 3.3 Year-by-year projection grid
 
 Year-by-year for the chosen strategy: Total Balance, Interest Paid, Principal
-Paid, Target(s) (every debt that took surplus that year, in strategy order), and
-Cumulative Interest. The debt-free year (last row) is highlighted with a legend.
+Paid, and Cumulative Interest. The debt-free year (last row) is highlighted with
+a legend. The per-debt breakdown lives in the monthly schedule (§3.4).
 
 ### 3.4 Monthly payment schedule grid
 
