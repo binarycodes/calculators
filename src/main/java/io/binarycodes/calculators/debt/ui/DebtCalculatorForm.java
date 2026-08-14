@@ -64,6 +64,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
             PercentageField.create(Translations.get("field.debt.inflationRate"));
 
     private FormCard debtsCard;
+    private final Span customHint = secondaryText(Translations.get("debt.customOrderHint"));
 
     private Signal<?> strategySignal;
     private Signal<?> extraPerMonthSignal;
@@ -140,6 +141,11 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         return this.binder.validate();
     }
 
+    /** Visible for tests: whether the custom-order reorder hint is currently shown. */
+    boolean isReorderHintVisible() {
+        return this.customHint.isVisible();
+    }
+
     private DebtPlanInputs buildInputs() {
         final var target = new DebtPlanInputs();
         this.binder.writeBeanAsDraft(target);
@@ -153,6 +159,11 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         this.strategy.setItemLabelGenerator(DebtCalculatorForm::strategyLabel);
         this.strategy.setValue(PayoffStrategy.AVALANCHE);
         this.strategy.addClassName("segmented-toggle");
+        // The reorder hint is only relevant to the custom order.
+        this.customHint.addClassName("subsection-hint");
+        this.customHint.setVisible(this.strategy.getValue() == PayoffStrategy.CUSTOM);
+        this.strategy.addValueChangeListener(
+                event -> this.customHint.setVisible(event.getValue() == PayoffStrategy.CUSTOM));
     }
 
     private void configureBindings() {
@@ -198,9 +209,6 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
     }
 
     private Component buildPlanCard() {
-        final Span customHint = secondaryText(Translations.get("debt.customOrderHint"));
-        customHint.addClassName("subsection-hint");
-
         final FormLayout layout = new FormLayout();
         layout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
@@ -209,7 +217,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         layout.add(this.extraPerMonth, withPercentageSuffix(this.extraStepUpPct),
                 withPercentageSuffix(this.inflationRatePct));
 
-        final var content = new VerticalLayout(this.strategy, customHint, layout);
+        final var content = new VerticalLayout(this.strategy, this.customHint, layout);
         content.setPadding(false);
         content.setSpacing(true);
 

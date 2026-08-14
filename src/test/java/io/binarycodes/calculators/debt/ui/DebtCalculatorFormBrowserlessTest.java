@@ -88,6 +88,22 @@ class DebtCalculatorFormBrowserlessTest extends BrowserlessTest {
     }
 
     @Test
+    void the_reorder_hint_shows_only_for_the_custom_strategy() {
+        final var form = new DebtCalculatorForm(new UserPreferences());
+        UI.getCurrent().add(form);
+
+        final DebtPlanInputs custom = seeded();
+        custom.setStrategy(PayoffStrategy.CUSTOM);
+        form.setInputs(custom);
+        assertTrue(form.isReorderHintVisible(), "the reorder hint should show for the custom strategy");
+
+        final DebtPlanInputs avalanche = seeded();
+        avalanche.setStrategy(PayoffStrategy.AVALANCHE);
+        form.setInputs(avalanche);
+        assertFalse(form.isReorderHintVisible(), "the reorder hint should hide for a non-custom strategy");
+    }
+
+    @Test
     void an_empty_form_is_invalid_and_a_seeded_form_is_valid() {
         final var form = new DebtCalculatorForm(new UserPreferences());
         UI.getCurrent().add(form);
