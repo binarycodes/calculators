@@ -13,6 +13,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -65,8 +66,9 @@ public class RetirementView extends BaseCalculatorView<RetirementInputs, Retirem
 
     public RetirementView(UserPreferences preferences,
                           DefaultsProvider defaultsProvider,
-                          RetirementInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                          RetirementInputsStore inputsStore,
+                          CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new RetirementCalculatorForm(preferences), "retirement", "page.retirement");
         this.projectionGrid = new ProjectionGrid(preferences);
 

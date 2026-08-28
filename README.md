@@ -47,6 +47,11 @@ Then open <http://localhost:8080>.
   tag — images are also tagged with the project's Maven version.
 - The app listens on port **8080**. Override it with the `PORT` environment
   variable: `-e PORT=9090 -p 9090:9090`.
+- Every calculator opens with a sample scenario filled in. Set
+  `CALCULATORS_PREFILL_DEFAULT_VALUES=false` to start visitors on a blank form
+  instead. The Reset button disappears with it — it only ever restored the
+  sample scenario, over whatever the visitor had typed. Clear still blanks the
+  form.
 
 ### docker compose
 
@@ -56,6 +61,9 @@ services:
     image: binarycodes/calculators:latest
     ports:
       - "8080:8080"
+    # Uncomment to open every calculator blank instead of on the sample scenario.
+    # environment:
+    #   CALCULATORS_PREFILL_DEFAULT_VALUES: "false"
     restart: unless-stopped
 ```
 
@@ -76,6 +84,8 @@ Wants=network-online.target
 [Container]
 Image=docker.io/binarycodes/calculators:latest
 PublishPort=8080:8080
+# Uncomment to open every calculator blank instead of on the sample scenario.
+#Environment=CALCULATORS_PREFILL_DEFAULT_VALUES=false
 # Opt in to `podman auto-update` pulling newer :latest images.
 AutoUpdate=registry
 

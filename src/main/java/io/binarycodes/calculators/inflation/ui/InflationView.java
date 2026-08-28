@@ -9,6 +9,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -39,8 +40,9 @@ public class InflationView extends BaseCalculatorView<InflationInputs, Inflation
 
     public InflationView(UserPreferences preferences,
                          InflationDefaultsProvider defaultsProvider,
-                         InflationInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                         InflationInputsStore inputsStore,
+                         CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new InflationCalculatorForm(preferences), "inflation", "page.inflation");
 
         add(buildSummaryRow());

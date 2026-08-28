@@ -10,6 +10,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -42,8 +43,9 @@ public class InvestmentView extends BaseCalculatorView<InvestmentInputs, Investm
 
     public InvestmentView(UserPreferences preferences,
                           InvestmentDefaultsProvider defaultsProvider,
-                          InvestmentInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                          InvestmentInputsStore inputsStore,
+                          CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new InvestmentCalculatorForm(preferences), "investment", "page.investment");
         this.projectionGrid = new InvestmentProjectionGrid(preferences);
 

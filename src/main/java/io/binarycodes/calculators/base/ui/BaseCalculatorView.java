@@ -17,6 +17,7 @@ import io.binarycodes.calculators.base.common.CalculatorDefaults;
 import io.binarycodes.calculators.base.common.InputsStore;
 import io.binarycodes.calculators.base.common.ScenarioCodec;
 import io.binarycodes.calculators.base.common.SharedScenario;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 
@@ -41,6 +42,7 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
 
     private final InputsStore<I> inputsStore;
     private final CalculatorDefaults<I> defaults;
+    private final CalculatorSettings settings;
     private final String routeSegment;
     private final String titleKey;
 
@@ -62,12 +64,14 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     protected BaseCalculatorView(UserPreferences preferences,
                                  InputsStore<I> inputsStore,
                                  CalculatorDefaults<I> defaults,
+                                 CalculatorSettings settings,
                                  F form,
                                  String routeSegment,
                                  String titleKey) {
         this.preferences = preferences;
         this.inputsStore = inputsStore;
         this.defaults = defaults;
+        this.settings = settings;
         this.form = form;
         this.routeSegment = routeSegment;
         this.titleKey = titleKey;
@@ -135,14 +139,18 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
         final Button calculateButton = new Button(getTranslation("action.calculate"), event -> recalculate());
         calculateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        // Reset restores the per-currency defaults; Clear blanks the form entirely.
-        final Button resetButton = new Button(getTranslation("action.reset"), event -> resetToDefaults());
-
         final Button clearButton = new Button(getTranslation("action.clear"), event -> clearInputs());
         clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        final HorizontalLayout primaryActions = new HorizontalLayout(calculateButton, resetButton);
+        final HorizontalLayout primaryActions = new HorizontalLayout(calculateButton);
         primaryActions.setSpacing(true);
+
+        // Reset restores the per-currency defaults; Clear blanks the form entirely.
+        // With prefill off there are no defaults to offer, and the button would only
+        // overwrite the visitor's own numbers with the sample scenario.
+        if (this.settings.prefillDefaults()) {
+            primaryActions.add(new Button(getTranslation("action.reset"), event -> resetToDefaults()));
+        }
 
         final HorizontalLayout actionRow = new HorizontalLayout(primaryActions, clearButton);
         actionRow.addClassName("action-row");
@@ -175,14 +183,22 @@ public abstract class BaseCalculatorView<I, F extends Component & CalculatorForm
     }
 
     private void populateFromPersistedOrDefault(SupportedCurrency currency) {
-        I inputs = this.inputsStore.get(currency);
-        if (inputs == null) {
-            inputs = this.defaults.forCurrency(currency);
+        final I inputs = this.inputsStore.get(currency);
+        if (inputs != null) {
+            this.form.setInputs(inputs);
+        } else if (this.settings.prefillDefaults()) {
+            this.form.setInputs(this.defaults.forCurrency(currency));
+        } else {
+            this.form.clear();
         }
-        this.form.setInputs(inputs);
     }
 
     private void resetToDefaults() {
+        // The button is absent when prefill is off, but a stale client could still
+        // send the click; refuse rather than clobber saved inputs with defaults.
+        if (!this.settings.prefillDefaults()) {
+            return;
+        }
         final SupportedCurrency currency = this.preferences.currency();
         final I defaultInputs = this.defaults.forCurrency(currency);
         this.inputsStore.save(currency, defaultInputs);

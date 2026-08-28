@@ -14,6 +14,7 @@ import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
 import io.binarycodes.calculators.base.i18n.Translations;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -70,8 +71,9 @@ public class LoanView extends BaseCalculatorView<LoanInputs, LoanCalculatorForm>
 
     public LoanView(UserPreferences preferences,
                     LoanDefaultsProvider defaultsProvider,
-                    LoanInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                    LoanInputsStore inputsStore,
+                    CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new LoanCalculatorForm(preferences), "loan", "page.loan");
         this.projectionGrid = new LoanProjectionGrid(preferences);
 

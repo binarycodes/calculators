@@ -11,6 +11,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -51,8 +52,9 @@ public class BuyRentView extends BaseCalculatorView<BuyRentInputs, BuyRentCalcul
 
     public BuyRentView(UserPreferences preferences,
                        BuyRentDefaultsProvider defaultsProvider,
-                       BuyRentInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                       BuyRentInputsStore inputsStore,
+                       CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new BuyRentCalculatorForm(preferences), "buyrent", "page.buyrent");
         this.projectionGrid = new BuyRentProjectionGrid(preferences);
 

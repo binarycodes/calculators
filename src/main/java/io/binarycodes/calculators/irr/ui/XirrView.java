@@ -17,6 +17,7 @@ import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.i18n.Translations;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -68,8 +69,9 @@ public class XirrView extends BaseCalculatorView<XirrInputs, XirrCalculatorForm>
 
     public XirrView(UserPreferences preferences,
                     XirrDefaultsProvider defaultsProvider,
-                    XirrInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                    XirrInputsStore inputsStore,
+                    CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new XirrCalculatorForm(preferences), "xirr", "page.xirr");
 
         this.warningBanner.addClassNames("xirr-banner", "warning");

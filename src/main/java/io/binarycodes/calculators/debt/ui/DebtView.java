@@ -13,6 +13,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -59,8 +60,9 @@ public class DebtView extends BaseCalculatorView<DebtPlanInputs, DebtCalculatorF
 
     public DebtView(UserPreferences preferences,
                     DebtDefaultsProvider defaultsProvider,
-                    DebtInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                    DebtInputsStore inputsStore,
+                    CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new DebtCalculatorForm(preferences), "debt", "page.debt");
         this.defaultsProvider = defaultsProvider;
         this.projectionGrid = new DebtProjectionGrid(preferences);

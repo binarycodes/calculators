@@ -12,6 +12,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import io.binarycodes.calculators.base.common.Status;
 import io.binarycodes.calculators.base.money.MoneyFormatter;
 import io.binarycodes.calculators.base.money.SupportedCurrency;
+import io.binarycodes.calculators.base.config.CalculatorSettings;
 import io.binarycodes.calculators.base.prefs.UserPreferences;
 import io.binarycodes.calculators.base.ui.BaseCalculatorView;
 import io.binarycodes.calculators.base.ui.SummaryCard;
@@ -50,8 +51,9 @@ public class GoalView extends BaseCalculatorView<GoalInputs, GoalCalculatorForm>
 
     public GoalView(UserPreferences preferences,
                     GoalDefaultsProvider defaultsProvider,
-                    GoalInputsStore inputsStore) {
-        super(preferences, inputsStore, defaultsProvider,
+                    GoalInputsStore inputsStore,
+                    CalculatorSettings settings) {
+        super(preferences, inputsStore, defaultsProvider, settings,
                 new GoalCalculatorForm(preferences), "goal", "page.goal");
         this.projectionGrid = new GoalProjectionGrid(preferences);
 
