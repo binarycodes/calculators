@@ -78,7 +78,7 @@ Project-wide rules. Once a pattern is established here, follow it without prompt
 
 ## 11. Build & CI
 
-- Run build / test / frontend tasks through `./run.sh <task>` (`compile`, `bundle`, `styles`, `test`, `run`, `package`, `clean`), which pins JDK 21. After a `@CssImport(themeFor=…)` / `@JsModule` change run `./run.sh bundle`; after editing an `@import`-ed CSS partial run `./run.sh styles`.
+- Run build / test / frontend tasks through `./run.sh <task>` (`deps`, `compile`, `bundle`, `styles`, `test`, `verify`, `run`, `preview`, `package`, `clean`), which pins JDK 21. `run.sh` is shared verbatim with sibling projects and must never be edited here — everything project-specific lives in `run.conf`, and a task the runner lacks goes in `run.tasks.sh`. After a `@CssImport(themeFor=…)` / `@JsModule` change run `./run.sh bundle`; after editing an `@import`-ed CSS partial run `./run.sh styles`.
 - CI runs `mvn verify` on push (Temurin JDK 21).
 - Tests live alongside the package they cover.
 - Conventional Commits: `<type>[(scope)][!]: <description>`, type one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Subject ≤100 chars, single line, no body, no `Co-Authored-By`. A `commit-msg` hook in `.githooks/` enforces this; enable per clone with `git config core.hooksPath .githooks`.
