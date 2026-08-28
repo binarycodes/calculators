@@ -6,7 +6,8 @@ projection. UI structure is described where it changes the meaning of an
 input. The app currently ships:
 
 - **Retirement Planner** — full retirement projection across life expectancy.
-- **Goal Planner** — solves for the monthly SIP required to hit a post-tax goal.
+- **Goal Planner** — solves for the monthly SIP required to hit a post-tax goal,
+  inflation-adjusted to the horizon year.
 - **Inflation Projection** — projects an amount forward or backward at a fixed
   inflation rate over a horizon.
 - **Investment** — grows regular contributions through an investment phase and a
@@ -36,6 +37,43 @@ one `base.common.Frequency` enum (`MONTHLY` / `QUARTERLY` / `HALF_YEARLY` /
 `YEARLY`, each carrying `monthsPerPeriod`) rendered through the reusable
 `base.ui.FrequencyField` dropdown. Every calculator that offers a frequency
 (Investment, Loan, Retirement, IRR) uses the same four options.
+
+## Calculator actions
+
+Every calculator carries the same action row beneath its form. Recalculation is
+already live — edits recompute as they are typed — so these are the explicit
+levers over the *inputs*, not over when the maths runs:
+
+| Action | Effect |
+| --- | --- |
+| **Calculate** | Recomputes on demand (refreshes the share token, then re-renders the results). Primary button; live recalculation makes it a reassurance rather than a necessity. |
+| **Reset** | Restores the current currency's baseline inputs from the classpath defaults, **overwriting** the visitor's own numbers, and persists them as the snapshot. Shown only when sample-data prefill is on (see below). |
+| **Clear** | Blanks the form entirely and persists the blank, so the calculator stays empty on reload. Separated to the far side of the row, away from Calculate / Reset. |
+
+Reset and Clear are deliberately distinct: Reset restores the *sample scenario*,
+Clear leaves *nothing*. Both write through to the per-currency snapshot, so
+neither is undone by a reload.
+
+## Prefilled sample data
+
+Whether a calculator opens on its shipped sample scenario is a deployment
+choice, not a per-user one: `app.calculators.prefill-defaults` (bound to
+`base.config.CalculatorSettings`, overridable by the
+`CALCULATORS_PREFILL_DEFAULT_VALUES` environment variable), **default `true`**.
+
+It only decides the fallback when nothing else applies. The load order on
+opening a calculator is unchanged by it: a `?s=` share token wins, then the
+per-currency persisted snapshot, and only then the defaults:
+
+| `prefill-defaults` | Nothing persisted for this currency |
+| --- | --- |
+| `true` (default) | The form opens on `*-defaults.json` for that currency, and the **Reset** action is offered. |
+| `false` | The form opens **blank**, and **Reset is not rendered** — with no defaults on offer the button could only overwrite the visitor's own numbers with a sample scenario. A stale client that posts the click anyway is refused rather than obeyed. |
+
+Turning it off suits a deployment where invented numbers would read as advice.
+Switching currency follows the same rule, so a blank-form deployment stays blank
+across currencies. `PrefillDefaultsEnabledIT` / `PrefillDefaultsDisabledIT`
+cover both settings end-to-end, including the presence of Reset.
 
 ## Deployed version indicator
 
@@ -451,7 +489,14 @@ keys: `gp_inputs` (browser localStorage, per currency); defaults from
 
 | Field | Notes |
 | --- | --- |
-| Goal Amount (post-tax) | Money in today's currency, > 0. The amount the user wants *in hand* after taxes on gains. |
+| Goal Amount (post-tax) | Money in **today's** currency, > 0. The amount the user wants *in hand*, in today's purchasing power, after taxes on gains. |
+| Inflation Rate (%) | Annual, `0–100`. Grows the goal to what that same purchasing power costs in the horizon year. Zero means the entered figure is taken as the nominal target. |
+
+The goal is always inflation-adjusted: a goal entered in today's money would
+otherwise be solved against a horizon-year corpus, quietly under-funding the
+plan by the whole inflation gap. The resolved target is shown back to the user
+as helper text under the rate — `Target at horizon: <amount>` — so the number
+being solved for is never hidden.
 
 **Investments card** — repeating rows; user can add or remove buckets.
 
@@ -477,6 +522,19 @@ calculator solves it in closed form (no iterative root-find). The corpus
 compounds monthly; contributions land at the start of each month; step-up
 is applied annually and **per bucket** (bucket *i*'s year-2 share becomes
 `M · a_i · (1+s_i)`, year 3 becomes `M · a_i · (1+s_i)^2`, and so on).
+
+The entered goal is in today's money, so it is first grown to the horizon year
+at the inflation rate `π`. Everything downstream solves against that
+inflation-adjusted figure — the target the plan actually has to hit:
+
+```
+Goal = Goal_today · (1 + π)^(N_m / 12)
+```
+
+The exponent is the fractional horizon, so a partial year inflates
+proportionally (`Math.pow`, matching the horizon handling elsewhere). A zero
+rate leaves the entered amount untouched. The result carries it as
+`inflatedGoal`.
 
 With per-bucket monthly rate `g_m,i = (1 + g_i)^(1/12) − 1`, allocation
 fraction `a_i`, exit tax `t_i`, per-bucket step-up `s_i`, and total months `N_m`:
@@ -506,8 +564,9 @@ Edges:
 - **Goal already covered.** If `net_corpus_FV ≥ Goal`, `M` is set to zero and
   the result flags `goalAlreadyCovered = true`. The UI shows a status banner
   on the summary cards and suppresses the chart and projection grid.
-- **Validation.** `N ≥ 1`, `Goal > 0`, `C ≥ 0`. Percentages are clamped to
-  `0–100` at the form layer.
+- **Validation.** `N ≥ 1`, `Goal_today > 0` (checked on the entered amount,
+  before inflation is applied), `C ≥ 0`. Percentages are clamped to `0–100` at
+  the form layer.
 
 ## 3. Output
 
@@ -547,7 +606,7 @@ age; in the other modes the column is hidden.
 
 | Suite | Purpose |
 | --- | --- |
-| `GoalCalculatorTest` | Closed-form solve correctness, monotonicity in growth / step-up / horizon, projection-row reconciliation, validation rejections, edge cases (zero corpus, goal-already-covered, 100% tax). |
+| `GoalCalculatorTest` | Closed-form solve correctness, inflation-adjusted target (net-at-exit reaches the grown goal), monotonicity in growth / step-up / horizon, projection-row reconciliation, validation rejections, edge cases (zero corpus, goal-already-covered, 100% tax). |
 | `GoalDefaultsJsonTest` | `goal-defaults.json` parses, every currency has every required field, projection round-trips. |
 | `GoalCalculatorFormBrowserlessTest` | Horizon toggle swaps the visible sub-field; binder round-trip preserves values. |
 
@@ -1074,8 +1133,11 @@ The year-by-year and monthly grids share one card, switched by a "Year by year" 
 | `dbt_inputs` (localStorage) | Per-currency snapshot of the edited debts, windfalls, and plan settings. |
 
 `DebtInputsStore`'s `toJsonNode` / `fromJsonNode` (debts and windfalls round-trip
-as JSON arrays; the debt order is preserved for the Custom strategy) also back the
-shareable-link codec.
+as JSON arrays; the debt order is preserved because both strategies rank with it
+as the tie-break, and the minimums-only baseline pays in it) also back the
+shareable-link codec. An unrecognised strategy name — including the retired
+`CUSTOM` still sitting in an old snapshot or share link — is dropped rather than
+failing the load, leaving the plan on the Avalanche default.
 
 ## 5. Test coverage
 
