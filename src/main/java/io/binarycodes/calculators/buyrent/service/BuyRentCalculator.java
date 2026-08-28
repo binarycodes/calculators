@@ -22,9 +22,12 @@ import java.util.List;
  *
  * <p><b>Rent path</b> — the down payment + buying costs that were not spent are
  * invested immediately at the investment return rate; each month any surplus
- * (buy costs > rent) is added to the portfolio and any deficit (rent > buy
- * costs) is withdrawn; rent grows annually. On exit: investment capital-gains
- * tax applies to the gain (portfolio − net contributions).</p>
+ * (buy costs > rent) is added to the portfolio. Once rent overtakes the buy cost
+ * there is no surplus to invest, so contributions stop while the existing corpus
+ * keeps compounding; the portfolio is never drawn down, because covering the
+ * higher rent from income sits outside the buy-vs-rent comparison. Rent steps up
+ * once per completed year. On exit: investment capital-gains tax applies to the
+ * gain (portfolio − net contributions).</p>
  *
  * <p>Break-even is the first year where after-tax buy equity ≥ after-tax rent
  * portfolio.</p>

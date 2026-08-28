@@ -37,9 +37,9 @@ import java.util.Map;
  * <p>The monthly rate is the nominal {@code annual/12} convention (as
  * {@link io.binarycodes.calculators.loan.service.LoanCalculator}); interest is
  * {@code balance × rate}. Avalanche ranks by ongoing (post-promo) APR, Snowball
- * by original balance, Custom by input order; all rank once. The minimums-only
- * baseline pays each debt exactly its minimum, ignoring the budget, as the
- * yardstick for interest and time saved.</p>
+ * by original balance, both tie-broken by input order; both rank once. The
+ * minimums-only baseline pays each debt exactly its minimum, ignoring the
+ * budget, as the yardstick for interest and time saved.</p>
  *
  * <p>Stateless static utility. The only hard error is having no valid debts; an
  * unpayable plan is not an error — it comes back with defaults flagged and, if it
