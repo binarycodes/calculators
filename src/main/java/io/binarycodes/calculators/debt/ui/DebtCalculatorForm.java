@@ -216,6 +216,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         this.debtsCard.setWidthFull();
         this.debtsCard.addClassName("form-section");
         this.debtsCard.add(content);
+        this.debtsCard.onClear(() -> this.debtsSection.set(List.of()));
         return this.debtsCard;
     }
 
@@ -241,6 +242,12 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         card.setWidthFull();
         card.addClassName("form-section");
         card.add(content);
+        // A strategy has to be picked for the plan to mean anything, so clearing
+        // the card leaves it on the avalanche default rather than unselected.
+        card.onClear(() -> {
+            card.blankOwnFields();
+            this.strategy.setValue(PayoffStrategy.AVALANCHE);
+        });
         return card;
     }
 
@@ -259,6 +266,7 @@ public class DebtCalculatorForm extends VerticalLayout implements CalculatorForm
         card.setWidthFull();
         card.addClassName("form-section");
         card.add(content);
+        card.onClear(() -> this.windfallsSection.set(List.of()));
         return card;
     }
 

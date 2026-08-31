@@ -54,6 +54,21 @@ Reset and Clear are deliberately distinct: Reset restores the *sample scenario*,
 Clear leaves *nothing*. Both write through to the per-currency snapshot, so
 neither is undone by a reload.
 
+### Per-section clear
+
+Alongside the row-wide Clear, every **form-section card** carries its own clear
+control: an eraser icon in the card header, at the right, beside the card's
+validation chip. It empties only that section, so a visitor can start one part
+of a long form over without losing the rest. Like every other edit it flows
+through the live-recalculation signal, so the results and the persisted snapshot
+follow immediately.
+
+What "empty" means is the section's own business. A card of plain inputs blanks
+its fields; a card holding a row list drops its rows; and a field whose empty
+value would be meaningless — a payoff strategy, a contribution cadence, a
+time-horizon mode — returns to the same default the form opens on rather than
+to nothing.
+
 ## Prefilled sample data
 
 Whether a calculator opens on its shipped sample scenario is a deployment
@@ -125,7 +140,8 @@ Validation feedback is shown consistently, in three layers:
 - **Field-level** — invalid fields keep their inline Vaadin error (e.g.
   "Required", range messages).
 - **Card-level** — each `FormCard` shows a danger **chip at its top-right**
-  (the header-suffix slot) describing why *that card* blocks calculation: a
+  (the header-suffix slot, shared with the section's clear icon) describing why
+  *that card* blocks calculation: a
   generic "Fix the highlighted fields" when any of its own fields are invalid,
   or a card-specific rule (e.g. Goal's "Allocations must sum to 100%"). A
   whole-calculation failure (an exception thrown by the calculator) is attached

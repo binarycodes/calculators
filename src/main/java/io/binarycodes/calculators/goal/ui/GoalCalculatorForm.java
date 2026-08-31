@@ -174,6 +174,19 @@ public class GoalCalculatorForm extends VerticalLayout implements CalculatorForm
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
+        // Only the selected mode's horizon fields are attached, so blank all of
+        // them explicitly and put the mode back on Years.
+        card.onClear(() -> {
+            this.goalAmount.clear();
+            this.inflationRate.clear();
+            this.horizonMode.setValue(TimeHorizonMode.YEARS);
+            this.yearsToGoal.clear();
+            this.monthsToGoal.clear();
+            this.currentAge.clear();
+            this.goalAge.clear();
+            this.targetYear.clear();
+            this.targetMonth.clear();
+        });
         this.goalCard = card;
         return card;
     }

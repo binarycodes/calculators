@@ -141,6 +141,7 @@ class InvestmentsTab extends VerticalLayout implements TabIndicator.Source {
             final FormCard card = new FormCard(title);
             card.setWidthFull();
             card.add(inner);
+            card.onClear(() -> set(List.of()));
             return card;
         }
 

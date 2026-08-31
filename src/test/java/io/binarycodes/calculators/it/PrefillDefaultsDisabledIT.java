@@ -38,7 +38,8 @@ class PrefillDefaultsDisabledIT extends SpringPlaywrightIT {
     void reset_isNotOffered() {
         assertThat(page.getByRole(AriaRole.BUTTON, new GetByRoleOptions().setName("Reset")))
                 .hasCount(0);
-        assertThat(page.getByRole(AriaRole.BUTTON, new GetByRoleOptions().setName("Clear")))
+        // Exact, so the per-section "Clear this section" buttons don't also match.
+        assertThat(page.getByRole(AriaRole.BUTTON, new GetByRoleOptions().setName("Clear").setExact(true)))
                 .isVisible();
     }
 }

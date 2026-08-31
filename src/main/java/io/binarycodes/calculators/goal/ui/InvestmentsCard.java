@@ -63,6 +63,8 @@ public class InvestmentsCard extends FormCard {
         content.setPadding(false);
         content.setSpacing(true);
         add(content);
+
+        onClear(() -> setInvestments(null));
     }
 
     public Signal<List<Investment>> investmentsSignal() {

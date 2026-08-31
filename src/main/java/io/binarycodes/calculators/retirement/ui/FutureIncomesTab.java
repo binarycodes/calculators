@@ -74,7 +74,10 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
                 event -> addFixedRow(new FutureIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        return wrapInCard(Translations.get("section.retirement.fixed"), intro, this.fixedRowsContainer, addButton);
+        final FormCard card = wrapInCard(Translations.get("section.retirement.fixed"), intro,
+                this.fixedRowsContainer, addButton);
+        card.onClear(() -> setFutureIncomes(List.of()));
+        return card;
     }
 
     private Component buildRecurringCard() {
@@ -89,10 +92,13 @@ class FutureIncomesTab extends VerticalLayout implements TabIndicator.Source {
                 event -> addRecurringRow(new RecurringIncome()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        return wrapInCard(Translations.get("section.retirement.recurring"), intro, this.recurringRowsContainer, addButton);
+        final FormCard card = wrapInCard(Translations.get("section.retirement.recurring"), intro,
+                this.recurringRowsContainer, addButton);
+        card.onClear(() -> setRecurringIncomes(List.of()));
+        return card;
     }
 
-    private static Component wrapInCard(String title, Component... children) {
+    private static FormCard wrapInCard(String title, Component... children) {
         final var inner = new VerticalLayout(children);
         inner.setPadding(false);
         inner.setSpacing(true);

@@ -162,6 +162,12 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                 withPercentageSuffix(this.stepUp));
 
         this.contributionCard = card(Translations.get("section.investment.contribution"), topLayout);
+        // An empty cadence is not a state the calculator accepts, so clearing the
+        // card puts the frequency back on its monthly default.
+        this.contributionCard.onClear(() -> {
+            this.contributionCard.blankOwnFields();
+            this.frequency.setFrequency(Frequency.MONTHLY);
+        });
         return this.contributionCard;
     }
 
@@ -174,7 +180,20 @@ public class InvestmentCalculatorForm extends VerticalLayout implements Calculat
                 new FormLayout.ResponsiveStep("36em", 2));
         this.horizonFields.setWidthFull();
 
-        return card(Translations.get("section.investment.investmentTime"), intro, this.horizonMode, this.horizonFields);
+        final FormCard card = card(Translations.get("section.investment.investmentTime"),
+                intro, this.horizonMode, this.horizonFields);
+        // Only the selected mode's fields are attached, so blank all of them
+        // explicitly and put the mode back on Years.
+        card.onClear(() -> {
+            this.horizonMode.setValue(TimeHorizonMode.YEARS);
+            this.investYears.clear();
+            this.investMonths.clear();
+            this.currentAge.clear();
+            this.goalAge.clear();
+            this.targetYear.clear();
+            this.targetMonth.clear();
+        });
+        return card;
     }
 
     private Component buildHoldingCard() {

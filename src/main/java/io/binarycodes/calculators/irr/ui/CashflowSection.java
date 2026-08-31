@@ -112,7 +112,9 @@ class CashflowSection extends VerticalLayout implements TabIndicator.Source {
                 event -> addOneOffRow(new DatedCashflow()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        return card(this.labels.oneOffTitle(), intro, this.oneOffContainer, addButton);
+        final FormCard card = card(this.labels.oneOffTitle(), intro, this.oneOffContainer, addButton);
+        card.onClear(() -> setOneOff(List.of()));
+        return card;
     }
 
     private Component buildRecurringCard() {
@@ -125,7 +127,9 @@ class CashflowSection extends VerticalLayout implements TabIndicator.Source {
                 event -> addRecurringRow(new RecurringCashflow()));
         addButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        return card(this.labels.recurringTitle(), intro, this.recurringContainer, addButton);
+        final FormCard card = card(this.labels.recurringTitle(), intro, this.recurringContainer, addButton);
+        card.onClear(() -> setRecurring(List.of()));
+        return card;
     }
 
     private void addOneOffRow(DatedCashflow initial) {

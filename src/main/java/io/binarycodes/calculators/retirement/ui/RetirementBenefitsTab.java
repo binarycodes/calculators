@@ -66,6 +66,7 @@ class RetirementBenefitsTab extends VerticalLayout implements TabIndicator.Sourc
         card.setWidthFull();
         card.addClassName("form-section");
         card.add(inner);
+        card.onClear(() -> setRetirementBenefits(List.of()));
         add(card);
     }
 

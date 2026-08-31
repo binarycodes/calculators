@@ -155,6 +155,21 @@ public class InflationCalculatorForm extends VerticalLayout implements Calculato
         card.add(content);
         card.setWidthFull();
         card.addClassName("form-section");
+        // Only the selected mode's horizon fields are attached, so blank all of
+        // them explicitly and put the mode back on Years.
+        card.onClear(() -> {
+            this.amount.clear();
+            this.inflationRate.clear();
+            this.inflationVariation.clear();
+            this.amountIsToday.clear();
+            this.horizonMode.setValue(TimeHorizonMode.YEARS);
+            this.years.clear();
+            this.months.clear();
+            this.currentAge.clear();
+            this.goalAge.clear();
+            this.targetYear.clear();
+            this.targetMonth.clear();
+        });
         this.inflationCard = card;
         return card;
     }

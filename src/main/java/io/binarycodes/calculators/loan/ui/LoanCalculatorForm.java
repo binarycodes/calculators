@@ -206,7 +206,16 @@ public class LoanCalculatorForm extends VerticalLayout implements CalculatorForm
         tabs.add(new Tab(new Span(Translations.get("loan.tab.extraEmis")), this.extraEmisDot), extraEmis);
         tabs.add(new Tab(new Span(Translations.get("loan.tab.stepUp")), this.stepUpDot), stepUp);
 
-        return card(Translations.get("section.prepayments"), intro, tabs);
+        final FormCard card = card(Translations.get("section.prepayments"), intro, tabs);
+        // The levers live in tab panels the default sweep would not reach, and the
+        // frequency belongs back at the calculator's yearly default, not empty.
+        card.onClear(() -> {
+            this.extraPerPeriod.clear();
+            this.extraEmisPerYear.clear();
+            this.emiStepUp.clear();
+            this.extraFrequency.setFrequency(Frequency.YEARLY);
+        });
+        return card;
     }
 
     /** One prepayment lever: its field(s) above a one-line caption explaining it. */

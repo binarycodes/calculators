@@ -45,9 +45,18 @@ a.brand-link:hover {
     gap: 0.75rem;
 }
 
+/* The card header's right-hand slot, holding the validation message and the
+ * clear button. It shares the header row with the title, so it has to be able
+ * to shrink — otherwise a long message pushes the card wider than the phone. */
+.form-card-header-suffix {
+    min-width: 0;
+    justify-content: flex-end;
+}
+
 /* Validation message anchored at a form card's top-right (header suffix) —
  * the standard place to explain why that card's inputs block calculation.
- * Rendered as a danger chip to read as a status badge, not body text. */
+ * Rendered as a danger chip to read as a status badge, not body text. It stays
+ * on one line while there is room and wraps only once the header runs out. */
 .form-card-message {
     padding: 0.2rem 0.65rem;
     border-radius: 0.5rem;
@@ -55,7 +64,25 @@ a.brand-link:hover {
     color: var(--color-danger-text);
     font-size: 0.8rem;
     font-weight: 600;
-    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Per-section clear button, sharing the header-suffix slot with the message.
+ * Unfilled and muted at rest so it reads as a quiet affordance beside the card
+ * title, tinting to the danger colour on hover to signal that it discards input. */
+.form-card-clear {
+    color: var(--color-text-subtle);
+    transition: color 0.12s ease, background-color 0.12s ease;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--color-danger-text);
+        background-color: var(--color-danger-bg);
+    }
+
+    & vaadin-icon {
+        color: inherit;
+    }
 }
 
 /* Repeating input rows (one record per row: expenses, incomes, investment
