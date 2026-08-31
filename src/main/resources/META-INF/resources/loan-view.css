@@ -63,8 +63,14 @@
     border: none;
 }
 
+/* The scroller's sticky overflow indicators are pulled out to the panel edges
+ * by a negative margin of one inline padding, so zeroing the padding alone
+ * leaves them wider than the panel and the scroller grows a horizontal
+ * scrollbar. Zero the variable they read too, the way Vaadin's own no-padding
+ * theme does. */
 .loan-view .prepay-tabs::part(content) {
     padding-inline: 0;
+    --vaadin-scroller-padding-inline: 0px;
 }
 
 /* Align the tab row flush with the card heading and the field below it. */
