@@ -1,0 +1,39 @@
+# Copyright (c) 2026 binarycodes
+# GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: auto-merge dependabot pull requests
+
+# pull_request_target rather than pull_request: a run Dependabot triggers gets
+# Dependabot's secrets, not the Actions ones the App credentials live in. The
+# target event runs in main's context with them, and is safe here only because
+# nothing checks out or executes the pull request's head.
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+
+permissions: {}
+
+jobs:
+  enable:
+    # The author or the PR
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: mint a token for the merge
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.BINARYCODES_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BINARYCODES_BOT_PRIVATE_KEY }}
+
+      - name: enable auto-merge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr merge --auto --squash "${PR}"
