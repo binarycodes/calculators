@@ -4,12 +4,11 @@
 
 name: auto-merge dependabot pull requests
 
-# pull_request_target rather than pull_request: a run Dependabot triggers gets
-# Dependabot's secrets, not the Actions ones the App credentials live in. The
-# target event runs in main's context with them, and is safe here only because
-# nothing checks out or executes the pull request's head.
+# A merge enabled with GITHUB_TOKEN does not trigger workflows, so CI and the
+# image publish skip that commit on main and catch up on the next push. Dependabot
+# only bumps pinned actions here, which leave the image unchanged.
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - reopened
@@ -23,17 +22,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    steps:
-      - name: mint a token for the merge
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ secrets.BINARYCODES_BOT_CLIENT_ID }}
-          private-key: ${{ secrets.BINARYCODES_BOT_PRIVATE_KEY }}
+    permissions:
+      contents: write
+      pull-requests: write
 
+    steps:
       - name: enable auto-merge
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
         run: gh pr merge --auto --squash "${PR}"
