@@ -17,10 +17,10 @@
 
     <properties>
         <java.version>21</java.version>
-        <vaadin.version>25.2.5</vaadin.version>
+        <vaadin.version>25.3.4</vaadin.version>
         <icu4j.version>78.3</icu4j.version>
         <dramafinder.version>1.1.1</dramafinder.version>
-        <playwright.version>1.59.0</playwright.version>
+        <playwright.version>1.61.0</playwright.version>
         <jacoco.version>0.8.13</jacoco.version>
         <headless>true</headless>
     </properties>
