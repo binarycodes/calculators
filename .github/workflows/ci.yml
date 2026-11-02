@@ -29,6 +29,13 @@ jobs:
           java-version: '21'
           cache: maven
 
+      - name: install playwright
+        run: | 
+          mvn exec:java \
+            -Dexec.classpathScope=test \
+            -Dexec.mainClass=com.microsoft.playwright.CLI \
+            -Dexec.args="install --with-deps"
+
       - name: maven verify
         env:
           VAADIN_SERVER_LICENSE: ${{ secrets.VAADIN_SERVER_LICENSE }}
